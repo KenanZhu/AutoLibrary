@@ -489,16 +489,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             system_config = self.loadSystemConfig(config_path)
             users_config = self.loadUsersConfig(config_path)
             if system_config is not None:
-                self.__config_paths["system"] = config_path
                 self.__system_config_data.update(system_config)
                 self.setSystemConfigToWidget(self.__system_config_data)
-                self.CurrentSystemConfigEdit.setText(config_path)
                 return True
             if users_config is not None:
-                self.__config_paths["users"] = config_path
                 self.__users_config_data.update(users_config)
                 self.fillUsersList(self.__users_config_data)
-                self.CurrentUserConfigEdit.setText(config_path)
                 return True
         except:
             return False
@@ -644,7 +640,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         )[0]
         if system_config_path:
             system_config_path = QDir.toNativeSeparators(system_config_path)
-            self.loadConfig(system_config_path)
+            if self.loadConfig(system_config_path):
+                self.__config_paths["system"] = system_config_path
+                self.CurrentSystemConfigEdit.setText(system_config_path)
 
     @Slot()
     def onBrowseCurrentUserConfigButtonClicked(
@@ -659,7 +657,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         )[0]
         if users_config_path:
             users_config_path = QDir.toNativeSeparators(users_config_path)
-            self.loadConfig(users_config_path)
+            if self.loadConfig(users_config_path):
+                self.__config_paths["users"] = users_config_path
+                self.CurrentUserConfigEdit.setText(users_config_path)
 
     @Slot()
     def onBrowseExportSystemConfigButtonClicked(
