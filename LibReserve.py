@@ -403,9 +403,9 @@ class LibReserve(LibOperator):
                 if abs_diff < best_time_diff or (
                     abs_diff == best_time_diff and (
                         # prefer earlier time
-                        (prefer_earlier and actual_diff < 0) or
+                        (prefer_earlier and actual_diff <= 0) or
                         # prefer later time
-                        (not prefer_earlier and actual_diff > 0)
+                        (not prefer_earlier and actual_diff >= 0)
                     )
                 ):
                     best_time_diff = abs_diff
