@@ -560,6 +560,9 @@
                  <height>25</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，如果有多个与目标&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;开始时间&lt;/span&gt;相近的可选时间，选择时间最早项&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>优先选择最早</string>
                </property>
@@ -600,6 +603,9 @@
                  <width>16777215</width>
                  <height>25</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;结束时间&lt;/span&gt;不可用时，按照该偏差范围寻找最近可选时间&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="maximum">
                 <number>120</number>
@@ -691,6 +697,9 @@
                  <height>25</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;开始时间&lt;/span&gt;不可用时，按照该偏差范围寻找最近可选时间&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="maximum">
                 <number>120</number>
                </property>
@@ -709,6 +718,9 @@
                  <width>16777215</width>
                  <height>25</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，如果有多个与目标&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;结束时间&lt;/span&gt;相近的可选时间，选择时间最晚项&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>优先选择最晚</string>
@@ -789,6 +801,9 @@
                  <height>25</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的预约时长，脚本会尽量满足&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="maximum">
                 <double>8.000000000000000</double>
                </property>
@@ -868,6 +883,9 @@
                  <width>16777215</width>
                  <height>25</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，会优先满足预约时长限制，当座位紧张时可能会导致&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;预约失败&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>优先满足时长要求</string>
@@ -1046,6 +1064,12 @@
               <height>25</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;脚本运行使用的浏览器类型&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="currentText">
              <string>edge</string>
             </property>
@@ -1113,6 +1137,12 @@
                 <height>25</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅根目录中的 manual.html&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="whatsThis">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
             <item>
@@ -1149,6 +1179,12 @@
               <width>16777215</width>
               <height>25</height>
              </size>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;运行时不显示浏览器&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>无头模式</string>
@@ -1236,6 +1272,9 @@
               <width>16777215</width>
               <height>25</height>
              </size>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;无需更改&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>主机URL：</string>
@@ -1758,7 +1797,7 @@
         </size>
        </property>
        <property name="text">
-        <string>载入配置</string>
+        <string>加载配置</string>
        </property>
       </widget>
      </item>

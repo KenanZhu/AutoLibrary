@@ -268,7 +268,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.DateEdit.setDate(QDate.currentDate())
         self.DateEdit.setMinimumDate(QDate.currentDate())
         self.DateEdit.setMaximumDate(QDate.currentDate())
-        if QTime.currentTime() > QTime(19, 0, 0) and QTime.currentTime() < QTime(23, 0, 0):
+        if QTime.currentTime() > QTime(18, 0, 0) and QTime.currentTime() < QTime(23, 0, 0):
             self.DateEdit.setMaximumDate(QDate.currentDate().addDays(1))
         self.BeginTimeEdit.setTime(QTime.currentTime())
         self.PreferEarlyBeginTimeCheckBox.setChecked(False)
@@ -479,7 +479,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if not config_path:
             config_path = QFileDialog.getOpenFileName(
                 self,
-                "选择配置文件 - AutoLibrary",
+                "从现有配置文件中加载 - AutoLibrary",
                 f"{QDir.toNativeSeparators(QDir.currentPath())}",
                 "JSON 文件 (*.json);;所有文件 (*)"
             )[0]
