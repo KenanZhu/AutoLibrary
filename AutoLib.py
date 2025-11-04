@@ -203,6 +203,7 @@ class AutoLib(MsgBase):
             f"用户配置文件路径: {self.__users_config_reader.configPath()}")
 
         for user in users:
+            user_counter["current"] += 1
             self._showTrace(f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user['username']}......")
             if self.__run(
                 username=user["username"],
