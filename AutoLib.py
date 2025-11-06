@@ -145,9 +145,10 @@ class AutoLib(MsgBase):
         username: str,
         password: str,
         reserve_info: dict,
-    ) -> bool:
+    ) -> int:
 
-        success = False
+        # result : 0 - success, 1 - failed, 2 - passed
+        result = 1
 
         # login
         if not self.__lib_login.login(
@@ -156,31 +157,36 @@ class AutoLib(MsgBase):
             self.__system_config_reader.get("login/max_attempt", 5),
             self.__system_config_reader.get("login/auto_captcha", True),
         ):
-            return False
-        run_mode = self.__system_config_reader.get("run/mode", 1)
-        run_mode = {
-            "auto_reserve":  run_mode&0x1,
-            "auto_checkin":  run_mode&0x2,
-            "auto_renewal":  run_mode&0x4,
-        }
-        # reserve or checkin or renewal
+            return 1
         """
             Here, we collect the run mode from the config file.
         """
-        if self.__lib_reserve.canReserve(reserve_info.get("date")) and run_mode["auto_reserve"]:
-            if self.__lib_reserve.reserve(reserve_info):
-                self._showTrace(f"用户 {username} 预约成功 !")
-                success = True
+        run_mode = self.__system_config_reader.get("run/mode", 1)
+        run_mode = {
+            "auto_reserve": run_mode&0x1,
+            "auto_checkin": run_mode&0x2,
+            "auto_renewal": run_mode&0x4,
+        }
+        # reserve
+        if run_mode["auto_reserve"]:
+            if self.__lib_reserve.canReserve(reserve_info.get("date")):
+                if self.__lib_reserve.reserve(reserve_info):
+                    self._showTrace(f"用户 {username} 预约成功 !")
+                    result = 0
+                else:
+                    self._showTrace(f"用户 {username} 预约失败 !")
+                    result = 1
             else:
-                self._showTrace(f"用户 {username} 预约失败 !")
-                success = False
+                result = 2
         # logout
         if not self.__lib_logout.logout(
             username,
         ):
+            # if logout is failed, we must make sure the host to be reloaded
+            # otherwise, the next login may fail
             self.__driver.get(self.__system_config_reader.get("library/host_url"))
-            return False
-        return success
+            return 1
+        return result
 
 
     def run(
@@ -197,25 +203,33 @@ class AutoLib(MsgBase):
             if not self.__initDriverUrl():
                 return
 
-        user_counter = {"current": 0, "success": 0, "failed": 0}
+        user_counter = {"current": 0, "success": 0, "failed": 0, "passed": 0}
         users = self.__users_config_reader.get("users")
-        self._showTrace(f"共发现 {len(users)} 个用户, "\
-            f"用户配置文件路径: {self.__users_config_reader.configPath()}")
-
+        self._showTrace(
+            f"共发现 {len(users)} 个用户, "\
+            f"用户配置文件路径: {self.__users_config_reader.configPath()}"
+        )
         for user in users:
             user_counter["current"] += 1
-            self._showTrace(f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user['username']}......")
-            if self.__run(
+            self._showTrace(
+                f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user['username']}......"
+            )
+            r = self.__run(
                 username=user["username"],
                 password=user["password"],
                 reserve_info=user["reserve_info"],
-            ):
+            )
+            if r == 0:
                 user_counter["success"] += 1
-            else:
+            elif r == 1:
                 user_counter["failed"] += 1
+            elif r == 2:
+                user_counter["passed"] += 1
         self._showTrace(f"处理完成, 共计 {user_counter["current"]} 个用户, "\
             f"成功 {user_counter["success"]} 个用户, "\
-            f"失败 {user_counter["failed"]} 个用户")
+            f"失败 {user_counter["failed"]} 个用户, "\
+            f"跳过 {user_counter["passed"]} 个用户"
+        )
         return
 
 
