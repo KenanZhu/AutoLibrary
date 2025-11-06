@@ -508,9 +508,6 @@ class LibReserve(LibOperator):
             WebDriverWait(self.__driver, 2).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "myReserveList"))
             )
-            WebDriverWait(self.__driver, 2).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, ".myReserveList dl"))
-            )
         except:
             self._showTrace("加载预约记录页面失败 !")
             return False
@@ -600,7 +597,7 @@ class LibReserve(LibOperator):
             WebDriverWait(self.__driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[@href='/map']"))
             ).click()
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.presence_of_element_located((By.ID, "seatLayout"))
             )
         except:
@@ -615,7 +612,7 @@ class LibReserve(LibOperator):
             return False
         # room find
         try:
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.element_to_be_clickable((By.ID, "findRoom"))
             ).click()
         except:
@@ -638,7 +635,7 @@ class LibReserve(LibOperator):
             pass
         else:
             try:
-                WebDriverWait(self.__driver, 5).until(
+                WebDriverWait(self.__driver, 2).until(
                     EC.element_to_be_clickable((By.ID, "reserveBtn"))
                 ).click()
                 submit_reserve = True
