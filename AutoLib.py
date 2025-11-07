@@ -161,7 +161,7 @@ class AutoLib(MsgBase):
         """
             Here, we collect the run mode from the config file.
         """
-        run_mode = self.__system_config_reader.get("run/mode", 1)
+        run_mode = self.__system_config_reader.get("mode/run_mode", 0)
         run_mode = {
             "auto_reserve": run_mode&0x1,
             "auto_checkin": run_mode&0x2,
