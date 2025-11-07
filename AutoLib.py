@@ -17,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.edge.service import Service
 
 from MsgBase import MsgBase
+from LibChecker import LibChecker
 from LibLogin import LibLogin
 from LibLogout import LibLogout
 from LibReserve import LibReserve
@@ -96,6 +97,7 @@ class AutoLib(MsgBase):
             self._showTrace(f"浏览器驱动初始化失败: {e}")
             return False
         # init library operators
+        self.__lib_checker = LibChecker(self._input_queue, self._output_queue, self.__driver)
         self.__lib_login = LibLogin(self._input_queue, self._output_queue, self.__driver)
         self.__lib_logout = LibLogout(self._input_queue, self._output_queue, self.__driver)
         self.__lib_reserve = LibReserve(self._input_queue, self._output_queue, self.__driver)
@@ -169,7 +171,7 @@ class AutoLib(MsgBase):
         }
         # reserve
         if run_mode["auto_reserve"]:
-            if self.__lib_reserve.canReserve(reserve_info.get("date")):
+            if self.__lib_checker.canReserve(reserve_info.get("date")):
                 if self.__lib_reserve.reserve(reserve_info):
                     self._showTrace(f"用户 {username} 预约成功 !")
                     result = 0
