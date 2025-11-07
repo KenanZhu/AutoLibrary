@@ -44,19 +44,13 @@ class LibLogout(LibOperator):
 
         if self.__driver is None:
             self._showTrace("未提供有效 WebDriver 实例 !")
-
             return False
-
         try:
             self.__driver.find_element(
                 By.XPATH, "//a[@href='/logout']"
             ).click()
-
             self._showTrace(f"用户 {username} 注销成功 !")
-
             return True
-
         except Exception as e:
             self._showTrace(f"用户 {username} 注销失败 ! : {e}")
-
             return False
