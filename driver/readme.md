@@ -1,1 +1,1 @@
-This folder is used to store the browser driver by selenium.
+This folder is used to store the browser driver using by selenium.
