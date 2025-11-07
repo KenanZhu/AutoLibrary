@@ -127,10 +127,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.setupUi(self)
         self.__input_queue = queue.Queue()
         self.__output_queue = queue.Queue()
-        self.__auto_lib = AutoLib(
-            self.__input_queue,
-            self.__output_queue,
-        )
         self.__config_paths = {
             "system":
             f"{QDir.toNativeSeparators(QFileInfo(sys.executable).absoluteDir().absoluteFilePath("system.json"))}",
@@ -172,8 +168,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
         if self.__timer and self.__timer.isActive():
             self.__timer.stop()
-        if self.__auto_lib:
-            self.__auto_lib.close()
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
         super().closeEvent(event)
