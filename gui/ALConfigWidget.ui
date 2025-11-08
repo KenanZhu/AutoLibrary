@@ -1127,13 +1127,13 @@
              <widget class="QLineEdit" name="BrowseBrowserDriverEdit">
               <property name="minimumSize">
                <size>
-                <width>265</width>
+                <width>250</width>
                 <height>25</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>260</width>
+                <width>300</width>
                 <height>25</height>
                </size>
               </property>
