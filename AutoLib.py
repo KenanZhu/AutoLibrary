@@ -52,7 +52,8 @@ class AutoLib(MsgBase):
             edge_options.add_argument("--no-sandbox")
             edge_options.add_argument("--disable-dev-shm-usage")
 
-        edge_options.add_argument("--window-size=1280,720")
+        # must be 1920x1080, otherwise the page will cause some elements not accessible
+        edge_options.add_argument("--window-size=1920,1080")
         edge_options.add_argument("--remote-allow-origins=*")
 
         # omit ssl errors and verbose log level
