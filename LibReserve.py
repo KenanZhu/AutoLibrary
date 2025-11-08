@@ -265,7 +265,7 @@ class LibReserve(LibOperator):
         trigger_locator: tuple,
         fail_msg: str,
         success_msg: str,
-        option_locator: tuple = None,
+        option_locator: tuple = None
     ) -> bool:
 
         try:

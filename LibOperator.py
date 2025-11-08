@@ -17,14 +17,14 @@ class LibOperator(MsgBase):
     def __init__(
         self,
         input_queue: queue.Queue,
-        output_queue: queue.Queue,
+        output_queue: queue.Queue
     ):
 
         super().__init__(input_queue, output_queue)
 
 
     def _waitResponseLoad(
-        self,
+        self
     ) -> bool:
 
         pass

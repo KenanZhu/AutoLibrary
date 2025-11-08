@@ -569,7 +569,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
     @Slot()
     def onFloorComboBoxCurrentIndexChanged(
-        self,
+        self
     ):
 
         floor = self.FloorComboBox.currentText()

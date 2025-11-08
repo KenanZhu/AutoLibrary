@@ -163,7 +163,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
     def closeEvent(
         self,
-        event: QCloseEvent,
+        event: QCloseEvent
     ):
 
         if self.__timer and self.__timer.isActive():
@@ -175,7 +175,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
     def appendToTextEdit(
         self,
-        text: str,
+        text: str
     ):
 
         cursor = self.MessageIOTextEdit.textCursor()
@@ -200,7 +200,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self,
         config_button_enabled: bool,
         start_button_enabled: bool,
-        stop_button_enabled: bool,
+        stop_button_enabled: bool
     ):
 
         self.ConfigButton.setEnabled(config_button_enabled)
@@ -210,7 +210,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     @Slot()
     def showMsg(
         self,
-        msg: str,
+        msg: str
     ):
 
         self.appendToTextEdit(f"[{self.__class_name:<12}] >>> : {msg}")
@@ -218,7 +218,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     @Slot()
     def showTrace(
         self,
-        msg: str,
+        msg: str
     ):
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -226,7 +226,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
     @Slot()
     def pollMsgQueue(
-        self,
+        self
     ):
 
         try:
@@ -239,7 +239,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     @Slot(dict)
     def onConfigWidgetClosed(
         self,
-        config_paths: dict,
+        config_paths: dict
     ):
 
         self.__alConfigWidget = None
@@ -250,7 +250,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
     @Slot()
     def onConfigButtonClicked(
-        self,
+        self
     ):
 
         if self.__alConfigWidget is None:
@@ -268,7 +268,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
     @Slot()
     def onStartButtonClicked(
-        self,
+        self
     ):
 
         self.setControlButtons(False, False, True)

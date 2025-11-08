@@ -16,7 +16,7 @@ class MsgBase:
     def __init__(
         self,
         input_queue: queue.Queue,
-        output_queue: queue.Queue,
+        output_queue: queue.Queue
     ):
 
         self._class_name = self.__class__.__name__
@@ -43,7 +43,7 @@ class MsgBase:
 
     def _waitMsg(
         self,
-        timeout: float = 1.0,
+        timeout: float = 1.0
     ) -> str:
 
         try:
@@ -55,7 +55,7 @@ class MsgBase:
 
     def _inputMsg(
         self,
-        timeout: float = 1.0,
+        timeout: float = 1.0
     ) -> bool:
 
         try:

@@ -22,7 +22,7 @@ class LibLogout(LibOperator):
         self,
         input_queue: queue.Queue,
         output_queue: queue.Queue,
-        driver,
+        driver
     ):
 
         super().__init__(input_queue, output_queue)
@@ -31,7 +31,7 @@ class LibLogout(LibOperator):
 
 
     def _waitResponseLoad(
-        self,
+        self
     ) -> bool:
 
         return True
@@ -39,7 +39,7 @@ class LibLogout(LibOperator):
 
     def logout(
         self,
-        username: str,
+        username: str
     ) -> bool:
 
         if self.__driver is None:

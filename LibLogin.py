@@ -36,7 +36,7 @@ class LibLogin(LibOperator):
 
 
     def _waitResponseLoad(
-        self,
+        self
     ) -> bool:
 
         # wait to verify login success
@@ -59,7 +59,7 @@ class LibLogin(LibOperator):
     def __fillLogInElements(
         self,
         username: str,
-        password: str,
+        password: str
     ) -> bool:
 
         # ensure elements presence and fill them
@@ -77,7 +77,7 @@ class LibLogin(LibOperator):
 
 
     def __autoRecognizeCaptcha(
-        self,
+        self
     ) -> str:
 
         # auto recognize captcha
@@ -99,7 +99,7 @@ class LibLogin(LibOperator):
 
 
     def __manualRecognizeCaptcha(
-        self,
+        self
     ) -> str:
 
         # manual recognize captcha
@@ -117,7 +117,7 @@ class LibLogin(LibOperator):
 
 
     def __refreshCaptcha(
-        self,
+        self
     ):
 
         # refresh captcha
@@ -136,7 +136,7 @@ class LibLogin(LibOperator):
 
     def __solveCaptcha(
         self,
-        auto_captcha: bool = True,
+        auto_captcha: bool = True
     ) -> str:
 
         max_attempts = 5
@@ -155,7 +155,7 @@ class LibLogin(LibOperator):
 
     def __fillCaptchaElement(
         self,
-        captcha_text: str,
+        captcha_text: str
     ) -> bool:
 
         try:
@@ -174,7 +174,7 @@ class LibLogin(LibOperator):
         username: str,
         password: str,
         max_attempts: int = 5,
-        auto_captcha: bool = True,
+        auto_captcha: bool = True
     ) -> bool:
 
         if self.__driver is None:

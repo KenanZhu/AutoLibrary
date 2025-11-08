@@ -34,7 +34,7 @@ class LibCheckout(LibOperator):
 
 
     def _waitResponseLoad(
-        self,
+        self
     ) -> bool:
 
         pass

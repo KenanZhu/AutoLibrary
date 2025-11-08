@@ -30,7 +30,7 @@ class AutoLib(MsgBase):
     def __init__(
         self,
         input_queue: queue.Queue,
-        output_queue: queue.Queue,
+        output_queue: queue.Queue
     ):
         super().__init__(input_queue, output_queue)
 
@@ -114,7 +114,7 @@ class AutoLib(MsgBase):
 
 
     def __waitResponseLoad(
-        self,
+        self
     ) -> bool:
 
         # wait for page load
@@ -154,7 +154,7 @@ class AutoLib(MsgBase):
         self,
         username: str,
         password: str,
-        reserve_info: dict,
+        reserve_info: dict
     ) -> int:
 
         # result : 0 - success, 1 - failed, 2 - passed
@@ -202,7 +202,7 @@ class AutoLib(MsgBase):
     def run(
         self,
         system_config_reader: ConfigReader,
-        users_config_reader: ConfigReader,
+        users_config_reader: ConfigReader
     ):
 
         self.__system_config_reader = system_config_reader
@@ -245,7 +245,7 @@ class AutoLib(MsgBase):
 
 
     def close(
-        self,
+        self
     ) -> bool:
 
         if self.__driver:
