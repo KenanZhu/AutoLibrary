@@ -137,6 +137,8 @@ class LibReserve(LibOperator):
                 raise ValueError(f"房间 '{reserve_info['room']}' 不存在")
             if reserve_info.get("seat_id") is None:
                 raise ValueError("未指定座位")
+            if reserve_info["seat_id"] == "":
+                raise ValueError("未指定座位号")
         except ValueError as e:
             self._showTrace(
                 f"预约信息错误 ! : {e}, "\
