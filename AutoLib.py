@@ -245,5 +245,5 @@ class AutoLib(MsgBase):
             self._showTrace(f"浏览器驱动已关闭")
             return True
         else:
-            self._showTrace(f"浏览器驱动未初始化，无需关闭")
+            self._showTrace(f"浏览器驱动未初始化, 无需关闭")
             return False

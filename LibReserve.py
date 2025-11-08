@@ -83,9 +83,9 @@ class LibReserve(LibOperator):
                    raise
             if "预定好了" in title or "预约成功" in title or "操作成功" in title:
                 if len(contents) >= 6:
-                    date_val = contents[1].split(" ： ")[1].strip() if " ： " in contents[1] else contents[1].strip()
-                    time_val = contents[2].split(" ： ")[1].strip() if " ： " in contents[2] else contents[2].strip()
-                    seat_val = contents[3].split(" ： ")[1].strip() if " ： " in contents[3] else contents[3].strip()
+                    date_val = contents[1].split(" : ")[1].strip() if " : " in contents[1] else contents[1].strip()
+                    time_val = contents[2].split(" : ")[1].strip() if " : " in contents[2] else contents[2].strip()
+                    seat_val = contents[3].split(" : ")[1].strip() if " : " in contents[3] else contents[3].strip()
                     checkin_val = contents[5].strip()
                     self._showTrace(f"\n"\
                         f"      预约成功 !\n"\
@@ -140,7 +140,7 @@ class LibReserve(LibOperator):
         except ValueError as e:
             self._showTrace(
                 f"预约信息错误 ! : {e}, "\
-                f"由于缺少必要的预约信息， 无法开始预约流程, 请检查预约信息是否完整"
+                f"由于缺少必要的预约信息, 无法开始预约流程, 请检查预约信息是否完整"
             )
             return False
 
@@ -224,7 +224,7 @@ class LibReserve(LibOperator):
             reserve_info["begin_time"]["time"], reserve_info["end_time"]["time"] = end_time_str, begin_time_str
             reserve_info["begin_time"]["prefer_early"], reserve_info["end_time"]["prefer_early"] = \
                 reserve_info["end_time"]["prefer_early"], reserve_info["begin_time"]["prefer_early"]
-            self._showTrace("预约开始时间晚于预约结束时间，自动调换开始时间和结束时间")
+            self._showTrace("预约开始时间晚于预约结束时间, 自动调换开始时间和结束时间")
 
             # update the begin_mins and end_mins after swap
             begin_time_str, end_time_str = end_time_str, begin_time_str
@@ -246,7 +246,7 @@ class LibReserve(LibOperator):
             reserve_info["end_time"]["time"] = self.__minsToTime(new_end_mins)
             self._showTrace("预约持续时间超过8小时, 自动设置为 8 小时")
         self._showTrace(
-            f"预约信息检查完成，准备预约 "
+            f"预约信息检查完成, 准备预约 "
             f"{reserve_info['date']} "
             f"{reserve_info['begin_time']["time"]} - "
             f"{reserve_info['end_time']["time"]} "

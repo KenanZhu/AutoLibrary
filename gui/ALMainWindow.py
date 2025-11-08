@@ -70,7 +70,7 @@ class AutoLibWorker(QThread):
             os.path.exists(path) for path in self.__config_paths.values()
         ):
             self.showTraceSignal.emit(
-                "配置文件路径不存在，请检查配置文件路径是否正确。"
+                "配置文件路径不存在, 请检查配置文件路径是否正确。"
             )
             return False
         return True
@@ -102,7 +102,7 @@ class AutoLibWorker(QThread):
             self.showTraceSignal.emit("AutoLibrary 运行结束")
         except Exception as e:
             self.showTraceSignal.emit(
-                f"AutoLibrary 运行时发生异常：{e}"
+                f"AutoLibrary 运行时发生异常 : {e}"
             )
         finally:
             self.finishedSignal.emit()
