@@ -166,7 +166,6 @@ class LibChecker(LibOperator):
             for i in range(checked_count, len(reservations)): # the last one is load button
                 reservation = reservations[i]
                 record = self.__decodeReserveRecord(reservation)
-                print(record)
                 if record is None:
                     continue
                 record_date = record["date"]
