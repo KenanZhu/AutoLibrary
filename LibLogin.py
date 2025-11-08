@@ -134,6 +134,41 @@ class LibLogin(LibOperator):
             return False
 
 
+    def __solveCaptcha(
+        self,
+        auto_captcha: bool = True,
+    ) -> str:
+
+        max_attempts = 5
+
+        for _ in range(max_attempts):
+            if auto_captcha:
+                captcha_text = self.__autoRecognizeCaptcha()
+            else:
+                self._showTrace(f"用户未配置自动识别验证码, 请手动输入验证码 !")
+                captcha_text = self.__manualRecognizeCaptcha()
+            if captcha_text:
+                return captcha_text
+        self._showTrace(f"验证码识别失败 {max_attempts} 次, 请检查验证码是否正确 !")
+        return ""
+
+
+    def __fillCaptchaElement(
+        self,
+        captcha_text: str,
+    ) -> bool:
+
+        try:
+            captcha_element = self.__driver.find_element(By.NAME, "answer")
+            captcha_element.clear()
+            captcha_element.send_keys(captcha_text)
+            return True
+        except Exception as e:
+            self._showTrace(f"验证码填写失败 ! : {e}")
+            self.__refreshCaptcha()
+            return False
+
+
     def login(
         self,
         username: str,
@@ -153,17 +188,11 @@ class LibLogin(LibOperator):
                 password,
             ):
                 continue
-            while True:
-                if auto_captcha:
-                    captcha_text = self.__autoRecognizeCaptcha()
-                else:
-                    self._showTrace(f"用户未配置自动识别验证码, 请手动输入验证码 !")
-                    captcha_text = self.__manualRecognizeCaptcha()
-                if captcha_text:
-                    break
-            captcha_element = self.__driver.find_element(By.NAME, "answer")
-            captcha_element.clear()
-            captcha_element.send_keys(captcha_text)
+            captcha_text = self.__solveCaptcha(auto_captcha)
+            if not captcha_text:
+                continue
+            if not self.__fillCaptchaElement(captcha_text):
+                continue
             self._showTrace("尝试登录...")
             try:
                 self.__driver.find_element(
