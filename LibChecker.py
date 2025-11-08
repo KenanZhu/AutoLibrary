@@ -39,6 +39,16 @@ class LibChecker(LibOperator):
 
         pass
 
+    @staticmethod
+    def __formatDiffTime(
+        seconds: float
+    ) -> str:
+
+        hours = int(seconds // 3600)
+        minutes = int(seconds % 3600 // 60)
+        seconds = int(seconds % 60)
+        return f"{hours} 时 {minutes} 分 {seconds} 秒"
+
 
     def __navigateToReserveRecordPage(
         self
@@ -242,22 +252,51 @@ class LibChecker(LibOperator):
             if time_diff_seconds < -30*60:
                 self._showTrace(
                     f"用户在 {date} 的预约开始时间为 {begin_time}, "
-                    f"距离当前时间还有 {abs(time_diff_seconds)/60:.2f} 分钟, 无法签到"
+                    f"距离当前时间还有 {self.__formatDiffTime(abs(time_diff_seconds))}, 无法签到"
                 )
                 return False
             # before in 30 minutes, can checkin
             elif -30*60 <= time_diff_seconds < 0:
                 self._showTrace(
                     f"用户在 {date} 的预约开始时间为 {begin_time}, "
-                    f"距离当前时间还有 {abs(time_diff_seconds)/60:.2f} 分钟, 可以签到"
+                    f"距离当前时间还有 {self.__formatDiffTime(abs(time_diff_seconds))}, 可以签到"
                 )
                 return True
             # past less than 30 minutes, can checkin
             elif 0 <= time_diff_seconds < 30*60:
                 self._showTrace(
                     f"用户在 {date} 的预约开始时间为 {begin_time}, "
-                    f"当前时间已经 {abs(time_diff_seconds)/60:.2f} 分钟, 可以签到"
+                    f"当前时间已经 {self.__formatDiffTime(abs(time_diff_seconds))}, 可以签到"
                 )
                 return True
-        self._showTrace(f"用户在 {date} 有没有有效预约记录, 无法签到")
+        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法签到")
+        return False
+
+
+    def canRenew(
+        self,
+        date: str
+    ) -> bool:
+
+        # have a using record in the given date
+        record = self.__getReserveRecord(date, "使用中")
+        if record is not None:
+            end_time = record["time"]["end"]
+            end_time = datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M")
+            time_diff = end_time - datetime.now()
+            time_diff_seconds = time_diff.total_seconds()
+            # a using record is definitely after the begin time
+            if abs(time_diff_seconds) < 120*60:
+                self._showTrace(
+                    f"用户在 {date} 的预约结束时间为 {end_time}, "
+                    f"距离当前时间还有 {self.__formatDiffTime(abs(time_diff_seconds))}, 可以续约"
+                )
+                return True
+            else:
+                self._showTrace(
+                    f"用户在 {date} 的预约结束时间为 {end_time}, "
+                    f"距离当前时间还有 {self.__formatDiffTime(abs(time_diff_seconds))}, 无法续约"
+                )
+                return False
+        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
         return False
