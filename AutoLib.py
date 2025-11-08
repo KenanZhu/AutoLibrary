@@ -96,13 +96,21 @@ class AutoLib(MsgBase):
         except Exception as e:
             self._showTrace(f"浏览器驱动初始化失败: {e}")
             return False
-        # init library operators
+        self._showTrace(f"浏览器驱动已初始化, 类型: {self.__driver_type}, 路径: {self.__driver_path}")
+        return True
+
+
+    def __initLibOperators(
+        self
+    ):
+
+        if not self.__driver:
+            self._showTrace(f"浏览器驱动未初始化, 请先初始化浏览器驱动 !")
+            return
         self.__lib_checker = LibChecker(self._input_queue, self._output_queue, self.__driver)
         self.__lib_login = LibLogin(self._input_queue, self._output_queue, self.__driver)
         self.__lib_logout = LibLogout(self._input_queue, self._output_queue, self.__driver)
         self.__lib_reserve = LibReserve(self._input_queue, self._output_queue, self.__driver)
-        self._showTrace(f"浏览器驱动已初始化, 类型: {self.__driver_type}, 路径: {self.__driver_path}")
-        return True
 
 
     def __waitResponseLoad(
@@ -204,6 +212,7 @@ class AutoLib(MsgBase):
         else:
             if not self.__initDriverUrl():
                 return
+            self.__initLibOperators()
 
         user_counter = {"current": 0, "success": 0, "failed": 0, "passed": 0}
         users = self.__users_config_reader.get("users")
