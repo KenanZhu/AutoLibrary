@@ -119,26 +119,26 @@ class LibReserve(LibOperator):
         return f"{hour:02d}:{minute:02d}"
 
 
-    def __checkReserveInfo(
+    def __containRequiredInfo(
         self,
         reserve_info: dict
     ) -> bool:
 
         try:
-            # check the required information
-            # reserve_info["place"]
-            if reserve_info.get("floor") is None:
+            # must contain the required infomation
+            if reserve_info.get("floor") is None: # if existence ?
                 raise ValueError("未指定楼层")
-            if reserve_info["floor"] not in self.__floor_map:
-                raise ValueError(f"楼层 '{reserve_info['floor']}' 不存在")
+            if reserve_info["floor"] not in self.__floor_map: # if in the mao ?
+                raise ValueError(f"该楼层 '{reserve_info['floor']}' 不存在")
             if reserve_info.get("room") is None:
                 raise ValueError("未指定房间")
             if reserve_info["room"] not in self.__room_map:
-                raise ValueError(f"房间 '{reserve_info['room']}' 不存在")
+                raise ValueError(f"该房间 '{reserve_info['room']}' 不存在")
             if reserve_info.get("seat_id") is None:
                 raise ValueError("未指定座位")
             if reserve_info["seat_id"] == "":
                 raise ValueError("未指定座位号")
+            return True
         except ValueError as e:
             self._showTrace(
                 f"预约信息错误 ! : {e}, "\
@@ -146,10 +146,14 @@ class LibReserve(LibOperator):
             )
             return False
 
-        # check and try to fix the time errors
-        cur_time_str = time.strftime("%Y-%m-%d %H:%M", time.localtime())
-        cur_date, curr_time = cur_time_str.split()
-        if not reserve_info.get("date"):
+
+    def __isValidDate(
+        self,
+        reserve_info: dict
+    ) -> bool:
+
+        cur_date = time.strftime("%Y-%m-%d", time.localtime())
+        if reserve_info.get("date") is None:
             reserve_info["date"] = cur_date
             self._showTrace(f"预约日期未指定, 自动设置为当前日期: {cur_date}")
         else:
@@ -159,94 +163,133 @@ class LibReserve(LibOperator):
                     f"{reserve_info['date']} 早于当前日期 {cur_date}, 自动设置为当前日期"
                 )
                 reserve_info["date"] = cur_date
-        # check the begin time
-        begin_time = reserve_info.get("begin_time")
-        if not begin_time:
-            reserve_info["begin_time"] = {
-                "time": curr_time,
-                "max_diff": 30,
-                "prefer_early": True
-            }
-            self._showTrace(f"开始时间未指定, 自动设置为当前时间: {curr_time}, 最大时间差为 30 分钟, 优先选择更早预约时间")
-        else:
-            begin_time = reserve_info["begin_time"]
-            if "time" not in begin_time:
-                begin_time["time"] = curr_time
-                self._showTrace(f"开始时间未指定, 自动设置为当前时间: {curr_time}")
-            if "max_diff" not in begin_time:
-                begin_time["max_diff"] = 30
-                self._showTrace(f"最大时间差未指定, 自动设置为 30 分钟")
-            if "prefer_early" not in begin_time:
-                begin_time["prefer_early"] = True
-                self._showTrace(f"是否优先选择更早预约时间未指定, 自动设置为 True")
-        expect_duration = reserve_info.get("expect_duration")
-        if not expect_duration:
+        return True
+
+
+    def __isValidBeginTime(
+        self,
+        reserve_info: dict
+    ) -> bool:
+
+        cur_time = time.strftime("%H:%M", time.localtime())
+        if reserve_info.get("begin_time") is None:
+            reserve_info["begin_time"] = {}
+        if "time" not in reserve_info["begin_time"]:
+            reserve_info["begin_time"]["time"] = cur_time
+            self._showTrace(f"开始时间未指定, 自动设置为当前时间: {cur_time}")
+        if "max_diff" not in reserve_info["begin_time"]:
+            reserve_info["begin_time"]["max_diff"] = 30
+            self._showTrace(f"开始时间最大时间差未指定, 自动设置为 30 分钟")
+        if "prefer_early" not in reserve_info["begin_time"]:
+            reserve_info["begin_time"]["prefer_early"] = True
+            self._showTrace(f"是否优先选择更早开始时间未指定, 自动设置为 True")
+        return True
+
+
+    def __isValidExpectDuration(
+        self,
+        reserve_info: dict
+    ) -> bool:
+
+        if reserve_info.get("expect_duration") is None:
             reserve_info["expect_duration"] = 4
-            expect_duration = 4
             self._showTrace("预约持续时间未指定, 使用默认时长为 4 小时")
-        if not reserve_info.get("satisfy_duration"):
+        if reserve_info.get("satisfy_duration") is None:
             reserve_info["satisfy_duration"] = True
             self._showTrace("预约满足时长要求未指定, 默认满足")
-        # check the end time
-        if not reserve_info.get("end_time"):
-            begin_mins = self.__timeToMins(reserve_info["begin_time"]["time"])
-            end_mins = begin_mins + reserve_info["expect_duration"] * 60
-            end_time_str = self.__minsToTime(end_mins)
+        return True
+
+
+    def __isValidEndTime(
+        self,
+        reserve_info: dict
+    ) -> bool:
+
+        if reserve_info.get("end_time") is None:
+            reserve_info["end_time"] = {}
+        if "time" not in reserve_info["end_time"]:
+            end_mins = self.__timeToMins(reserve_info["begin_time"]["time"])
+            end_mins = end_mins + int(reserve_info["expect_duration"]*60)
             reserve_info["end_time"] = {
-                "time": end_time_str,
+                "time": self.__minsToTime(end_mins),
                 "max_diff": 30,
                 "prefer_early": False
             }
-            self._showTrace(f"结束时间未指定, 自动设置为开始时间加上期望时长: {end_time_str}, 最大时间差为 30 分钟, 优先选择较晚预约时间")
+            self._showTrace(
+                f"结束时间未指定, 自动设置为开始时间加上期望时长: {reserve_info['end_time']['time']}"
+            )
+        if "max_diff" not in reserve_info["end_time"]:
+            reserve_info["end_time"]["max_diff"] = 30
+            self._showTrace(f"结束时间最大时间差未指定, 自动设置为 30 分钟")
+        if "prefer_early" not in reserve_info["end_time"]:
+            reserve_info["end_time"]["prefer_early"] = False
+            self._showTrace(f"是否优先选择较晚结束时间未指定, 自动设置为 True")
+        return True
+
+
+    def __finalCheck(
+        self,
+        reserve_info: dict
+    ):
+
+        begin_time, end_time = reserve_info["begin_time"], reserve_info["end_time"]
+        begin_mins = self.__timeToMins(begin_time["time"])
+        end_mins = self.__timeToMins(end_time["time"])
+        # if end time is earlier than begin_time, exchange them
+        if end_mins < begin_mins:
+            self._showTrace(
+                f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, 自动交换"
+            )
+            reserve_info["end_time"] = begin_time
+            reserve_info["begin_time"] = end_time
+            begin_time, end_time = reserve_info["begin_time"], reserve_info["end_time"]
+            begin_mins = self.__timeToMins(begin_time["time"])
+            end_mins = self.__timeToMins(end_time["time"])
+        # ensure the end time is not later than 23:30
+        if end_mins > self.__timeToMins("23:30"):
+            self._showTrace(
+                f"结束时间 {end_time['time']} 晚于 23:30, 自动设置为 23:30"
+            )
+            reserve_info["end_time"]["time"] = "23:30"
+            end_mins = self.__timeToMins("23:30")
+        # ensure the duration is not longer than 8 hours
+        if reserve_info["satisfy_duration"]:
+            if reserve_info["expect_duration"] > 8:
+                self._showTrace(
+                    f"该用户设置了优先满足时长要求, 但是预约期望持续时间 "
+                    f"{reserve_info['expect_duration']} 小时 "
+                    f"超出最大时长 8 小时, 自动设置为 8 小时"
+                )
+                reserve_info["expect_duration"] = 8
         else:
-            end_time = reserve_info["end_time"]
-            if "time" not in end_time:
-                begin_mins = self.__timeToMins(reserve_info["begin_time"]["time"])
-                end_mins = begin_mins + reserve_info["expect_duration"] * 60
-                end_time["time"] = self.__minsToTime(end_mins)
-                self._showTrace(f"结束时间未指定, 自动设置为开始时间加上期望时长: {end_time['time']}")
-            if "max_diff" not in end_time:
-                end_time["max_diff"] = 30
-                self._showTrace(f"最大时间差未指定, 自动设置为 30 分钟")
-            if "prefer_early" not in end_time:
-                end_time["prefer_early"] = False
-                self._showTrace(f"是否优先选择较早预约时间未指定, 自动设置为 False")
-        # check the reserve time boundary and fix the errors
-        #
-        # get time string for message show
-        begin_time_str = reserve_info["begin_time"]["time"]
-        end_time_str = reserve_info["end_time"]["time"]
+            if end_mins - begin_mins > 8*60:
+                self._showTrace(
+                    f"该用户未设置优先满足时长要求, 但是检查到预约持续时间 "
+                    f"{int((end_mins - begin_mins)/60)} 小时 "
+                    f"超出最大时长 8 小时, 自动设置为 8 小时"
+                )
+                reserve_info["expect_duration"] = 8
+                reserve_info["end_time"]["time"] = self.__minsToTime(begin_mins + 8*60)
+        return True
 
-        # minute time for check and fix them
-        begin_mins = self.__timeToMins(begin_time_str)
-        end_mins = self.__timeToMins(end_time_str)
 
-        # ensure begin time is not later than end time
-        if begin_mins > end_mins:
-            reserve_info["begin_time"]["time"], reserve_info["end_time"]["time"] = end_time_str, begin_time_str
-            reserve_info["begin_time"]["prefer_early"], reserve_info["end_time"]["prefer_early"] = \
-                reserve_info["end_time"]["prefer_early"], reserve_info["begin_time"]["prefer_early"]
-            self._showTrace("预约开始时间晚于预约结束时间, 自动调换开始时间和结束时间")
+    def __checkReserveInfo(
+        self,
+        reserve_info: dict
+    ) -> bool:
 
-            # update the begin_mins and end_mins after swap
-            begin_time_str, end_time_str = end_time_str, begin_time_str
-            begin_mins, end_mins = end_mins, begin_mins
-
-        # ensure end time is not later than 22:30
-        max_end_mins = self.__timeToMins("22:30")
-        if end_mins > max_end_mins:
-            reserve_info["end_time"]["time"] = "22:30"
-            end_time_str = "22:30"
-            end_mins = max_end_mins
-            self._showTrace("预约结束时间超过 22:30, 自动设置为 22:30")
-
-        # ensure expect duration is shorter than 8 hours
-        max_duration_mins = 8 * 60
-        duration_mins = end_mins - begin_mins
-        if duration_mins > max_duration_mins:
-            new_end_mins = begin_mins + max_duration_mins
-            reserve_info["end_time"]["time"] = self.__minsToTime(new_end_mins)
-            self._showTrace("预约持续时间超过8小时, 自动设置为 8 小时")
+        if not self.__containRequiredInfo(reserve_info):
+            return False
+        if not self.__isValidDate(reserve_info):
+            return False
+        if not self.__isValidBeginTime(reserve_info):
+            return False
+        if not self.__isValidExpectDuration(reserve_info):
+            return False
+        if not self.__isValidEndTime(reserve_info):
+            return False
+        if not self.__finalCheck(reserve_info):
+            return False
         self._showTrace(
             f"预约信息检查完成, 准备预约 "
             f"{reserve_info['date']} "
