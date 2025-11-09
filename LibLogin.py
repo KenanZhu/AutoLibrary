@@ -51,8 +51,8 @@ class LibLogin(LibOperator):
                 EC.presence_of_element_located((By.CLASS_NAME, "selectContent"))
             )
             return True
-        except Exception as e:
-            self._showTrace(f"登录页面加载失败 ! : {e}")
+        except:
+            self._showTrace(f"登录页面加载失败 ! : 用户账号或者密码错误/验证码错误, 具体以页面提示为准")
             return False
 
 
