@@ -242,6 +242,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         config_paths: dict
     ):
 
+        self.__alConfigWidget.configWidgetCloseSingal.disconnect(self.onConfigWidgetClosed)
+        self.__alConfigWidget.deleteLater()
         self.__alConfigWidget = None
         self.ConfigButton.setEnabled(True)
         self.StartButton.setEnabled(True)
@@ -288,8 +290,12 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         if self.__auto_lib_thread and self.__auto_lib_thread.isRunning():
-            self.__auto_lib_thread.stop()
             self.showTrace("正在停止操作......")
+            self.__auto_lib_thread.stop()
+            self.__auto_lib_thread.wait()
+            self.showTrace("操作已停止")
+            self.__auto_lib_thread.finishedSignal.disconnect(self.onStopButtonClicked)
+            self.__auto_lib_thread.deleteLater()
         self.setControlButtons(True, True, False)
 
     @Slot()
