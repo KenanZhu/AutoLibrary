@@ -83,16 +83,12 @@ class LibReserve(LibOperator):
                    raise
             if "预定好了" in title or "预约成功" in title or "操作成功" in title:
                 if len(contents) >= 6:
-                    date_val = contents[1].split(" : ")[1].strip() if " : " in contents[1] else contents[1].strip()
-                    time_val = contents[2].split(" : ")[1].strip() if " : " in contents[2] else contents[2].strip()
-                    seat_val = contents[3].split(" : ")[1].strip() if " : " in contents[3] else contents[3].strip()
-                    checkin_val = contents[5].strip()
                     self._showTrace(f"\n"\
                         f"      预约成功 !\n"\
-                        f"          预约日期: {date_val}, \n"\
-                        f"          预约时间: {time_val}, \n"\
-                        f"          预约座位: {seat_val}, \n"\
-                        f"          签到时间: {checkin_val}")
+                        f"          {contents[1]}\n"\
+                        f"          {contents[2]}\n"\
+                        f"          {contents[3]}\n"\
+                        f"          签到时间 ：{contents[5]}")
                 else:
                     self._showTrace(f"\n"\
                         f"      预约成功 !\n"\

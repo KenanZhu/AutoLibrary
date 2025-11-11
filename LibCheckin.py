@@ -34,7 +34,74 @@ class LibCheckin(LibOperator):
 
 
     def _waitResponseLoad(
-        self,
+        self
     ) -> bool:
 
-        pass
+        try:
+            WebDriverWait(self.__driver, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "ui_dialog"))
+            )
+            WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "resultMessage"))
+            )
+            WebDriverWait(self.__driver, 2).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, "btnOK"))
+            )
+            result_message_element = self.__driver.find_element(
+                By.CLASS_NAME, "resultMessage"
+            )
+            ok_btn = self.__driver.find_element(By.CLASS_NAME, "btnOK")
+        except:
+            self._showTrace("签到时发生未知错误 !")
+            return False
+        print(result_message_element)
+        result_message = result_message_element.text
+        if "签到成功" in result_message:
+            try:
+                detail_elements = self.__driver.find_elements(
+                    By.CSS_SELECTOR, ".resultMessage dd"
+                )
+            except:
+                pass
+            if detail_elements:
+                details = [element.text for element in detail_elements if element.text.strip()]
+                if len(details) >= 5:
+                    self._showTrace(f"\n"\
+                        f"      签到成功 !\n"\
+                        f"          {details[1]}\n"\
+                        f"          {details[2]}\n"\
+                        f"          {details[3]}\n"\
+                        f"          {details[4]}")
+            else:
+                self._showTrace(
+                         "      签到成功 !\n"\
+                         "          未获取到签到详情 !")
+            ok_btn.click()
+            return True
+        else:
+            failure_reason = result_message.replace("签到失败", "").strip()
+            self._showTrace(f"签到失败: {failure_reason}")
+            ok_btn.click()
+            return False
+
+
+    def checkin(
+        self,
+        username: str
+    ) -> bool:
+
+        if self.__driver is None:
+            self._showTrace("未提供有效 WebDriver 实例 !")
+            return False
+        try:
+            checkin_btn = WebDriverWait(self.__driver, 2).until(
+                EC.element_to_be_clickable((By.ID, "btnCheckIn"))
+            )
+        except:
+            self._showTrace(f"用户 {username} 签到界面加载失败 !")
+            return False
+        if "disabled" in checkin_btn.get_attribute("class"):
+            self._showTrace("签到按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试")
+            return False
+        checkin_btn.click()
+        return self._waitResponseLoad()
