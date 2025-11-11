@@ -21,6 +21,7 @@ from LibChecker import LibChecker
 from LibLogin import LibLogin
 from LibLogout import LibLogout
 from LibReserve import LibReserve
+from LibCheckin import LibCheckin
 
 from ConfigReader import ConfigReader
 
@@ -112,6 +113,7 @@ class AutoLib(MsgBase):
         self.__lib_login = LibLogin(self._input_queue, self._output_queue, self.__driver)
         self.__lib_logout = LibLogout(self._input_queue, self._output_queue, self.__driver)
         self.__lib_reserve = LibReserve(self._input_queue, self._output_queue, self.__driver)
+        self.__lib_checkin = LibCheckin(self._input_queue, self._output_queue, self.__driver)
 
 
     def __waitResponseLoad(
@@ -159,7 +161,7 @@ class AutoLib(MsgBase):
     ) -> int:
 
         # result : 0 - success, 1 - failed, 2 - passed
-        result = 1
+        result = 2
 
         # login
         if not self.__lib_login.login(
@@ -188,6 +190,26 @@ class AutoLib(MsgBase):
                     self._showTrace(f"用户 {username} 预约失败 !")
                     result = 1
             else:
+                self._showTrace(f"用户 {username} 无法预约，已跳过")
+                result = 2
+        # checkin
+        if run_mode["auto_checkin"] and result == 2:
+            if self.__lib_checker.canCheckin(reserve_info.get("date")):
+                if self.__lib_checkin.checkin(username):
+                    self._showTrace(f"用户 {username} 签到成功 !")
+                    result = 0
+                else:
+                    self._showTrace(f"用户 {username} 签到失败 !")
+                    result = 1
+            else:
+                self._showTrace(f"用户 {username} 无法签到，已跳过")
+                result = 2
+        # renewal
+        if run_mode["auto_renewal"] and result == 2:
+            if self.__lib_checker.canRenew(reserve_info.get("date")):
+                pass
+            else:
+                self._showTrace(f"用户 {username} 无法续约，已跳过")
                 result = 2
         # logout
         if not self.__lib_logout.logout(
