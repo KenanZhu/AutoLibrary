@@ -32,27 +32,24 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self,
         parent = None,
         config_paths = {
-            "system":
-            f"{QDir.toNativeSeparators(QFileInfo(sys.executable).absoluteDir().absoluteFilePath("system.json"))}",
-            "users":
-            f"{QDir.toNativeSeparators(QFileInfo(sys.executable).absoluteDir().absoluteFilePath("users.json"))}",
+            "system": "",
+            "users": ""
         }
     ):
 
         super().__init__(parent)
 
         self.setupUi(self)
-        self.connectSignals()
-        self.modifyUi()
         self.__config_paths = config_paths
-        self.__system_config_data = self.loadSystemConfig(self.__config_paths["system"])
-        self.__users_config_data = self.loadUsersConfig(self.__config_paths["users"])
-        if not self.__system_config_data:
-            self.initlizeDefaultConfig("system")
-        if not self.__users_config_data:
-            self.initlizeDefaultConfig("users")
-        self.initlizeConfigToWidget("system", self.__system_config_data)
-        self.initlizeConfigToWidget("users", self.__users_config_data)
+        self.__config_data = {"system": {}, "users": {}}
+        self.__seat_map_widget = None
+
+        self.modifyUi()
+        self.connectSignals()
+        self.initlizeFloorRoomMap()
+        self.initlizeDefaultConfigPaths()
+        if not self.initlizeConfigs():
+            self.close()
 
 
     def modifyUi(
@@ -129,40 +126,14 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
     def initlizeDefaultConfigPaths(
         self
-    ) -> dict:
+    ):
 
         script_path = sys.executable
         script_dir = QFileInfo(script_path).absoluteDir()
-        return {
+        self.__default_config_paths = {
             "users": QDir.toNativeSeparators(script_dir.absoluteFilePath("users.json")),
             "system": QDir.toNativeSeparators(script_dir.absoluteFilePath("system.json"))
         }
-
-
-    def initlizeDefaultConfig(
-        self,
-        which: str
-    ):
-
-        default_config_paths = self.initlizeDefaultConfigPaths()
-        if which == "system":
-            self.__system_config_data = self.defaultSystemConfig()
-            self.__config_paths["system"] = default_config_paths["system"]
-            self.saveSystemConfig(self.__config_paths["system"], self.__system_config_data)
-        elif which == "users":
-            self.__users_config_data = self.defaultUsersConfig()
-            self.__config_paths["users"] = default_config_paths["users"]
-            self.saveUsersConfig(self.__config_paths["users"], self.__users_config_data)
-        if which == "system":
-            file_type = "系统配置文件"
-        elif which == "users":
-            file_type = "用户配置文件"
-        QMessageBox.information(
-            self,
-            "提示 - AutoLibrary",
-            f"{file_type}已初始化, \n"\
-            f" 文件路径: {self.__config_paths[which]}"
-        )
 
 
     def initlizeConfigToWidget(
@@ -178,6 +149,63 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.initilizeUserInfoWidget()
             self.fillUsersList(config_data)
             self.CurrentUserConfigEdit.setText(self.__config_paths["users"])
+
+
+    def initlizeConfig(
+        self,
+        which: str
+    ) -> bool:
+
+        msg = ""
+        is_success = True
+        if which == "system":
+            system_config_path = self.__config_paths[which]
+            if not os.path.exists(system_config_path):
+                self.__config_data[which] = self.defaultSystemConfig()
+                self.__config_paths[which] = self.__default_config_paths[which]
+                if self.saveSystemConfig(self.__config_paths[which], self.__config_data[which]):
+                    msg += f"系统配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
+                else:
+                    is_success = False
+            else:
+                self.__config_data[which] = self.loadSystemConfig(system_config_path)
+                if self.__config_data[which] is None:
+                    is_success = False
+        elif which == "users":
+            users_config_path = self.__config_paths[which]
+            if not os.path.exists(users_config_path):
+                self.__config_data[which] = self.defaultUsersConfig()
+                self.__config_paths[which] = self.__default_config_paths[which]
+                if self.saveUsersConfig(self.__config_paths[which], self.__config_data[which]):
+                    msg += f"用户配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
+                else:
+                    is_success = False
+            else:
+                self.__config_data[which] = self.loadUsersConfig(users_config_path)
+                if self.__config_data[which] is None:
+                    is_success = False
+        if msg:
+            QMessageBox.information(
+                self,
+                "提示 - AutoLibrary",
+                f"配置文件初始化完成: \n{msg}"
+            )
+        return is_success
+
+
+    def initlizeConfigs(
+        self
+    ) -> bool:
+
+        is_success = True
+        for which in ["system", "users"]:
+            if not self.__config_paths[which]:
+                self.__config_paths[which] = self.__default_config_paths[which]
+            if not self.initlizeConfig(which):
+                is_success = False
+                break
+            self.initlizeConfigToWidget(which, self.__config_data[which])
+        return is_success
 
 
     def defaultSystemConfig(
@@ -448,21 +476,21 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ) -> bool:
 
         if users_config_path:
-            self.__users_config_data = self.defaultUsersConfig()
+            self.__config_data["users"] = self.defaultUsersConfig()
             for index in range(self.UserListWidget.count()):
                 user_config = self.collectUserConfigFromUserListWidget(index)
                 if user_config:
-                    self.__users_config_data["users"].append(user_config)
+                    self.__config_data["users"]["users"].append(user_config)
             if not self.saveUsersConfig(
                 users_config_path,
-                self.__users_config_data
+                self.__config_data["users"]
             ):
                 return False
         if system_config_path:
-            self.__system_config_data = self.collectSystemConfigFromWidget()
+            self.__config_data["system"] = self.collectSystemConfigFromWidget()
             if not self.saveSystemConfig(
                 system_config_path,
-                self.__system_config_data
+                self.__config_data["system"]
             ):
                 return False
         return True
@@ -486,12 +514,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             system_config = self.loadSystemConfig(config_path)
             users_config = self.loadUsersConfig(config_path)
             if system_config is not None:
-                self.__system_config_data.update(system_config)
-                self.setSystemConfigToWidget(self.__system_config_data)
+                self.__config_data["system"].update(system_config)
+                self.setSystemConfigToWidget(self.__config_data["system"])
                 return True
             if users_config is not None:
-                self.__users_config_data.update(users_config)
-                self.fillUsersList(self.__users_config_data)
+                self.__config_data["users"].update(users_config)
+                self.fillUsersList(self.__config_data["users"])
                 return True
         except:
             return False
@@ -707,6 +735,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "", users_config_path
             ):
                 msg += f"用户配置文件已导出到: \n'{users_config_path}'\n"
+            else:
+                msg += f"用户配置文件导出失败: \n'{users_config_path}'\n"
         if msg:
             QMessageBox.information(
                 self,
@@ -746,21 +776,21 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 exist_files.append(users_config_path)
             reply = QMessageBox.information(
                 self,
-                "信息 - AutoLibrary",
+                "提示 - AutoLibrary",
                 f"文件夹中已存在以下文件, 是否覆盖 ?\n{chr(10).join(exist_files)}",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
             if reply == QMessageBox.No:
                 return
-        self.__system_config_data = self.defaultSystemConfig()
-        self.__users_config_data = self.defaultUsersConfig()
+        self.__config_data["system"] = self.defaultSystemConfig()
+        self.__config_data["users"] = self.defaultUsersConfig()
         self.__config_paths = {
             "system": system_config_path,
             "users": users_config_path
         }
-        self.initlizeConfigToWidget("system", self.__system_config_data)
-        self.initlizeConfigToWidget("users", self.__users_config_data)
+        self.initlizeConfigToWidget("system", self.__config_data["system"])
+        self.initlizeConfigToWidget("users", self.__config_data["users"])
 
     @Slot()
     def onConfirmButtonClicked(
@@ -768,16 +798,16 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         if self.UserListWidget.currentItem() is not None:
-            user = self.collectUserConfigFromUserInfoWidget()
-            if user:
-                self.UserListWidget.currentItem().setData(Qt.UserRole, user)
+            user_config = self.collectUserConfigFromUserInfoWidget()
+            if user_config:
+                self.UserListWidget.currentItem().setData(Qt.UserRole, user_config)
         if self.saveConfigs(
             self.__config_paths["system"],
             self.__config_paths["users"]
         ):
             QMessageBox.information(
                 self,
-                "信息 - AutoLibrary",
+                "提示 - AutoLibrary",
                 "配置文件保存成功 !\n"
                 f"系统配置文件路径: \n{self.__config_paths['system']}\n"\
                 f"用户配置文件路径: \n{self.__config_paths['users']}"
