@@ -448,10 +448,13 @@
                 </size>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的预约时长，脚本会尽量满足&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="maximum">
                 <double>8.000000000000000</double>
+               </property>
+               <property name="stepType">
+                <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
                </property>
               </widget>
              </item>
@@ -620,6 +623,9 @@
                  <height>25</height>
                 </size>
                </property>
+               <property name="calendarPopup">
+                <bool>true</bool>
+               </property>
                <property name="date">
                 <date>
                  <year>2025</year>
@@ -752,6 +758,9 @@
                <property name="maximum">
                 <number>120</number>
                </property>
+               <property name="stepType">
+                <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+               </property>
               </widget>
              </item>
              <item row="2" column="1">
@@ -842,6 +851,9 @@
                <property name="maximum">
                 <number>120</number>
                </property>
+               <property name="stepType">
+                <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+               </property>
               </widget>
              </item>
              <item row="3" column="4">
@@ -910,6 +922,9 @@
                    <width>25</width>
                    <height>25</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;查询座位布局&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string/>
@@ -1164,7 +1179,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅根目录中的 manual.html&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅 &lt;a href=&quot;https://www.autolibrary.cv/docs/manual_lists.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#69fcff;&quot;&gt;用户手册&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="whatsThis">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

@@ -261,21 +261,18 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UsernameEdit.setText("")
         self.PasswordEdit.setText("")
         self.UserListWidget.setSortingEnabled(True)
-        self.PasswordEdit.setEchoMode(QLineEdit.Password)
+        self.PasswordEdit.setEchoMode(QLineEdit.EchoMode.Password)
         self.ShowPasswordCheckBox.setChecked(False)
-        self.FloorComboBox.setCurrentIndex(1) # use for the '__init__' to effect the signal
         self.FloorComboBox.setCurrentIndex(0)
+        self.onFloorComboBoxCurrentIndexChanged()
         self.DateEdit.setDate(QDate.currentDate())
         self.DateEdit.setMinimumDate(QDate.currentDate())
-        self.DateEdit.setMaximumDate(QDate.currentDate())
-        if QTime.currentTime() > QTime(18, 0, 0) and QTime.currentTime() < QTime(23, 0, 0):
-            self.DateEdit.setMaximumDate(QDate.currentDate().addDays(1))
         self.BeginTimeEdit.setTime(QTime.currentTime())
         self.PreferEarlyBeginTimeCheckBox.setChecked(False)
-        self.MaxBeginTimeDiffSpinBox.setValue(10)
+        self.MaxBeginTimeDiffSpinBox.setValue(30)
         self.EndTimeEdit.setTime(QTime.currentTime().addSecs(120*60))
         self.PreferLateEndTimeCheckBox.setChecked(False)
-        self.MaxEndTimeDiffSpinBox.setValue(10)
+        self.MaxEndTimeDiffSpinBox.setValue(30)
         self.ExpectDurationSpinBox.setValue(self.BeginTimeEdit.time().secsTo(self.EndTimeEdit.time())/3600)
         self.SatisfyDurationCheckBox.setChecked(False)
 
@@ -528,12 +525,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "seat_id": "",
                 "begin_time": {
                     "time": f"{QTime.currentTime().toString("hh:mm")}",
-                    "max_diff": 0,
+                    "max_diff": 30,
                     "prefer_early": False
                 },
                 "end_time": {
                     "time": f"{QTime.currentTime().addSecs(2*3600).toString("hh:mm")}",
-                    "max_diff": 0,
+                    "max_diff": 30,
                     "prefer_early": True
                 },
                 "expect_duration": 2.0,
@@ -621,7 +618,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         browser_driver_path = QFileDialog.getOpenFileName(
             self,
             "选择浏览器驱动 - AutoLibrary",
-            self.CurrentSystemConfigEdit.text(),
+            self.BrowseBrowserDriverEdit.text(),
             "可执行文件 (*.exe);;所有文件 (*)"
         )[0]
         if browser_driver_path:
@@ -700,10 +697,11 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         users_config_path = self.ExportUserConfigEdit.text()
         if system_config_path:
             if self.saveConfigs(
-                system_config_path,
-                users_config_path=""
+                system_config_path, ""
             ):
                 msg += f"系统配置文件已导出到: \n'{system_config_path}'\n"
+            else:
+                msg += f"系统配置文件导出失败: \n'{system_config_path}'\n"
         if users_config_path:
             if self.saveConfigs(
                 "", users_config_path
@@ -712,7 +710,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if msg:
             QMessageBox.information(
                 self,
-                "信息 - AutoLibrary",
+                "提示 - AutoLibrary",
                 msg
             )
 
