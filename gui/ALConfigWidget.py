@@ -19,7 +19,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QCloseEvent
 
 from .Ui_ALConfigWidget import Ui_ALConfigWidget
+from .SeatMapWidget import SeatMapWidget
 
+from .SeatMapTable import seats_maps
 from ConfigReader import ConfigReader
 from ConfigWriter import ConfigWriter
 
@@ -66,6 +68,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         self.ShowPasswordCheckBox.clicked.connect(self.onShowPasswordCheckBoxChecked)
         self.FloorComboBox.currentIndexChanged.connect(self.onFloorComboBoxCurrentIndexChanged)
+        self.SelectSeatsButton.clicked.connect(self.onSelectSeatsButtonClicked)
         self.UserListWidget.currentItemChanged.connect(self.onUserListWidgetCurrentItemChanged)
         self.AddUserButton.clicked.connect(self.onAddUserButtonClicked)
         self.DelUserButton.clicked.connect(self.onDelUserButtonClicked)
@@ -601,6 +604,41 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.RoomComboBox.clear()
         self.RoomComboBox.addItems(self.__floor_room_map[floor])
         self.RoomComboBox.setCurrentIndex(0)
+
+    @Slot()
+    def onSeatMapWidgetClosed(
+        self,
+        selected_seats: list[str]
+    ):
+
+        self.__seat_map_widget.seatMapWidgetClosed.disconnect(self.onSeatMapWidgetClosed)
+        self.__seat_map_widget.deleteLater()
+        self.__seat_map_widget = None
+        if len(selected_seats) == 0:
+            return
+        self.SeatIDEdit.setText(",".join(selected_seats))
+
+    @Slot()
+    def onSelectSeatsButtonClicked(
+        self
+    ):
+
+        floor = self.FloorComboBox.currentText()
+        room = self.RoomComboBox.currentText()
+        floor_idx = self.__floor_rmap[floor]
+        room_idx = self.__room_rmap[room]
+        if self.__seat_map_widget is None:
+            self.__seat_map_widget = SeatMapWidget(
+                self,
+                floor,
+                room,
+                seats_maps[floor_idx][room_idx]
+            )
+            self.__seat_map_widget.seatMapWidgetClosed.connect(self.onSeatMapWidgetClosed)
+        self.__seat_map_widget.show()
+        self.__seat_map_widget.raise_()
+        self.__seat_map_widget.activateWindow()
+        self.__seat_map_widget.selectSeats(self.SeatIDEdit.text().split(","))
 
     @Slot()
     def onUserListWidgetCurrentItemChanged(
