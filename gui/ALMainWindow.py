@@ -13,7 +13,7 @@ import time
 import queue
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTimer, QThread
+    Qt, Signal, Slot, QDir, QFileInfo, QTimer, QThread
 )
 from PySide6.QtWidgets import (
     QMainWindow, QMenu
@@ -129,9 +129,11 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.setupUi(self)
         self.__input_queue = queue.Queue()
         self.__output_queue = queue.Queue()
+        script_path = sys.executable
+        script_dir = QFileInfo(script_path).absoluteDir()
         self.__config_paths = {
-            "system": "",
-            "users": "",
+            "system":   QDir.toNativeSeparators(script_dir.absoluteFilePath("system.json")),
+            "users": QDir.toNativeSeparators(script_dir.absoluteFilePath("users.json")),
         }
         self.__alConfigWidget = None
         self.__auto_lib_thread = None
