@@ -80,6 +80,7 @@ class AutoLibWorker(QThread):
         self
     ):
 
+        auto_lib = None
         try:
             if not self.checkTimeAvailable():
                 self.showTraceSignal.emit(
@@ -98,13 +99,14 @@ class AutoLibWorker(QThread):
                 ConfigReader(self.__config_paths["system"]),
                 ConfigReader(self.__config_paths["users"]),
             )
-            auto_lib.close()
-            self.showTraceSignal.emit("AutoLibrary 运行结束")
         except Exception as e:
             self.showTraceSignal.emit(
                 f"AutoLibrary 运行时发生异常 : {e}"
             )
         finally:
+            if auto_lib:
+                auto_lib.close()
+            self.showTraceSignal.emit("AutoLibrary 运行结束")
             self.finishedSignal.emit()
 
 
@@ -242,9 +244,10 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         config_paths: dict
     ):
 
-        self.__alConfigWidget.configWidgetCloseSingal.disconnect(self.onConfigWidgetClosed)
-        self.__alConfigWidget.deleteLater()
-        self.__alConfigWidget = None
+        if self.__alConfigWidget:
+            self.__alConfigWidget.configWidgetCloseSingal.disconnect(self.onConfigWidgetClosed)
+            self.__alConfigWidget.deleteLater()
+            self.__alConfigWidget = None
         self.ConfigButton.setEnabled(True)
         self.StartButton.setEnabled(True)
         self.StopButton.setEnabled(False)
@@ -274,14 +277,15 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         self.setControlButtons(False, False, True)
-        self.__auto_lib_thread = AutoLibWorker(
-            self.__input_queue,
-            self.__output_queue,
-            self.__config_paths,
-        )
-        self.__auto_lib_thread.finishedSignal.connect(self.onStopButtonClicked)
-        self.__auto_lib_thread.showMsgSignal.connect(self.showMsg)
-        self.__auto_lib_thread.showTraceSignal.connect(self.showTrace)
+        if self.__auto_lib_thread is None:
+            self.__auto_lib_thread = AutoLibWorker(
+                self.__input_queue,
+                self.__output_queue,
+                self.__config_paths,
+            )
+            self.__auto_lib_thread.finishedSignal.connect(self.onStopButtonClicked)
+            self.__auto_lib_thread.showMsgSignal.connect(self.showMsg)
+            self.__auto_lib_thread.showTraceSignal.connect(self.showTrace)
         self.__auto_lib_thread.start()
 
     @Slot()
@@ -289,13 +293,16 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__auto_lib_thread and self.__auto_lib_thread.isRunning():
+        if self.__auto_lib_thread:
             self.showTrace("正在停止操作......")
             self.__auto_lib_thread.stop()
             self.__auto_lib_thread.wait()
             self.showTrace("操作已停止")
+            self.__auto_lib_thread.showMsgSignal.disconnect(self.showMsg)
+            self.__auto_lib_thread.showTraceSignal.disconnect(self.showTrace)
             self.__auto_lib_thread.finishedSignal.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
+            self.__auto_lib_thread = None
         self.setControlButtons(True, True, False)
 
     @Slot()
