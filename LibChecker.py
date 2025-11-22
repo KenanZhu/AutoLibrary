@@ -160,23 +160,6 @@ class LibChecker(LibOperator):
         }
 
 
-    def __decodeReserveRecords(
-        self,
-        reservations
-    ) -> list:
-
-        records = []
-
-        for reservation in reservations:
-            record = self.__decodeReserveRecord(reservation)
-            if record["date"] == "":
-                record = None
-            if record["time"] == {"begin": "", "end": ""}:
-                record = None
-            records.append(record)
-        return records
-
-
     def __loadReserveRecords(
         self
     ) -> list:
@@ -240,10 +223,14 @@ class LibChecker(LibOperator):
             reservations = self.__loadReserveRecords()
             if reservations is None:
                 return None
-            records = self.__decodeReserveRecords(reservations[checked_count:])
-            for record in records:
+            for reservation in reservations[checked_count:]:
+                record = self.__decodeReserveRecord(reservation)
                 checked_count += 1
                 if record is None:
+                    continue
+                if record["date"] == "":
+                    continue
+                if record["time"] == {"begin": "", "end": ""}:
                     continue
                 # record date is later than the given date, check the next one
                 if datetime.strptime(record["date"], "%Y-%m-%d").date() >\
