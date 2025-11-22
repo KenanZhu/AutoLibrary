@@ -55,13 +55,13 @@ class LibReserve(LibOperator):
     ) -> bool:
 
         try:
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "layoutSeat"))
             )
             title_elements = []
             # reserve failed without title elements, so we need to try
             try:
-                WebDriverWait(self.__driver, 1).until(
+                WebDriverWait(self.__driver, 2).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, ".layoutSeat dt"))
                 )
                 title_elements = self.__driver.find_elements(
@@ -309,12 +309,12 @@ class LibReserve(LibOperator):
 
         try:
             # click the trigger element
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.element_to_be_clickable(trigger_locator)
             ).click()
             if option_locator:
                 # select the option element if specified
-                WebDriverWait(self.__driver, 5).until(
+                WebDriverWait(self.__driver, 2).until(
                     EC.element_to_be_clickable(option_locator)
                 ).click()
             self._showTrace(success_msg)
@@ -386,9 +386,16 @@ class LibReserve(LibOperator):
 
         try:
             # wait fot seat layout element to load
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.presence_of_element_located((By.ID, "seatLayout"))
             )
+            WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "li[id^='seat_']"))
+            )
+        except:
+            self._showTrace(f"座位加载失败 !")
+            return False
+        try:
             all_seats = self.__driver.find_elements(
                 By.CSS_SELECTOR, "li[id^='seat_']"
             )
@@ -397,7 +404,7 @@ class LibReserve(LibOperator):
                 if not seat_id_upper == seat.text.lstrip('0'):
                     continue
                 seat_link = seat.find_element(By.TAG_NAME, "a")
-                WebDriverWait(self.__driver, 5).until(
+                WebDriverWait(self.__driver, 2).until(
                     EC.element_to_be_clickable(seat_link)
                 )
                 seat_link.click()
@@ -420,6 +427,15 @@ class LibReserve(LibOperator):
     ) -> int:
 
         try:
+            WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, f"#{time_id} ul li a")
+                )
+            )
+        except:
+            self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
+            return -1
+        try:
             all_time_opts = self.__driver.find_elements(
                 By.CSS_SELECTOR,
                 f"#{time_id} ul li a"
@@ -429,6 +445,9 @@ class LibReserve(LibOperator):
             best_actual_diff = None
             best_time_opt = None
 
+            if not all_time_opts:
+                self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
+                return -1
             for time_opt in all_time_opts:
                 time_attr = time_opt.get_attribute("time")
                 if time_attr == "now":
@@ -544,7 +563,7 @@ class LibReserve(LibOperator):
             return False
         # map page
         try:
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[@href='/map']"))
             ).click()
             WebDriverWait(self.__driver, 2).until(

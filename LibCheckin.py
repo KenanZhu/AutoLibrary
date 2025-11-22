@@ -38,7 +38,7 @@ class LibCheckin(LibOperator):
     ) -> bool:
 
         try:
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "ui_dialog"))
             )
             WebDriverWait(self.__driver, 2).until(

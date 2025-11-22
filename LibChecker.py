@@ -55,7 +55,7 @@ class LibChecker(LibOperator):
     ) -> bool:
 
         try:
-            WebDriverWait(self.__driver, 5).until(
+            WebDriverWait(self.__driver, 2).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[@href='/history?type=SEAT']"))
             ).click()
             WebDriverWait(self.__driver, 2).until(

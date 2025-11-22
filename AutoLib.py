@@ -91,7 +91,7 @@ class AutoLib(MsgBase):
                     self.__driver = webdriver.Firefox(service=service, options=edge_options)
                 case _:
                     raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type}")
-            self.__driver.implicitly_wait(10)
+            self.__driver.implicitly_wait(1)
             self.__driver.execute_script(
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
@@ -122,7 +122,7 @@ class AutoLib(MsgBase):
 
         # wait for page load
         try:
-            WebDriverWait(self.__driver, 5).until( # title contains "首页"
+            WebDriverWait(self.__driver, 2).until( # title contains "首页"
                 EC.title_contains("首页")
             )
             WebDriverWait(self.__driver, 2).until( # username field presence
@@ -147,7 +147,9 @@ class AutoLib(MsgBase):
         self,
     ) -> bool:
 
-        self.__driver.get(self.__system_config_reader.get("library/host_url"))
+        url = self.__system_config_reader.get("library/host_url")
+        url += self.__system_config_reader.get("library/login_url")
+        self.__driver.get(url)
         if not self.__waitResponseLoad():
             return False
         return True

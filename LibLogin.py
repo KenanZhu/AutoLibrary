@@ -41,13 +41,13 @@ class LibLogin(LibOperator):
 
         # wait to verify login success
         try:
-            WebDriverWait(self.__driver, 5).until( # title contains "自选座位 :: 座位预约系统"
+            WebDriverWait(self.__driver, 2).until( # title contains "自选座位 :: 座位预约系统"
                 EC.title_contains("自选座位 :: 座位预约系统")
             )
-            WebDriverWait(self.__driver, 3).until( # search button presence
+            WebDriverWait(self.__driver, 2).until( # search button presence
                 EC.presence_of_element_located((By.ID, "search"))
             )
-            WebDriverWait(self.__driver, 3).until( # select content presence
+            WebDriverWait(self.__driver, 2).until( # select content presence
                 EC.presence_of_element_located((By.CLASS_NAME, "selectContent"))
             )
             return True
