@@ -27,8 +27,8 @@ from .ALConfigWidget import ALConfigWidget
 
 from . import AutoLibraryResource
 
-from AutoLib import AutoLib
-from ConfigReader import ConfigReader
+from operators.AutoLib import AutoLib
+from utils.ConfigReader import ConfigReader
 
 
 class AutoLibWorker(QThread):

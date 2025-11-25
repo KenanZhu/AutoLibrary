@@ -8,10 +8,10 @@ build/
 dist/
 model/*.onnx
 driver/*.exe
-gui/configs/*.json
-gui/translators/qtbase_zh_CN.qm
-gui/AutoLibraryResources.py
-gui/AutoLibraryResource.py
-gui/Ui_ALMainWindow.py
-gui/Ui_ALConfigWidget.py
+src/gui/configs/*.json
+src/gui/translators/qtbase_zh_CN.qm
+src/gui/AutoLibraryResources.py
+src/gui/AutoLibraryResource.py
+src/gui/Ui_ALMainWindow.py
+src/gui/Ui_ALConfigWidget.py
 Main.spec

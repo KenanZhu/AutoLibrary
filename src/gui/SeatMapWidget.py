@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import (
     QPainter, QWheelEvent, QCloseEvent
 )
-from .SeatFrame import SeatFrame
+from gui.SeatFrame import SeatFrame
 
 
 class SeatMapWidget(QWidget):

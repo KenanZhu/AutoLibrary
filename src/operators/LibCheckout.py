@@ -7,13 +7,19 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import os
+import re
+import time
 import queue
 
-from LibOperator import LibOperator
+from datetime import datetime, timedelta
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from base.LibOperator import LibOperator
 
 
-class LibRenew(LibOperator):
+class LibCheckout(LibOperator):
 
     def __init__(
         self,

@@ -16,14 +16,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.edge.service import Service
 
-from MsgBase import MsgBase
-from LibChecker import LibChecker
-from LibLogin import LibLogin
-from LibLogout import LibLogout
-from LibReserve import LibReserve
-from LibCheckin import LibCheckin
+from base.MsgBase import MsgBase
+from operators.LibChecker import LibChecker
+from operators.LibLogin import LibLogin
+from operators.LibLogout import LibLogout
+from operators.LibReserve import LibReserve
+from operators.LibCheckin import LibCheckin
 
-from ConfigReader import ConfigReader
+from utils.ConfigReader import ConfigReader
 
 
 class AutoLib(MsgBase):

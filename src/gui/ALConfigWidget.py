@@ -18,12 +18,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QCloseEvent
 
-from .Ui_ALConfigWidget import Ui_ALConfigWidget
-from .SeatMapWidget import SeatMapWidget
+from gui.Ui_ALConfigWidget import Ui_ALConfigWidget
+from gui.SeatMapWidget import SeatMapWidget
 
-from .SeatMapTable import seats_maps
-from ConfigReader import ConfigReader
-from ConfigWriter import ConfigWriter
+from gui.SeatMapTable import seats_maps
+from utils.ConfigReader import ConfigReader
+from utils.ConfigWriter import ConfigWriter
 
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):
