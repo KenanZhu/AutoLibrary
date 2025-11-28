@@ -187,12 +187,13 @@ class LibReserve(LibOperator):
         reserve_info: dict
     ) -> bool:
 
-        if reserve_info.get("expect_duration") is None:
-            reserve_info["expect_duration"] = 4
-            self._showTrace("预约持续时间未指定, 使用默认时长为 4 小时")
         if reserve_info.get("satisfy_duration") is None:
             reserve_info["satisfy_duration"] = True
             self._showTrace("预约满足时长要求未指定, 默认满足")
+        if reserve_info["satisfy_duration"]:
+            if reserve_info.get("expect_duration") is None:
+                reserve_info["expect_duration"] = 4
+                self._showTrace("需要满足预约持续时间, 但未指定, 使用默认时长为 4 小时")
         return True
 
 
@@ -234,7 +235,7 @@ class LibReserve(LibOperator):
         # if end time is earlier than begin_time, exchange them
         if end_mins < begin_mins:
             self._showTrace(
-                f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, 自动交换"
+                f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, 尝试交换时间"
             )
             reserve_info["end_time"] = begin_time
             reserve_info["begin_time"] = end_time
@@ -261,10 +262,9 @@ class LibReserve(LibOperator):
             if end_mins - begin_mins > 8*60:
                 self._showTrace(
                     f"该用户未设置优先满足时长要求, 但是检查到预约持续时间 "
-                    f"{int((end_mins - begin_mins)/60)} 小时 "
+                    f"{float((end_mins - begin_mins)/60)} 小时 "
                     f"超出最大时长 8 小时, 自动设置为 8 小时"
                 )
-                reserve_info["expect_duration"] = 8
                 reserve_info["end_time"]["time"] = self.__minsToTime(begin_mins + 8*60)
         return True
 
@@ -577,6 +577,7 @@ class LibReserve(LibOperator):
         expect_begin_time = actual_begin_time = begin_time["time"]
         expect_end_time = actual_end_time = end_time["time"]
         expect_begin_mins = self.__timeToMins(expect_begin_time)
+        actual_begin_mins = expect_begin_mins
         expect_end_mins = self.__timeToMins(expect_end_time)
 
         # select the begin time
@@ -590,11 +591,18 @@ class LibReserve(LibOperator):
             return False
         else:
             actual_begin_time = self.__minsToTime(expect_begin_mins)
+            actual_begin_mins = self.__timeToMins(actual_begin_time)
         # if 'satisfy_duration' is True.
         # select the end time based on the begin time
         # (because it may be changed under the 'max time diff' strategy) and expect duration.
         if satisfy_duration:
-            expect_end_mins = int(expect_begin_mins + expct_duration*60)
+            expect_end_mins = int(actual_begin_mins + expct_duration*60)
+            if expect_end_mins > self.__timeToMins("23:30"):
+                expect_end_mins = self.__timeToMins("23:30")
+                self._showTrace(
+                    f"预约持续时间 {expct_duration} 小时, 超过最大预约时间 23:30, 自动调整为 23:30"
+                )
+            expect_end_time = self.__minsToTime(expect_end_mins)
             self._showTrace(
                 f"需要满足期望预约持续时间: {expct_duration} 小时, "\
                 f"根据开始时间 {actual_begin_time} 计算结束时间: {self.__minsToTime(expect_end_mins)}"

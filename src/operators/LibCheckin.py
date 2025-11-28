@@ -54,7 +54,6 @@ class LibCheckin(LibOperator):
         except:
             self._showTrace("签到时发生未知错误 !")
             return False
-        print(result_message_element)
         result_message = result_message_element.text
         if "签到成功" in result_message:
             try:
@@ -73,14 +72,16 @@ class LibCheckin(LibOperator):
                         f"          {details[3]}\n"\
                         f"          {details[4]}")
             else:
-                self._showTrace(
+                self._showTrace(f"\n"\
                          "      签到成功 !\n"\
                          "          未获取到签到详情 !")
             ok_btn.click()
             return True
         else:
             failure_reason = result_message.replace("签到失败", "").strip()
-            self._showTrace(f"签到失败: {failure_reason}")
+            self._showTrace(f"\n"\
+                "      签到失败 !\n"\
+                f"          {failure_reason}")
             ok_btn.click()
             return False
 
