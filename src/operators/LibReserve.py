@@ -324,11 +324,52 @@ class LibReserve(LibOperator):
             return False
 
 
+    def __clickElementByJS(
+        self,
+        trigger_locator_id: str,
+        option_query_selector: str,
+        fail_msg: str,
+        success_msg: str,
+    ) -> bool:
+
+        script = f"""
+        try {{
+            var trigger = document.getElementById('{trigger_locator_id}');
+            if (trigger) {{
+                trigger.click();
+                var option = document.querySelector("{option_query_selector}");
+                if (option) {{
+                    option.click();
+                    return true;
+                }}
+                return false;
+            }}
+            return false;
+        }} catch (e) {{
+            return false;
+        }}
+        """
+        result = self.__driver.execute_script(script)
+        time.sleep(0.1)
+        if result:
+            self._showTrace(success_msg)
+        else:
+            self._showTrace(fail_msg)
+        return result
+
+
     def __selectDate(
         self,
         date_str: str
     ) -> bool:
 
+        if self.__clickElementByJS(
+            trigger_locator_id="onDate_select",
+            option_query_selector=f"p#options_onDate a[value='{date_str}']",
+            success_msg=f"日期 {date_str} 选择成功 !",
+            fail_msg=f"选择日期失败 ! : {date_str} 不可用"
+        ):
+            return True
         return self.__clickElement(
             trigger_locator=(By.ID, "onDate_select"),
             option_locator=(By.XPATH, f"//p[@id='options_onDate']/a[@value='{date_str}']"),
@@ -342,12 +383,20 @@ class LibReserve(LibOperator):
         place: str
     ) -> bool:
 
-        actual_place = "1" if place == "图书馆" else "1"
+        place = "1" # the library only have this place :)
+        display_place = "图书馆"
+        if self.__clickElementByJS(
+            trigger_locator_id="display_building",
+            option_query_selector=f"p#options_building a[value='{place}']",
+            success_msg=f"预约场所 {display_place} 选择成功 !",
+            fail_msg=f"选择预约场所失败 ! : {display_place} 不可用"
+        ):
+            return True
         return self.__clickElement(
             trigger_locator=(By.ID, "display_building"),
-            option_locator=(By.XPATH, f"//p[@id='options_building']/a[@value='{actual_place}']"),
-            success_msg=f"预约场所 {place} 选择成功 !",
-            fail_msg=f"选择预约场所失败 ! : {place} 不可用"
+            option_locator=(By.XPATH, f"//p[@id='options_building']/a[@value='{place}']"),
+            success_msg=f"预约场所 {display_place} 选择成功 !",
+            fail_msg=f"选择预约场所失败 ! : {display_place} 不可用"
         )
 
 
@@ -357,6 +406,13 @@ class LibReserve(LibOperator):
     ) -> bool:
 
         display_floor = self.__floor_map.get(floor)
+        if self.__clickElementByJS(
+            trigger_locator_id="floor_select",
+            option_query_selector=f"p#options_floor a[value='{floor}']",
+            success_msg=f"楼层 {display_floor} 选择成功 !",
+            fail_msg=f"选择楼层失败 ! : {display_floor} 不可用"
+        ):
+            return True
         return self.__clickElement(
             trigger_locator=(By.ID, "floor_select"),
             option_locator=(By.XPATH, f"//p[@id='options_floor']/a[@value='{floor}']"),
@@ -371,12 +427,24 @@ class LibReserve(LibOperator):
     ) -> bool:
 
         display_room = self.__room_map.get(room)
-        return self.__clickElement(
-            trigger_locator=(By.ID, f"room_{room}"),
-            option_locator=None,
-            success_msg=f"房间 {display_room} 选择成功 !",
-            fail_msg=f"选择房间失败 ! : {display_room} 不可用"
-        )
+        # find room
+        try:
+            WebDriverWait(self.__driver, 2).until(
+                EC.element_to_be_clickable((By.ID, "findRoom"))
+            ).click()
+        except:
+            self._showTrace("加载房间/区域失败 !")
+            return False
+        # select room
+        try:
+            WebDriverWait(self.__driver, 2).until(
+                EC.element_to_be_clickable((By.ID, f"room_{room}"))
+            ).click()
+            self._showTrace(f"房间 {display_room} 选择成功 !")
+            return True
+        except:
+            self._showTrace(f"选择房间失败 ! : {display_room} 不可用")
+            return False
 
 
     def __selectSeat(
@@ -572,22 +640,13 @@ class LibReserve(LibOperator):
         except:
             self._showTrace(f"加载预约选座页面失败 !")
             return False
-        # date, place, floor
+        # date, place, floor, room
         if not self.__selectDate(reserve_info["date"]):
             return False
         if not self.__selectPlace(reserve_info["place"]):
             return False
         if not self.__selectFloor(reserve_info["floor"]):
             return False
-        # room find
-        try:
-            WebDriverWait(self.__driver, 2).until(
-                EC.element_to_be_clickable((By.ID, "findRoom"))
-            ).click()
-        except:
-            self._showTrace("加载房间/区域失败 !")
-            return False
-        # room
         if not self.__selectRoom(reserve_info["room"]):
             return False
         else:
