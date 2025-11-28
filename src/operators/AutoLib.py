@@ -187,7 +187,7 @@ class AutoLib(MsgBase):
         # reserve
         if run_mode["auto_reserve"]:
             if self.__lib_checker.canReserve(reserve_info.get("date")):
-                if self.__lib_reserve.reserve(reserve_info):
+                if self.__lib_reserve.reserve(username, reserve_info):
                     result = 0
                 else:
                     result = 1
