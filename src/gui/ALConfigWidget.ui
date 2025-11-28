@@ -254,7 +254,7 @@
              <item row="2" column="1">
               <layout class="QHBoxLayout" name="PasswordLayout">
                <property name="spacing">
-                <number>5</number>
+                <number>0</number>
                </property>
                <item>
                 <widget class="QLineEdit" name="PasswordEdit">
@@ -376,151 +376,6 @@
              <property name="spacing">
               <number>5</number>
              </property>
-             <item row="0" column="1">
-              <widget class="QLabel" name="DateLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>日期：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="1">
-              <widget class="QLabel" name="MaxBeginTimeDiffLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>最大时长偏差：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="PlaceLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>地点：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="12" column="4">
-              <widget class="QDoubleSpinBox" name="ExpectDurationSpinBox">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="maximum">
-                <double>8.000000000000000</double>
-               </property>
-               <property name="stepType">
-                <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="4">
-              <widget class="QCheckBox" name="PreferLateEndTimeCheckBox">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，如果有多个与目标&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;结束时间&lt;/span&gt;相近的可选时间，选择时间最晚项&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>优先选择最晚</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="1">
-              <widget class="QLabel" name="EndTimeLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>结束时间：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1">
-              <widget class="QLabel" name="BeginTimeLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>开始时间：</string>
-               </property>
-              </widget>
-             </item>
              <item row="2" column="4">
               <widget class="QComboBox" name="FloorComboBox">
                <property name="minimumSize">
@@ -555,6 +410,511 @@
                  <string>五层</string>
                 </property>
                </item>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="RoomLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>区域：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="FloorLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>楼层：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="1">
+              <widget class="QLabel" name="ExpectRenewDurationLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>期望续约时长：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="1">
+              <widget class="QLabel" name="EndTimeLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>结束时间：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="4">
+              <layout class="QHBoxLayout" name="SeatIDLayout">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLineEdit" name="SeatIDEdit">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>130</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="SelectSeatsButton">
+                 <property name="minimumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;查询座位布局&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="icon">
+                  <iconset theme="edit-find"/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="3" column="4">
+              <widget class="QComboBox" name="RoomComboBox">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QLabel" name="SeatIDLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>座位号：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="12" column="1">
+              <widget class="QLabel" name="ExpectDurationLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>期望预约时长：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="DateLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>日期：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="4">
+              <widget class="QDoubleSpinBox" name="ExpectRenewDurationSpinBox">
+               <property name="maximum">
+                <double>4.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>1.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="4">
+              <widget class="QDateEdit" name="DateEdit">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="calendarPopup">
+                <bool>true</bool>
+               </property>
+               <property name="date">
+                <date>
+                 <year>2025</year>
+                 <month>11</month>
+                 <day>1</day>
+                </date>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="4">
+              <layout class="QHBoxLayout" name="EndTimeDiffLayout">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QSpinBox" name="MaxEndTimeDiffSpinBox">
+                 <property name="minimumSize">
+                  <size>
+                   <width>55</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;结束时间&lt;/span&gt;不可用时，按照该偏差范围寻找最近可选时间&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="maximum">
+                  <number>120</number>
+                 </property>
+                 <property name="stepType">
+                  <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="PreferLateEndTimeCheckBox">
+                 <property name="minimumSize">
+                  <size>
+                   <width>75</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，如果有多个与目标&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;结束时间&lt;/span&gt;相近的可选时间，选择时间最晚项&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>优先最晚</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="9" column="4">
+              <widget class="QTimeEdit" name="EndTimeEdit">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumDate">
+                <date>
+                 <year>2000</year>
+                 <month>1</month>
+                 <day>1</day>
+                </date>
+               </property>
+               <property name="maximumTime">
+                <time>
+                 <hour>23</hour>
+                 <minute>0</minute>
+                 <second>0</second>
+                </time>
+               </property>
+               <property name="minimumTime">
+                <time>
+                 <hour>7</hour>
+                 <minute>0</minute>
+                 <second>0</second>
+                </time>
+               </property>
+               <property name="displayFormat">
+                <string>H:mm</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="PlaceLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>地点：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="4">
+              <widget class="QCheckBox" name="SatisfyDurationCheckBox">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，会优先满足预约时长限制，当座位紧张时可能会导致&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;预约失败&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>优先满足预约时长</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="4">
+              <widget class="QComboBox" name="PlaceComboBox">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <item>
+                <property name="text">
+                 <string>图书馆</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="12" column="4">
+              <widget class="QDoubleSpinBox" name="ExpectDurationSpinBox">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="minimum">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>8.000000000000000</double>
+               </property>
+               <property name="stepType">
+                <enum>QAbstractSpinBox::StepType::DefaultStepType</enum>
+               </property>
+               <property name="value">
+                <double>2.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="4">
+              <layout class="QHBoxLayout" name="BeginTimeDiffLayout">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QSpinBox" name="MaxBeginTimeDiffSpinBox">
+                 <property name="minimumSize">
+                  <size>
+                   <width>65</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;开始时间&lt;/span&gt;不可用时，按照该偏差范围寻找最近可选时间&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="maximum">
+                  <number>120</number>
+                 </property>
+                 <property name="stepType">
+                  <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="PreferEarlyBeginTimeCheckBox">
+                 <property name="minimumSize">
+                  <size>
+                   <width>75</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，如果有多个与目标&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;开始时间&lt;/span&gt;相近的可选时间，选择时间最早项&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>优先最早</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="7" column="1">
+              <widget class="QLabel" name="MaxBeginTimeDiffLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>最大时长偏差：</string>
+               </property>
               </widget>
              </item>
              <item row="10" column="1">
@@ -609,34 +969,8 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="4">
-              <widget class="QDateEdit" name="DateEdit">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="calendarPopup">
-                <bool>true</bool>
-               </property>
-               <property name="date">
-                <date>
-                 <year>2025</year>
-                 <month>11</month>
-                 <day>1</day>
-                </date>
-               </property>
-              </widget>
-             </item>
-             <item row="12" column="1">
-              <widget class="QLabel" name="ExpectDurationLabel">
+             <item row="5" column="1">
+              <widget class="QLabel" name="BeginTimeLabel">
                <property name="minimumSize">
                 <size>
                  <width>100</width>
@@ -650,291 +984,60 @@
                 </size>
                </property>
                <property name="text">
-                <string>期望时长：</string>
+                <string>开始时间：</string>
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="RoomLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>区域：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="4">
-              <widget class="QTimeEdit" name="EndTimeEdit">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumDate">
-                <date>
-                 <year>2000</year>
-                 <month>1</month>
-                 <day>1</day>
-                </date>
-               </property>
-               <property name="maximumTime">
-                <time>
-                 <hour>23</hour>
-                 <minute>0</minute>
-                 <second>0</second>
-                </time>
-               </property>
-               <property name="minimumTime">
-                <time>
-                 <hour>7</hour>
-                 <minute>0</minute>
-                 <second>0</second>
-                </time>
-               </property>
-               <property name="displayFormat">
-                <string>H:mm</string>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="4">
-              <widget class="QCheckBox" name="SatisfyDurationCheckBox">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，会优先满足预约时长限制，当座位紧张时可能会导致&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;预约失败&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>优先满足时长要求</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="4">
-              <widget class="QSpinBox" name="MaxBeginTimeDiffSpinBox">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;开始时间&lt;/span&gt;不可用时，按照该偏差范围寻找最近可选时间&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="maximum">
-                <number>120</number>
-               </property>
-               <property name="stepType">
-                <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="FloorLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>楼层：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="4">
-              <widget class="QComboBox" name="PlaceComboBox">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
+             <item row="15" column="4">
+              <layout class="QHBoxLayout" name="RenewTimeDiffLayout">
+               <property name="spacing">
+                <number>0</number>
                </property>
                <item>
-                <property name="text">
-                 <string>图书馆</string>
-                </property>
+                <widget class="QSpinBox" name="MaxRenewTimeDiffSpinBox"/>
                </item>
-              </widget>
-             </item>
-             <item row="8" column="4">
-              <widget class="QCheckBox" name="PreferEarlyBeginTimeCheckBox">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;勾选此项，如果有多个与目标&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;开始时间&lt;/span&gt;相近的可选时间，选择时间最早项&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>优先选择最早</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="4">
-              <widget class="QSpinBox" name="MaxEndTimeDiffSpinBox">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;期望的&lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;结束时间&lt;/span&gt;不可用时，按照该偏差范围寻找最近可选时间&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="maximum">
-                <number>120</number>
-               </property>
-               <property name="stepType">
-                <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="4">
-              <widget class="QComboBox" name="RoomComboBox">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>25</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QLabel" name="SeatIDLabel">
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>座位号：</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="4">
-              <layout class="QHBoxLayout" name="SeatIDLayout">
                <item>
-                <widget class="QLineEdit" name="SeatIDEdit">
+                <widget class="QCheckBox" name="PreferLateRenewTimeCheckBox">
                  <property name="minimumSize">
                   <size>
-                   <width>0</width>
+                   <width>75</width>
                    <height>25</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>130</width>
+                   <width>16777215</width>
                    <height>25</height>
                   </size>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="SelectSeatsButton">
-                 <property name="minimumSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;查询座位布局&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
-                  <string/>
+                  <string>优先最晚</string>
                  </property>
-                 <property name="icon">
-                  <iconset theme="edit-find"/>
+                 <property name="checked">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
               </layout>
+             </item>
+             <item row="15" column="1">
+              <widget class="QLabel" name="label">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>最大时长偏差</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>

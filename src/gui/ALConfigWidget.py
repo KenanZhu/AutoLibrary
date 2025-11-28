@@ -306,6 +306,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.MaxEndTimeDiffSpinBox.setValue(30)
         self.ExpectDurationSpinBox.setValue(self.BeginTimeEdit.time().secsTo(self.EndTimeEdit.time())/3600)
         self.SatisfyDurationCheckBox.setChecked(False)
+        self.ExpectRenewDurationSpinBox.setValue(1.0)
+        self.MaxRenewTimeDiffSpinBox.setValue(30)
+        self.PreferLateRenewTimeCheckBox.setChecked(False)
 
 
     def collectUserConfigFromUserInfoWidget(
@@ -317,7 +320,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             "password": self.PasswordEdit.text(),
             "reserve_info": {
                 "begin_time":{},
-                "end_time": {}
+                "end_time": {},
+                "renew_time": {}
             }
         }
         user_config["reserve_info"]["date"] = self.DateEdit.dateTime().toString("yyyy-MM-dd")
@@ -333,6 +337,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         user_config["reserve_info"]["end_time"]["prefer_early"] = not self.PreferLateEndTimeCheckBox.isChecked()
         user_config["reserve_info"]["expect_duration"] = self.ExpectDurationSpinBox.value()
         user_config["reserve_info"]["satisfy_duration"] = self.SatisfyDurationCheckBox.isChecked()
+        user_config["reserve_info"]["renew_time"]["expect_duration"] = self.ExpectRenewDurationSpinBox.value()
+        user_config["reserve_info"]["renew_time"]["max_diff"] = self.MaxRenewTimeDiffSpinBox.value()
+        user_config["reserve_info"]["renew_time"]["prefer_early"] = not self.PreferLateRenewTimeCheckBox.isChecked()
         return user_config
 
 
@@ -371,6 +378,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.PreferLateEndTimeCheckBox.setChecked(not user_config["reserve_info"]["end_time"]["prefer_early"])
             self.ExpectDurationSpinBox.setValue(user_config["reserve_info"]["expect_duration"])
             self.SatisfyDurationCheckBox.setChecked(user_config["reserve_info"]["satisfy_duration"])
+            self.ExpectRenewDurationSpinBox.setValue(user_config["reserve_info"]["renew_time"]["expect_duration"])
+            self.MaxRenewTimeDiffSpinBox.setValue(user_config["reserve_info"]["renew_time"]["max_diff"])
+            self.PreferLateRenewTimeCheckBox.setChecked(not user_config["reserve_info"]["renew_time"]["prefer_early"])
         except:
             QMessageBox.warning(
                 self,
@@ -565,7 +575,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                     "prefer_early": True
                 },
                 "expect_duration": 2.0,
-                "satisfy_duration": False
+                "satisfy_duration": False,
+                "renew_time": {
+                    "expect_duration": 1.0,
+                    "max_diff": 30,
+                    "prefer_early": True
+                }
             }
         }
         user_item = QListWidgetItem(new_user["username"])

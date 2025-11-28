@@ -22,6 +22,7 @@ from operators.LibLogin import LibLogin
 from operators.LibLogout import LibLogout
 from operators.LibReserve import LibReserve
 from operators.LibCheckin import LibCheckin
+from operators.LibRenew import LibRenew
 
 from utils.ConfigReader import ConfigReader
 
@@ -114,6 +115,7 @@ class AutoLib(MsgBase):
         self.__lib_logout = LibLogout(self._input_queue, self._output_queue, self.__driver)
         self.__lib_reserve = LibReserve(self._input_queue, self._output_queue, self.__driver)
         self.__lib_checkin = LibCheckin(self._input_queue, self._output_queue, self.__driver)
+        self.__lib_renew = LibRenew(self._input_queue, self._output_queue, self.__driver)
 
 
     def __waitResponseLoad(
@@ -204,8 +206,11 @@ class AutoLib(MsgBase):
                 result = 2
         # renewal
         if run_mode["auto_renewal"] and result == 2:
-            if self.__lib_checker.canRenew(reserve_info.get("date")):
-                pass
+            if record := self.__lib_checker.canRenew():
+                if self.__lib_renew.renew(username, record, reserve_info):
+                    result = 0
+                else:
+                    result = 1
             else:
                 self._showTrace(f"用户 {username} 无法续约，已跳过")
                 result = 2
