@@ -270,11 +270,11 @@ class LibChecker(LibOperator):
 
 
     def canCheckin(
-        self,
-        date: str
+        self
     ) -> bool:
 
-        # have a reserved record in the given date
+        # only check the current date
+        date = time.strftime("%Y-%m-%d", time.localtime())
         record = self.__getReserveRecord(date, "已预约")
         if record is not None:
             begin_time = record["time"]["begin"]
@@ -307,11 +307,11 @@ class LibChecker(LibOperator):
 
 
     def canRenew(
-        self,
-        date: str
-    ) -> bool:
+        self
+    ):
 
-        # have a using record in the given date
+        # only check the current date
+        date = time.strftime("%Y-%m-%d", time.localtime())
         record = self.__getReserveRecord(date, "使用中")
         if record is not None:
             end_time = record["time"]["end"]
@@ -325,9 +325,9 @@ class LibChecker(LibOperator):
             )
             if abs(time_diff_seconds) < 120*60:
                 self._showTrace(f"{trace_msg}, 可以续约")
-                return True
+                return record
             else:
                 self._showTrace(f"{trace_msg}, 无法续约")
-                return False
+                return None
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
-        return False
+        return None
