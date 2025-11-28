@@ -25,7 +25,7 @@ class LibCheckin(LibOperator):
         self,
         input_queue: queue.Queue,
         output_queue: queue.Queue,
-        driver
+        driver: any
     ):
 
         super().__init__(input_queue, output_queue)
