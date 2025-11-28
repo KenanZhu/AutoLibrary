@@ -186,22 +186,18 @@ class AutoLib(MsgBase):
         if run_mode["auto_reserve"]:
             if self.__lib_checker.canReserve(reserve_info.get("date")):
                 if self.__lib_reserve.reserve(reserve_info):
-                    self._showTrace(f"用户 {username} 预约成功 !")
                     result = 0
                 else:
-                    self._showTrace(f"用户 {username} 预约失败 !")
                     result = 1
             else:
                 self._showTrace(f"用户 {username} 无法预约，已跳过")
                 result = 2
         # checkin
         if run_mode["auto_checkin"] and result == 2:
-            if self.__lib_checker.canCheckin(reserve_info.get("date")):
+            if self.__lib_checker.canCheckin():
                 if self.__lib_checkin.checkin(username):
-                    self._showTrace(f"用户 {username} 签到成功 !")
                     result = 0
                 else:
-                    self._showTrace(f"用户 {username} 签到失败 !")
                     result = 1
             else:
                 self._showTrace(f"用户 {username} 无法签到，已跳过")

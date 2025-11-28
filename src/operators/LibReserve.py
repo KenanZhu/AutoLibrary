@@ -674,4 +674,8 @@ class LibReserve(LibOperator):
                 self._showTrace(f"预约提交失败 !")
         if not submit_reserve and have_hover_on_page:
             self.__driver.refresh()
+        if reserve_success:
+            self._showTrace(f"用户 {reserve_info['username']} 预约成功 !")
+        else:
+            self._showTrace(f"用户 {reserve_info['username']} 预约失败 !")
         return reserve_success

@@ -104,4 +104,9 @@ class LibCheckin(LibOperator):
             self._showTrace("签到按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试")
             return False
         checkin_btn.click()
-        return self._waitResponseLoad()
+        if self._waitResponseLoad():
+            self._showTrace(f"用户 {username} 签到成功 !")
+            return True
+        else:
+            self._showTrace(f"用户 {username} 签到失败 !")
+        return False
