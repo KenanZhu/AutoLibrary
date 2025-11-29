@@ -40,7 +40,7 @@ class SeatMapWidget(QWidget):
         self.__seats_data = seats_data
         self.__selected_seats = []
         self.__seat_frames = {}
-        self.setUpUi()
+        self.setupUi()
         self.connectSignals()
 
     @staticmethod
@@ -55,7 +55,7 @@ class SeatMapWidget(QWidget):
         return seat_number.zfill(3)
 
 
-    def setUpUi(
+    def setupUi(
         self
     ):
 

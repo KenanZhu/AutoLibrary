@@ -20,8 +20,8 @@ from PySide6.QtGui import QCloseEvent
 
 from gui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.SeatMapWidget import SeatMapWidget
-
 from gui.SeatMapTable import seats_maps
+
 from utils.ConfigReader import ConfigReader
 from utils.ConfigWriter import ConfigWriter
 
@@ -596,8 +596,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         current_item = self.UserListWidget.currentItem()
         if current_item:
-            self.UserListWidget.takeItem(self.UserListWidget.row(current_item))
-            self.UserListWidget.setCurrentItem(None)
+            current_index = self.UserListWidget.row(current_item)
+            self.UserListWidget.takeItem(current_index)
+            if current_index < self.UserListWidget.count():
+                self.UserListWidget.setCurrentRow(current_index)
+            else:
+                self.UserListWidget.setCurrentItem(None)
 
     @Slot()
     def onShowPasswordCheckBoxChecked(
