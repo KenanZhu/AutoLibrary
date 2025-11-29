@@ -300,6 +300,16 @@ font: 700 9pt &quot;Microsoft YaHei UI&quot;;</string>
     <bool>false</bool>
    </property>
   </widget>
+  <action name="ManualAction">
+   <property name="text">
+    <string>在线手册</string>
+   </property>
+  </action>
+  <action name="AboutAction">
+   <property name="text">
+    <string>关于</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
