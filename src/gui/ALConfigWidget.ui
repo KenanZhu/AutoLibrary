@@ -1829,6 +1829,9 @@
             <property name="text">
              <string>导出配置文件</string>
             </property>
+            <property name="icon">
+             <iconset theme="document-save"/>
+            </property>
            </widget>
           </item>
          </layout>
@@ -1924,6 +1927,9 @@
        <property name="text">
         <string>新建配置</string>
        </property>
+       <property name="icon">
+        <iconset theme="document-new"/>
+       </property>
       </widget>
      </item>
      <item>
@@ -1942,6 +1948,9 @@
        </property>
        <property name="text">
         <string>加载配置</string>
+       </property>
+       <property name="icon">
+        <iconset theme="document-open"/>
        </property>
       </widget>
      </item>

@@ -14,4 +14,8 @@ src/gui/AutoLibraryResources.py
 src/gui/AutoLibraryResource.py
 src/gui/Ui_ALMainWindow.py
 src/gui/Ui_ALConfigWidget.py
+src/gui/Ui_ALTimerTaskWidget.py
+src/gui/Ui_ALAddTimerTaskDialog.py
+src/gui/Ui_ALAboutDialog.py
+
 Main.spec

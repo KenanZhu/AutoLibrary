@@ -51,10 +51,32 @@
        <number>5</number>
       </property>
       <item>
+       <widget class="QPushButton" name="TimerTaskWidgetButton">
+        <property name="minimumSize">
+         <size>
+          <width>25</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>25</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset theme="document-open-recent"/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QFrame" name="ControlSpaceFrame">
         <property name="minimumSize">
          <size>
-          <width>1280</width>
+          <width>1000</width>
           <height>0</height>
          </size>
         </property>
@@ -237,6 +259,9 @@ font: 700 9pt &quot;Microsoft YaHei UI&quot;;</string>
         <property name="text">
          <string>发送</string>
         </property>
+        <property name="icon">
+         <iconset theme="document-send"/>
+        </property>
        </widget>
       </item>
      </layout>
@@ -245,7 +270,7 @@ font: 700 9pt &quot;Microsoft YaHei UI&quot;;</string>
   </widget>
   <widget class="QMenuBar" name="MenuBar">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>
@@ -258,6 +283,17 @@ font: 700 9pt &quot;Microsoft YaHei UI&quot;;</string>
    <property name="nativeMenuBar">
     <bool>true</bool>
    </property>
+   <widget class="QMenu" name="HelpMenu">
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="title">
+     <string>帮助</string>
+    </property>
+    <addaction name="ManualAction"/>
+    <addaction name="AboutAction"/>
+   </widget>
+   <addaction name="HelpMenu"/>
   </widget>
   <widget class="QStatusBar" name="StatusBar">
    <property name="enabled">

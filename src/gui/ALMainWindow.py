@@ -13,19 +13,21 @@ import time
 import queue
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QDir, QFileInfo, QTimer, QThread
+    Qt, Signal, Slot, QDir, QFileInfo, QTimer, QThread, QUrl,
 )
 from PySide6.QtWidgets import (
-    QMainWindow, QMenu
+    QMainWindow, QMenu, QSystemTrayIcon
 )
 from PySide6.QtGui import (
-    QTextCursor, QCloseEvent, QFont, QIcon
+    QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
 )
 
-from .Ui_ALMainWindow import Ui_ALMainWindow
-from .ALConfigWidget import ALConfigWidget
+from gui.Ui_ALMainWindow import Ui_ALMainWindow
+from gui.ALConfigWidget import ALConfigWidget
+from gui.ALTimerTaskWidget import ALTimerTaskWidget
+from gui.ALAboutDialog import ALAboutDialog
 
-from . import AutoLibraryResource
+from gui import AutoLibraryResource
 
 from operators.AutoLib import AutoLib
 from utils.ConfigReader import ConfigReader
@@ -49,7 +51,6 @@ class AutoLibWorker(QThread):
         self.__input_queue = input_queue
         self.__output_queue = output_queue
         self.__config_paths = config_paths
-        self.__stopped = False
 
 
     def checkTimeAvailable(
@@ -110,14 +111,45 @@ class AutoLibWorker(QThread):
             self.finishedSignal.emit()
 
 
-    def stop(
+class TimerTaskWorker(AutoLibWorker):
+
+    finishedSignal_TimerWorker = Signal(dict)
+
+    def __init__(
+        self,
+        timer_task: dict,
+        input_queue: queue.Queue,
+        output_queue: queue.Queue,
+        config_paths: dict
+    ):
+
+        super().__init__(
+            input_queue,
+            output_queue,
+            config_paths,
+        )
+
+        self.__timer_task = timer_task
+        self.__stopped = False
+
+    def run(
         self
     ):
 
-        self.__stopped = True
+        self.showTraceSignal.emit(
+            f"定时任务 {self.__timer_task['name']} 开始运行"
+        )
+        super().run()
+        self.showTraceSignal.emit(
+            f"定时任务 {self.__timer_task['name']} 运行结束"
+        )
+        self.finishedSignal_TimerWorker.emit(self.__timer_task)
 
 
 class ALMainWindow(QMainWindow, Ui_ALMainWindow):
+
+    timerTaskIsRunning = Signal(dict)
+    timerTaskIsExecuted = Signal(dict)
 
     def __init__(
         self
@@ -129,27 +161,100 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.setupUi(self)
         self.__input_queue = queue.Queue()
         self.__output_queue = queue.Queue()
+        self.__timer_task_queue = queue.Queue()
         script_path = sys.executable
         script_dir = QFileInfo(script_path).absoluteDir()
         self.__config_paths = {
             "system":   QDir.toNativeSeparators(script_dir.absoluteFilePath("system.json")),
             "users": QDir.toNativeSeparators(script_dir.absoluteFilePath("users.json")),
         }
+        self.__alTimerTaskWidget = None
         self.__alConfigWidget = None
+        self.__alAboutDialog = None
         self.__auto_lib_thread = None
+        self.__current_timer_task_thread = None
+        self.__is_running_timer_task = False
 
         self.modifyUi()
+        self.setupTray()
         self.connectSignals()
         self.startMsgPolling()
+        self.startTimerTaskPolling()
 
 
     def modifyUi(
         self
     ):
 
-        icon = QIcon(":/res/icon/icons/AutoLibrary.ico")
-        self.setWindowIcon(icon)
+        self.icon = QIcon(":/res/icon/icons/AutoLibrary.ico")
+        self.setWindowIcon(self.icon)
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
+        self.ManualAction.triggered.connect(self.onManualActionTriggered)
+        self.AboutAction.triggered.connect(self.onAboutActionTriggered)
+
+
+    def onAboutActionTriggered(
+        self
+    ):
+
+        if self.__alAboutDialog is None:
+            self.__alAboutDialog = ALAboutDialog(self)
+        self.__alAboutDialog.show()
+
+
+    def onManualActionTriggered(
+        self
+    ):
+
+        url = QUrl("https://www.autolibrary.cv/docs/manual_lists.html")
+        QDesktopServices.openUrl(url)
+
+
+    def setupTray(
+        self
+    ):
+
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.showTraceSignal.emit(
+                "系统不支持系统托盘功能, 无法创建系统托盘图标。"
+            )
+            return
+        self.TrayIcon = QSystemTrayIcon(self.icon, self)
+        self.TrayIcon.setToolTip("AutoLibrary")
+
+        self.TrayMenu = QMenu()
+        self.TrayMenu.addAction("显示主窗口", self.showNormal)
+        self.TrayMenu.addAction("显示定时窗口", self.onTimerTaskWidgetButtonClicked)
+        self.TrayMenu.addAction("最小化到托盘", self.hideToTray)
+        self.TrayMenu.addSeparator()
+        self.TrayMenu.addAction("退出", self.close)
+        self.TrayIcon.setContextMenu(self.TrayMenu)
+
+        self.TrayIcon.setContextMenu(self.TrayMenu)
+        self.TrayIcon.activated.connect(self.onTrayIconActivated)
+        self.TrayIcon.show()
+
+
+    def hideToTray(
+        self
+    ):
+
+        self.hide()
+        self.TrayIcon.showMessage(
+            "AutoLibrary",
+            "\n已最小化到托盘",
+            QSystemTrayIcon.MessageIcon.Information,
+            2000
+        )
+
+
+    def onTrayIconActivated(
+        self,
+        reason: QSystemTrayIcon.ActivationReason
+    ):
+
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.showNormal()
 
 
     def connectSignals(
@@ -157,6 +262,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         self.ConfigButton.clicked.connect(self.onConfigButtonClicked)
+        self.TimerTaskWidgetButton.clicked.connect(self.onTimerTaskWidgetButtonClicked)
         self.StartButton.clicked.connect(self.onStartButtonClicked)
         self.StopButton.clicked.connect(self.onStopButtonClicked)
         self.SendButton.clicked.connect(self.onSendButtonClicked)
@@ -170,8 +276,17 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
         if self.__timer and self.__timer.isActive():
             self.__timer.stop()
+        if self.__timer_task_timer and self.__timer_task_timer.isActive():
+            self.__timer_task_timer.stop()
+        if self.__is_running_timer_task:
+            self.__current_timer_task_thread.wait(2000)
+            self.__current_timer_task_thread.deleteLater()
+        if self.__alTimerTaskWidget:
+            self.__alTimerTaskWidget.close()
+            self.__alTimerTaskWidget.deleteLater()
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
+            self.__alConfigWidget.deleteLater()
         super().closeEvent(event)
 
 
@@ -196,6 +311,51 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__timer = QTimer()
         self.__timer.timeout.connect(self.pollMsgQueue)
         self.__timer.start(100)
+
+
+    def startTimerTaskPolling(
+        self
+    ):
+
+        self.__timer_task_timer = QTimer()
+        self.__timer_task_timer.timeout.connect(self.pollTimerTaskQueue)
+        self.__timer_task_timer.start(500)
+
+
+    def pollTimerTaskQueue(
+        self
+    ):
+
+        if self.__is_running_timer_task:
+            return
+        try:
+            while not self.__is_running_timer_task:
+                timer_task = self.__timer_task_queue.get_nowait()
+                self.timerTaskIsRunning.emit(timer_task)
+                self.__timer_task_timer.stop()
+                self.__is_running_timer_task = True
+                self.setControlButtons(False, False, True)
+                if not timer_task["silent"]:
+                    self.TrayIcon.showMessage(
+                        "定时任务 - AutoLibrary",
+                        f"\n已开始执行定时任务: \n{timer_task['name']}",
+                        QSystemTrayIcon.MessageIcon.Information,
+                        1000
+                    )
+                    self.showNormal()
+                self.__current_timer_task_thread = TimerTaskWorker(
+                    timer_task,
+                    self.__input_queue,
+                    self.__output_queue,
+                    self.__config_paths
+                )
+                self.__current_timer_task_thread.finishedSignal_TimerWorker.connect(self.onTimerTaskFinished)
+                self.__current_timer_task_thread.showTraceSignal.connect(self.showTrace)
+                self.__current_timer_task_thread.showMsgSignal.connect(self.showMsg)
+                self.__current_timer_task_thread.start()
+        except queue.Empty:
+            self.__is_running_timer_task = False
+            pass
 
 
     def setControlButtons(
@@ -238,6 +398,15 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         except queue.Empty:
             pass
 
+
+    @Slot()
+    def onTimerTaskWidgetClosed(
+        self
+    ):
+
+        self.TimerTaskWidgetButton.setEnabled(True)
+
+
     @Slot(dict)
     def onConfigWidgetClosed(
         self,
@@ -252,6 +421,55 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.StartButton.setEnabled(True)
         self.StopButton.setEnabled(False)
         self.__config_paths = config_paths
+
+    @Slot(dict)
+    def onTimerTaskReady(
+        self,
+        timer_task: dict
+    ):
+
+        self.__timer_task_queue.put(timer_task)
+
+    @Slot(dict)
+    def onTimerTaskFinished(
+        self,
+        timer_task: dict
+    ):
+
+        self.__current_timer_task_thread.wait(1000)
+        self.__current_timer_task_thread.finishedSignal_TimerWorker.disconnect(self.onTimerTaskFinished)
+        self.__current_timer_task_thread.showTraceSignal.disconnect(self.showTrace)
+        self.__current_timer_task_thread.showMsgSignal.disconnect(self.showMsg)
+        self.__current_timer_task_thread.deleteLater()
+        self.__current_timer_task_thread = None
+        self.setControlButtons(True, True, False)
+        self.__is_running_timer_task = False
+        self.__timer_task_timer.start(500)
+        timer_task["executed"] = True
+        self.TrayIcon.showMessage(
+            "定时任务 - AutoLibrary",
+            f"\n定时任务 '{timer_task['name']}' 执行完成",
+            QSystemTrayIcon.MessageIcon.Information,
+            1000
+        )
+        self.showTrace(f"定时任务 {timer_task['name']} 执行完成, uuid: {timer_task['task_uuid']}")
+        self.timerTaskIsExecuted.emit(timer_task)
+
+    @Slot()
+    def onTimerTaskWidgetButtonClicked(
+        self
+    ):
+        if self.__alTimerTaskWidget is None:
+            self.__alTimerTaskWidget = ALTimerTaskWidget(self)
+            self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
+            self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
+            self.__alTimerTaskWidget.timerTaskReady.connect(self.onTimerTaskReady)
+            self.__alTimerTaskWidget.timerTaskWidgetClosed.connect(self.onTimerTaskWidgetClosed)
+            self.__alTimerTaskWidget.setWindowFlags(Qt.Window)
+        self.__alTimerTaskWidget.show()
+        self.__alTimerTaskWidget.raise_()
+        self.__alTimerTaskWidget.activateWindow()
+        self.TimerTaskWidgetButton.setEnabled(False)
 
     @Slot()
     def onConfigButtonClicked(
@@ -281,7 +499,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.__auto_lib_thread = AutoLibWorker(
                 self.__input_queue,
                 self.__output_queue,
-                self.__config_paths,
+                self.__config_paths
             )
             self.__auto_lib_thread.finishedSignal.connect(self.onStopButtonClicked)
             self.__auto_lib_thread.showMsgSignal.connect(self.showMsg)
@@ -295,8 +513,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
         if self.__auto_lib_thread:
             self.showTrace("正在停止操作......")
-            self.__auto_lib_thread.stop()
-            self.__auto_lib_thread.wait()
+            self.__auto_lib_thread.wait(2000)
             self.showTrace("操作已停止")
             self.__auto_lib_thread.showMsgSignal.disconnect(self.showMsg)
             self.__auto_lib_thread.showTraceSignal.disconnect(self.showTrace)
