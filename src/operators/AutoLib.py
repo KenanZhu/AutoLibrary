@@ -219,7 +219,7 @@ class AutoLib(MsgBase):
                 result = 2
         # logout
         if not self.__lib_logout.logout(
-            username,
+            username
         ):
             # if logout is failed, we must make sure the host to be reloaded
             # otherwise, the next login may fail

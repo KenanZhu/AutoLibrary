@@ -70,18 +70,21 @@ class LibCheckin(LibOperator):
                         f"          {details[1]}\n"\
                         f"          {details[2]}\n"\
                         f"          {details[3]}\n"\
-                        f"          {details[4]}")
+                        f"          {details[4]}"
+                    )
             else:
                 self._showTrace(f"\n"\
                          "      签到成功 !\n"\
-                         "          未获取到签到详情 !")
+                         "          未获取到签到详情 !"
+                    )
             ok_btn.click()
             return True
         else:
             failure_reason = result_message.replace("签到失败", "").strip()
             self._showTrace(f"\n"\
                 "      签到失败 !\n"\
-                f"          {failure_reason}")
+                f"          {failure_reason}"
+                )
             ok_btn.click()
             return False
 

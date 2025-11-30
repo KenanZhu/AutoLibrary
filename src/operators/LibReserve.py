@@ -88,11 +88,13 @@ class LibReserve(LibOperator):
                         f"          {contents[1]}\n"\
                         f"          {contents[2]}\n"\
                         f"          {contents[3]}\n"\
-                        f"          签到时间 ：{contents[5]}")
+                        f"          签到时间 ：{contents[5]}"
+                    )
                 else:
-                    self._showTrace(f"\n"\
-                        f"      预约成功 !\n"\
-                        f"          未找获取到详细信息")
+                    self._showTrace("\n"\
+                        "      预约成功 !\n"\
+                        "          未找获取到详细信息"
+                    )
             return True
         except:
             self._showTrace(f"预约结果加载失败 !")
