@@ -331,3 +331,44 @@ class LibChecker(LibOperator):
                 return None
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
         return None
+
+
+    def postRenewCheck(
+        self,
+        record: dict
+    ):
+        """
+        Check if the renew operation is successful
+
+        Args:
+            record (dict): The expected record after renewal
+
+        Returns:
+            bool: True if the renew operation is successful, False otherwise
+        """
+        # because the special circumstance that the renew operation
+        # do not show the success message or anything else,
+        # we need to check the record data to make sure the renew operation is successful.
+
+        # only check the given record date
+        date = record["date"]
+        act_record = self.__getReserveRecord(date, "使用中")
+        if act_record is not None:
+            if act_record["time"]["begin"] == record["time"]["begin"] and\
+               act_record["time"]["end"] == record["time"]["end"]:
+                self._showTrace(f"\n"\
+                    f"      续约成功 !\n"\
+                    f"          日 期 ：{date}\n"\
+                    f"          时 间 ：{act_record["time"]["begin"]} - {act_record["time"]["end"]}\n"\
+                    f"          位 置 ：{act_record["info"]["location"]}\n"
+                    f"          状 态 ：{act_record["info"]["status"]}"
+                )
+                return True
+            else:
+                self._showTrace(f"\n"\
+                    f"      续约失败 !\n"\
+                    f"          续约后结束时间为 {act_record["time"]["end"]}，与预期结束时间 {record["time"]["end"]} 不符 !"
+                )
+                return False
+        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法检查续约结果")
+        return False

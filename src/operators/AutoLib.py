@@ -208,7 +208,10 @@ class AutoLib(MsgBase):
         if run_mode["auto_renewal"] and result == 2:
             if record := self.__lib_checker.canRenew():
                 if self.__lib_renew.renew(username, record, reserve_info):
-                    result = 0
+                    if self.__lib_checker.postRenewCheck(record):
+                        result = 0
+                    else:
+                        result = 1
                 else:
                     result = 1
             else:

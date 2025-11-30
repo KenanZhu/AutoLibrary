@@ -37,54 +37,8 @@ class LibRenew(LibOperator):
         self
     ) -> bool:
 
-        try:
-            WebDriverWait(self.__driver, 2).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "ui_dialog"))
-            )
-            WebDriverWait(self.__driver, 2).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "resultMessage"))
-            )
-            WebDriverWait(self.__driver, 2).until(
-                EC.element_to_be_clickable((By.CLASS_NAME, "btnOK"))
-            )
-            result_message_element = self.__driver.find_element(
-                By.CLASS_NAME, "resultMessage"
-            )
-            ok_btn = self.__driver.find_element(By.CLASS_NAME, "btnOK")
-        except:
-            self._showTrace("续约时发生未知错误 !")
-            return False
-        result_message = result_message_element.text
-        if "续约成功" in result_message:
-            try:
-                detail_elements = self.__driver.find_elements(
-                    By.CSS_SELECTOR, ".resultMessage dd"
-                )
-            except:
-                pass
-            if detail_elements:
-                details = [element.text for element in detail_elements if element.text.strip()]
-                if len(details) >= 5:
-                    self._showTrace(f"\n"\
-                        f"      续约成功 !\n"\
-                        f"          {details[1]}\n"\
-                        f"          {details[2]}\n"\
-                        f"          {details[3]}\n"\
-                        f"          {details[4]}")
-            else:
-                self._showTrace(f"\n"\
-                         "      续约成功 !\n"\
-                         "          未获取到续约详情 !")
-            ok_btn.click()
-            return True
-        else:
-            failure_reason = result_message.replace("续约失败", "").strip()
-            self._showTrace(f"\n"\
-                "      续约失败 !\n"\
-                f"          {failure_reason}"
-            )
-            ok_btn.click()
-            return False
+        self.__driver.refresh()
+        return True
 
     @staticmethod
     def __timeToMins(
@@ -93,7 +47,6 @@ class LibRenew(LibOperator):
 
         hour, minute = map(int, time_str.split(":"))
         return hour*60 + minute
-
 
     @staticmethod
     def __minsToTime(
@@ -104,32 +57,66 @@ class LibRenew(LibOperator):
         return f"{hour:02d}:{minute:02d}"
 
 
-    def __selectNearstRecord(
+    def __waitRenewDialog(
+        self
+    ) -> bool:
+
+        try:
+            WebDriverWait(self.__driver, 2).until(
+                EC.visibility_of_element_located((By.ID, "extendDiv"))
+            )
+            head_message = WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "#extendDiv p.messageHead"))
+            )
+            result_message = WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "#extendDiv div.resultMessage"))
+            )
+        except:
+            self._showTrace("续约时间选择界面加载失败 !")
+            return False
+        head_message = head_message.text.strip()
+        if "警告" in head_message:
+            result_message = result_message.text.strip()
+            self._showTrace(f"\n"\
+                f"      续约失败 !\n"\
+                f"          {result_message}")
+            return False
+        try:
+            WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, "#extendDiv .renewal_List li")
+                )
+            )
+            WebDriverWait(self.__driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "#extendDiv .btnOK"))
+            )
+        except:
+            self._showTrace("续约时间选择界面加载失败 !")
+            return False
+        return True
+
+
+    def __selectNearstTime(
         self,
         record: dict,
         reserve_info: dict
     ) -> bool:
+
+        """
+            TODO : this function is too long and too ugly
+
+            we need to refactor it to make it more readable.
+            but may be it is not a good idea to refactor it. :) who knows...
+        """
 
         end_time = record["time"]["end"]
         renew_info = reserve_info["renew_time"]
         max_diff = renew_info["max_diff"]
         prefer_earlier = renew_info["prefer_early"]
         target_renew_mins = self.__timeToMins(end_time) + renew_info["expect_duration"]*60
-        try:
-            WebDriverWait(self.__driver, 2).until(
-                EC.visibility_of_element_located((By.ID, "extendDiv"))
-            )
-            WebDriverWait(self.__driver, 2).until(
-                EC.presence_of_all_elements_located(
-                    (By.CSS_SELECTOR, "#extendDiv .renewal_List li")
-                )
-            )
-            renew_ok_btn = WebDriverWait(self.__driver, 2).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "#extendDiv .btnOK"))
-            )
-        except:
-            self._showTrace("续约时间选择界面加载失败 !")
-            return False
+        renew_ok_btn = self.__driver.find_element(
+            By.CSS_SELECTOR, "#extendDiv .btnOK"
+        )
         try:
             renew_time_opts = self.__driver.find_elements(
                 By.CSS_SELECTOR, "#extendDiv .renewal_List li"
@@ -176,6 +163,8 @@ class LibRenew(LibOperator):
                     f"选择距离期望续约时间最近的 {best_time_opt.text}, "\
                     f"与期望续约时间相比 {time_relation}"
                 )
+                # update the actual renew end time
+                record["time"]["end"] = best_time_opt.text.strip()
                 renew_ok_btn.click()
                 return True
             self._showTrace(
@@ -209,15 +198,19 @@ class LibRenew(LibOperator):
             self._showTrace(f"用户 {username} 续约界面加载失败 !")
             return False
         if "disabled" in renew_btn.get_attribute("class"):
-            self._showTrace(f"用户 {username} 续约按钮不可用, 可能不在场馆内")
+            self._showTrace(f"用户 {username} 续约按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试")
             return False
         renew_btn.click()
-        if not self.__selectNearstRecord(record, reserve_info):
-            return False
-        # renew_ok_btn.click()
-        if self._waitResponseLoad():
-            self._showTrace(f"用户 {username} 续约成功 !")
-            return True
-        else:
+        if not self.__waitRenewDialog():
             self._showTrace(f"用户 {username} 续约失败 !")
+
+            # After the renewal, the webpage will display a mask overlay,
+            #  so we need to refresh the page for subsequent operations.
+            self.__driver.refresh()
             return False
+        if not self.__selectNearstTime(record, reserve_info):
+            self._showTrace(f"用户 {username} 续约失败 !")
+            self.__driver.refresh()
+            return False
+        if self._waitResponseLoad():
+            return True
