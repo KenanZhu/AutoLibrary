@@ -169,8 +169,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         event: QCloseEvent
     ):
 
-        if self.__timer and self.__timer.isActive():
-            self.__timer.stop()
+        if self.__msg_queue_timer and self.__msg_queue_timer.isActive():
+            self.__msg_queue_timer.stop()
         if self.__timer_task_timer and self.__timer_task_timer.isActive():
             self.__timer_task_timer.stop()
         if self.__is_running_timer_task:
@@ -203,9 +203,9 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.__timer = QTimer()
-        self.__timer.timeout.connect(self.pollMsgQueue)
-        self.__timer.start(100)
+        self.__msg_queue_timer = QTimer()
+        self.__msg_queue_timer.timeout.connect(self.pollMsgQueue)
+        self.__msg_queue_timer.start(100)
 
 
     def startTimerTaskPolling(
@@ -256,13 +256,13 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     def setControlButtons(
         self,
         config_button_enabled: bool,
-        start_button_enabled: bool,
-        stop_button_enabled: bool
+        stop_button_enabled: bool,
+        start_button_enabled: bool
     ):
 
         self.ConfigButton.setEnabled(config_button_enabled)
-        self.StartButton.setEnabled(start_button_enabled)
         self.StopButton.setEnabled(stop_button_enabled)
+        self.StartButton.setEnabled(start_button_enabled)
 
     @Slot()
     def showMsg(
@@ -312,9 +312,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget.configWidgetCloseSingal.disconnect(self.onConfigWidgetClosed)
             self.__alConfigWidget.deleteLater()
             self.__alConfigWidget = None
-        self.ConfigButton.setEnabled(True)
-        self.StartButton.setEnabled(True)
-        self.StopButton.setEnabled(False)
+        self.setControlButtons(True, False, True)
         self.__config_paths = config_paths
 
     @Slot(dict)
@@ -337,7 +335,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__current_timer_task_thread.showMsgSignal.disconnect(self.showMsg)
         self.__current_timer_task_thread.deleteLater()
         self.__current_timer_task_thread = None
-        self.setControlButtons(True, True, False)
+        self.setControlButtons(True, False, True)
         self.__is_running_timer_task = False
         self.__timer_task_timer.start(500)
         timer_task["executed"] = True
@@ -371,8 +369,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                 self.__config_paths
             )
             self.__alConfigWidget.configWidgetCloseSingal.connect(self.onConfigWidgetClosed)
-        self.__alConfigWidget.setWindowFlags(Qt.Window)
-        self.__alConfigWidget.setWindowModality(Qt.ApplicationModal)
+        self.__alConfigWidget.setWindowFlags(Qt.WindowType.Window)
+        self.__alConfigWidget.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.__alConfigWidget.show()
         self.__alConfigWidget.raise_()
         self.__alConfigWidget.activateWindow()
