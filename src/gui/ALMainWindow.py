@@ -58,7 +58,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         }
         self.__alTimerTaskWidget = None
         self.__alConfigWidget = None
-        self.__alAboutDialog = None
         self.__auto_lib_thread = None
         self.__current_timer_task_thread = None
         self.__is_running_timer_task = False
@@ -85,9 +84,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alAboutDialog is None:
-            self.__alAboutDialog = ALAboutDialog(self)
-        self.__alAboutDialog.show()
+        about_dialog = ALAboutDialog(self)
+        about_dialog.exec()
 
 
     def onManualActionTriggered(

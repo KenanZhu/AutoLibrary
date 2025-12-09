@@ -30,7 +30,7 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
 
     def __init__(
         self,
-        parent=None
+        parent = None
     ):
         super().__init__(parent)
 
@@ -67,21 +67,21 @@ Version: {AL_VERSION}<br>
 Python version: {platform.python_version()}<br>
 Qt version: {self.getQtVersion()}<br>
 
-<h4>Author Information:</h4>
-Developer: KenanZhu<br>
-Contact: nanoki_zh@163.com<br>
-GitHub: <a href="https://www.github.com/KenanZhu" style="text-decoration: none;">https://www.github.com/KenanZhu</a><br>
+<h4>System Information:</h4>
+Processor: {platform.processor()}<br>
+Operating system: {os_info['system']}<br>
+System version: {os_info['version']}<br>
+System architecture: {os_info['architecture']}<br>
 
 <h4>Project Information:</h4>
 License: MIT License<br>
 Project repository: <a href="https://www.github.com/KenanZhu/AutoLibrary" style="text-decoration: none;">https://www.github.com/KenanZhu/AutoLibrary</a><br>
 Project website: <a href="https://www.autolibrary.cv/" style="text-decoration: none;">https://www.autolibrary.cv/</a><br>
 
-<h4>System Information:</h4>
-Processor: {platform.processor()}<br>
-Operating system: {os_info['system']}<br>
-System version: {os_info['version']}<br>
-System architecture: {os_info['architecture']}<br>
+<h4>Author Information:</h4>
+Developer: KenanZhu<br>
+Contact: nanoki_zh@163.com<br>
+GitHub: <a href="https://www.github.com/KenanZhu" style="text-decoration: none;">https://www.github.com/KenanZhu</a><br>
 """
         return about_text
 
