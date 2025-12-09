@@ -31,6 +31,7 @@ from gui.Ui_ALAddTimerTaskDialog import Ui_ALAddTimerTaskDialog
 
 
 class TimerTaskStatus(Enum):
+
     PENDING = "等待中"
     READY = "已就绪"
     RUNNING = "执行中"

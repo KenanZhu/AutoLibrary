@@ -162,6 +162,82 @@
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="TimerTaskSortLayout">
+     <property name="spacing">
+      <number>5</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="TimerTaskSortSpaceFrame">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Shape::NoFrame</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="TimerTaskSortLabel">
+       <property name="minimumSize">
+        <size>
+         <width>40</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>排序：</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="TimerTaskSortTypeComboBox">
+       <property name="minimumSize">
+        <size>
+         <width>90</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>90</width>
+         <height>25</height>
+        </size>
+       </property>
+       <item>
+        <property name="text">
+         <string>按名称</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>按添加时间</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>按执行时间</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QListWidget" name="TimerTasksListWidget">
      <property name="enabled">
       <bool>true</bool>

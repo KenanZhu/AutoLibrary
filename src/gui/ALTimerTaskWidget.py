@@ -10,6 +10,7 @@ See the LICENSE file for details.
 import os
 import sys
 import time
+import copy
 import queue
 
 from enum import Enum
@@ -23,11 +24,21 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QVBoxLayout, QLabel, QPushButton
 )
 from PySide6.QtGui import (
-    QCloseEvent
+    QCloseEvent, QScreen
 )
 
 from gui.Ui_ALTimerTaskWidget import Ui_ALTimerTaskWidget
 from gui.ALAddTimerTaskDialog import ALAddTimerTaskWidget, TimerTaskStatus
+
+from utils.ConfigReader import ConfigReader
+from utils.ConfigWriter import ConfigWriter
+
+
+class SortPolicy(Enum):
+
+    BY_NAME = "按名称"
+    BY_ADD_TIME = "按添加时间"
+    BY_EXECUTE_TIME = "按执行时间"
 
 
 class TimerTaskItemWidget(QWidget):
@@ -125,22 +136,38 @@ class TimerTaskItemWidget(QWidget):
 
 class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
 
-    timerTasksChanged = Signal(list)
-    timerTaskReady = Signal(dict)
+    timerTasksChanged = Signal()
+    timerTaskIsReady = Signal(dict)
     timerTaskWidgetClosed = Signal()
 
     def __init__(
         self,
-        parent = None
+        parent = None,
+        timer_tasks_config_path: str = ""
     ):
 
         super().__init__(parent)
 
         self.__timer_tasks = []
         self.__check_timer = None
+        self.__sort_policy = SortPolicy.BY_EXECUTE_TIME
+        self.__timer_tasks_config_path = timer_tasks_config_path
+
         self.setupUi(self)
         self.connectSignals()
         self.setupTimer()
+        if not self.initializeTimerTasks():
+            return
+
+
+    def connectSignals(
+        self
+    ):
+
+        self.AddTimerTaskButton.clicked.connect(self.addTask)
+        self.ClearAllTimerTasksButton.clicked.connect(self.clearAllTasks)
+        self.TimerTaskSortTypeComboBox.currentIndexChanged.connect(self.onSortPolicyComboBoxChanged)
+        self.timerTasksChanged.connect(self.onTimerTasksChanged)
 
 
     def setupTimer(
@@ -152,12 +179,79 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         self.__check_timer.start(500)
 
 
-    def connectSignals(
+    def initializeTimerTasks(
         self
-    ):
+    ) -> bool:
 
-        self.AddTimerTaskButton.clicked.connect(self.addTask)
-        self.ClearAllTimerTasksButton.clicked.connect(self.clearAllTasks)
+        timer_tasks = self.loadTimerTasks(self.__timer_tasks_config_path)
+        if timer_tasks is not None:
+            self.__timer_tasks = timer_tasks
+            self.timerTasksChanged.emit()
+            return True
+        if self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(timer_tasks)):
+            QMessageBox.information(
+                self,
+                "信息 - AutoLibrary",
+                f"定时任务配置文件初始化完成: \n{self.__timer_tasks_config_path}"
+            )
+            self.__timer_tasks = timer_tasks
+            self.updateTimerTaskList()
+            return True
+        return False
+
+
+    def loadTimerTasks(
+        self,
+        timer_tasks_config_path: str
+    ) -> list:
+
+        try:
+            if not timer_tasks_config_path or not os.path.exists(timer_tasks_config_path):
+                raise Exception("定时任务配置文件不存在")
+            timer_tasks = ConfigReader(timer_tasks_config_path).getConfigs()
+            if timer_tasks and "timer_tasks" in timer_tasks:
+                for task in timer_tasks["timer_tasks"]:
+                    task["add_time"] = datetime.strptime(task["add_time"], "%Y-%m-%d %H:%M:%S")
+                    task["execute_time"] = datetime.strptime(task["execute_time"], "%Y-%m-%d %H:%M:%S")
+                    task["status"] = TimerTaskStatus(task["status"])
+                return timer_tasks["timer_tasks"]
+            raise Exception("定时任务配置文件格式错误")
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"加载定时任务配置发生错误 ! : {e}\n"\
+                f"文件路径: {timer_tasks_config_path}"
+            )
+            return None
+
+
+    def saveTimerTasks(
+        self,
+        timer_tasks_config_path: str,
+        timer_tasks: list
+    ) -> bool:
+
+        try:
+            if not timer_tasks_config_path:
+                raise Exception("配置文件路径为空")
+            for task in timer_tasks:
+                task["add_time"] = task["add_time"].strftime("%Y-%m-%d %H:%M:%S")
+                task["execute_time"] = task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
+                task["status"] = task["status"].value
+            ConfigWriter(
+                timer_tasks_config_path,
+                { "timer_tasks": timer_tasks }
+            )
+            return True
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"保存定时任务配置发生错误 ! : {e}\n"\
+                f"文件路径: {timer_tasks_config_path}"
+            )
+            return False
 
 
     def closeEvent(
@@ -168,6 +262,25 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         self.hide()
         self.timerTaskWidgetClosed.emit()
         event.ignore()
+
+
+    def sortTimerTasks(
+        self,
+        policy: SortPolicy = SortPolicy.BY_EXECUTE_TIME
+    ):
+
+        if policy == SortPolicy.BY_NAME:
+            self.__timer_tasks.sort(
+                key = lambda x: x["name"]
+            )
+        elif policy == SortPolicy.BY_ADD_TIME:
+            self.__timer_tasks.sort(
+                key = lambda x: x["add_time"]
+            )
+        elif policy == SortPolicy.BY_EXECUTE_TIME:
+            self.__timer_tasks.sort(
+                key = lambda x: x["execute_time"]
+            )
 
 
     def updateStat(
@@ -197,9 +310,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
     ):
 
         self.TimerTasksListWidget.clear()
-        self.__timer_tasks.sort(
-            key = lambda x: x["execute_time"]
-        )
+        self.sortTimerTasks(self.__sort_policy)
         for timer_task in self.__timer_tasks:
             item = QListWidgetItem()
             item.setData(Qt.UserRole, timer_task)
@@ -220,8 +331,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             timer_task = dialog.getTimerTask()
             self.__timer_tasks.append(timer_task)
-            self.updateTimerTaskList()
-            self.updateStat()
+            self.timerTasksChanged.emit()
 
 
     def deleteTask(
@@ -233,8 +343,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
             x for x in self.__timer_tasks
             if x["task_uuid"] != task_uuid
         ]
-        self.updateTimerTaskList()
-        self.updateStat()
+        self.timerTasksChanged.emit()
 
 
     def clearAllTasks(
@@ -264,13 +373,14 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
                 "存在正在执行或已就绪的队列任务，无法清除所有定时任务 !"
             )
         self.__timer_tasks = in_queue_tasks
-        self.updateTimerTaskList()
-        self.updateStat()
+        self.timerTasksChanged.emit()
 
 
     def checkTasks(
         self
     ):
+
+        need_update = False
 
         now = datetime.now()
         for timer_task in self.__timer_tasks:
@@ -280,9 +390,35 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
                 continue
             if timer_task["execute_time"] <= now + timedelta(seconds = -5):
                 timer_task["status"] = TimerTaskStatus.OUTDATED
+                need_update = True
             else:
                 timer_task["status"] = TimerTaskStatus.READY
-                self.timerTaskReady.emit(timer_task)
+                self.timerTaskIsReady.emit(timer_task)
+                need_update = True
+        if need_update:
+            self.timerTasksChanged.emit()
+
+    @Slot(int)
+    def onSortPolicyComboBoxChanged(
+        self,
+        policy: int
+    ):
+
+        mapping = {
+            0: SortPolicy.BY_NAME,
+            1: SortPolicy.BY_ADD_TIME,
+            2: SortPolicy.BY_EXECUTE_TIME
+        }
+        self.__sort_policy = mapping[policy]
+        self.updateTimerTaskList()
+
+
+    @Slot()
+    def onTimerTasksChanged(
+        self
+    ):
+
+        self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(self.__timer_tasks))
         self.updateTimerTaskList()
         self.updateStat()
 
@@ -296,8 +432,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         for task in self.__timer_tasks:
             if task["task_uuid"] == timer_task["task_uuid"]:
                 task["status"] = TimerTaskStatus.RUNNING
-        self.updateTimerTaskList()
-        self.updateStat()
+        self.timerTasksChanged.emit()
 
 
     @Slot(dict)
@@ -309,5 +444,4 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         for task in self.__timer_tasks:
             if task["task_uuid"] == timer_task["task_uuid"]:
                 task["status"] = TimerTaskStatus.EXECUTED
-        self.updateTimerTaskList()
-        self.updateStat()
+        self.timerTasksChanged.emit()

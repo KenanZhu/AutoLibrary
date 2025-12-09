@@ -55,6 +55,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__config_paths = {
             "system":   QDir.toNativeSeparators(script_dir.absoluteFilePath("system.json")),
             "users": QDir.toNativeSeparators(script_dir.absoluteFilePath("users.json")),
+            "timer_tasks": QDir.toNativeSeparators(script_dir.absoluteFilePath("timer_tasks.json")),
         }
         self.__alTimerTaskWidget = None
         self.__alConfigWidget = None
@@ -78,6 +79,14 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
+
+        # initialize timer task widget, but not show it
+        self.__alTimerTaskWidget = ALTimerTaskWidget(self, self.__config_paths["timer_tasks"])
+        self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
+        self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
+        self.__alTimerTaskWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
+        self.__alTimerTaskWidget.timerTaskWidgetClosed.connect(self.onTimerTaskWidgetClosed)
+        self.__alTimerTaskWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
 
     def onAboutActionTriggered(
@@ -309,7 +318,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__config_paths = config_paths
 
     @Slot(dict)
-    def onTimerTaskReady(
+    def onTimerTaskIsReady(
         self,
         timer_task: dict
     ):
@@ -345,13 +354,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     def onTimerTaskWidgetButtonClicked(
         self
     ):
-        if self.__alTimerTaskWidget is None:
-            self.__alTimerTaskWidget = ALTimerTaskWidget(self)
-            self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
-            self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
-            self.__alTimerTaskWidget.timerTaskReady.connect(self.onTimerTaskReady)
-            self.__alTimerTaskWidget.timerTaskWidgetClosed.connect(self.onTimerTaskWidgetClosed)
-            self.__alTimerTaskWidget.setWindowFlags(Qt.Window)
+
         self.__alTimerTaskWidget.show()
         self.__alTimerTaskWidget.raise_()
         self.__alTimerTaskWidget.activateWindow()
