@@ -115,6 +115,30 @@ class ALSeatMapWidget(QWidget):
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
 
 
+    def showEvent(
+        self,
+        event
+    ):
+
+        result = super().showEvent(event)
+
+        screen_rect = self.screen().geometry()
+        target_pos = self.parent().geometry().center()
+        target_pos.setX(target_pos.x() - self.width()//2)
+        target_pos.setY(target_pos.y() - self.height()//2)
+        if target_pos.x() < 0:
+            target_pos.setX(0)
+        if target_pos.x() + self.width() > screen_rect.width():
+            target_pos.setX(screen_rect.width() - self.width())
+        if target_pos.y() < 0:
+            target_pos.setY(0)
+        if target_pos.y() + self.height() > screen_rect.height():
+            target_pos.setY(screen_rect.height() - self.height())
+        self.move(target_pos)
+
+        return result
+
+
     def closeEvent(
         self,
         event: QCloseEvent
