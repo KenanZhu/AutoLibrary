@@ -18,10 +18,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import (
     QPainter, QWheelEvent, QCloseEvent
 )
-from gui.SeatFrame import SeatFrame
+from gui.ALSeatFrame import ALSeatFrame
 
 
-class SeatMapWidget(QWidget):
+class ALSeatMapWidget(QWidget):
 
     seatMapWidgetClosed = Signal(list)
 
@@ -160,7 +160,7 @@ class SeatMapWidget(QWidget):
             seats_number = [seat.strip() for seat in row.split(",")]
             for seat_number in seats_number:
                 if seat_number:
-                    seat_widget = SeatFrame(seat_number)
+                    seat_widget = ALSeatFrame(seat_number)
                     seat_widget.clicked.connect(self.onSeatClicked)
                     self.SeatsContainerLayout.addWidget(seat_widget, row_idx, col_idx)
                     self.__seat_frames[seat_number] = seat_widget

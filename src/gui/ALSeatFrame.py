@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class SeatFrame(QFrame):
+class ALSeatFrame(QFrame):
 
     clicked = Signal(str)
 

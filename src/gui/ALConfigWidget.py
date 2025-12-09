@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QCloseEvent
 
 from gui.Ui_ALConfigWidget import Ui_ALConfigWidget
-from gui.SeatMapWidget import SeatMapWidget
-from gui.SeatMapTable import seats_maps
+from gui.ALSeatMapWidget import ALSeatMapWidget
+from gui.ALSeatMapTable import seats_maps
 
 from utils.ConfigReader import ConfigReader
 from utils.ConfigWriter import ConfigWriter
@@ -647,7 +647,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         floor_idx = self.__floor_rmap[floor]
         room_idx = self.__room_rmap[room]
         if self.__seat_map_widget is None:
-            self.__seat_map_widget = SeatMapWidget(
+            self.__seat_map_widget = ALSeatMapWidget(
                 self,
                 floor,
                 room,
