@@ -188,6 +188,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
             self.__timer_tasks = timer_tasks
             self.timerTasksChanged.emit()
             return True
+        timer_tasks = []
         if self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(timer_tasks)):
             QMessageBox.information(
                 self,
