@@ -32,13 +32,20 @@ class AutoLib(MsgBase):
     def __init__(
         self,
         input_queue: queue.Queue,
-        output_queue: queue.Queue
+        output_queue: queue.Queue,
+        run_config: dict
     ):
         super().__init__(input_queue, output_queue)
 
-        self.__system_config_reader = None
-        self.__users_config_reader = None
+        self.__run_config = run_config
+        self.__user_config = None
         self.__driver = None
+        if not self.__initBrowserDriver():
+            return None
+        else:
+            if not self.__initDriverUrl():
+                return None
+            self.__initLibOperators()
 
 
     def __initBrowserDriver(
@@ -48,7 +55,11 @@ class AutoLib(MsgBase):
         self._showTrace("正在初始化浏览器驱动......")
         edge_options = webdriver.EdgeOptions()
 
-        if self.__system_config_reader.get("web_driver/headless"):
+        web_driver_config = self.__run_config.get("web_driver", None)
+        if not web_driver_config:
+            self._showTrace("未配置浏览器驱动参数 !")
+            return False
+        if web_driver_config.get("headless"):
             edge_options.add_argument("--headless")
             edge_options.add_argument("--disable-gpu")
             edge_options.add_argument("--no-sandbox")
@@ -76,8 +87,8 @@ class AutoLib(MsgBase):
         )
 
         # init browser driver
-        self.__driver_path = self.__system_config_reader.get("web_driver/driver_path")
-        self.__driver_type = self.__system_config_reader.get("web_driver/driver_type")
+        self.__driver_path = web_driver_config.get("driver_path")
+        self.__driver_type = web_driver_config.get("driver_type")
         self.__driver_path = os.path.abspath(self.__driver_path)
         try:
             service = None
@@ -149,8 +160,11 @@ class AutoLib(MsgBase):
         self,
     ) -> bool:
 
-        url = self.__system_config_reader.get("library/host_url")
-        url += self.__system_config_reader.get("library/login_url")
+        lib_config = self.__run_config.get("library", None)
+        if not lib_config:
+            self._showError("未配置图书馆参数 !")
+            return False
+        url = lib_config.get("host_url") + lib_config.get("login_url")
         self.__driver.get(url)
         if not self.__waitResponseLoad():
             return False
@@ -161,24 +175,26 @@ class AutoLib(MsgBase):
         self,
         username: str,
         password: str,
+        login_config: dict,
+        run_mode_config: dict,
         reserve_info: dict
     ) -> int:
 
-        # result : 0 - success, 1 - failed, 2 - passed
+        # result : -1 - terminate, 0 - success, 1 - failed, 2 - passed
         result = 2
 
         # login
         if not self.__lib_login.login(
             username,
             password,
-            self.__system_config_reader.get("login/max_attempt", 5),
-            self.__system_config_reader.get("login/auto_captcha", True),
+            login_config.get("max_attempt", 3),
+            login_config.get("auto_captcha", True),
         ):
             return 1
         """
-            Here, we collect the run mode from the config file.
+            Here, we collect the run mode from the run config.
         """
-        run_mode = self.__system_config_reader.get("mode/run_mode", 0)
+        run_mode = run_mode_config.get("run_mode", 0)
         run_mode = {
             "auto_reserve": run_mode&0x1,
             "auto_checkin": run_mode&0x2,
@@ -223,43 +239,43 @@ class AutoLib(MsgBase):
         ):
             # if logout is failed, we must make sure the host to be reloaded
             # otherwise, the next login may fail
-            self.__driver.get(self.__system_config_reader.get("library/host_url"))
-            return 1
+            if not self.__initDriverUrl():
+                return -1
         return result
 
 
     def run(
         self,
-        system_config_reader: ConfigReader,
-        users_config_reader: ConfigReader
+        user_config: dict
     ):
 
-        self.__system_config_reader = system_config_reader
-        self.__users_config_reader = users_config_reader
-        if not self.__initBrowserDriver():
-            return
-        else:
-            if not self.__initDriverUrl():
-                return
-            self.__initLibOperators()
+        self.__user_config = user_config
 
         user_counter = {"current": 0, "success": 0, "failed": 0, "passed": 0}
-        users = self.__users_config_reader.get("users")
-        self._showTrace(
-            f"共发现 {len(users)} 个用户, "\
-            f"用户配置文件路径: {self.__users_config_reader.configPath()}"
-        )
+        users = self.__user_config["users"]
+        self._showTrace(f"共发现 {len(users)} 个用户")
         for user in users:
             user_counter["current"] += 1
             self._showTrace(
-                f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user['username']}......"
+                f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user["username"]}......"
             )
+            if not user["enabled"]:
+                self._showTrace(f"用户 {user["username"]} 已跳过")
+                user_counter["passed"] += 1
+                continue
             r = self.__run(
                 username=user["username"],
                 password=user["password"],
+                login_config=self.__run_config["login"],
+                run_mode_config=self.__run_config["mode"],
                 reserve_info=user["reserve_info"],
             )
-            if r == 0:
+            if r == -1:
+                self._showTrace(
+                    f"用户 {user["username"]} 处理过程中页面发生异常，无法继续操作, 任务已终止 !"
+                )
+                break
+            elif r == 0:
                 user_counter["success"] += 1
             elif r == 1:
                 user_counter["failed"] += 1

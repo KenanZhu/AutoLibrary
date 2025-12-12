@@ -14,13 +14,18 @@ from PySide6.QtCore import (
     Qt, Signal, Slot, QTime, QDate, QDir, QFileInfo
 )
 from PySide6.QtWidgets import (
-    QWidget, QLineEdit, QMessageBox, QFileDialog, QListWidgetItem
+    QWidget, QLineEdit, QMessageBox, QFileDialog,
+    QTreeWidgetItem, QMenu, QInputDialog
 )
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import (
+     QCloseEvent, QAction
+)
 
 from gui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapWidget import ALSeatMapWidget
 from gui.ALSeatMapTable import seats_maps
+from gui.ALUserTreeWidget import TreeItemType
+from gui.ALUserTreeWidget import ALUserTreeWidget
 
 from utils.ConfigReader import ConfigReader
 from utils.ConfigWriter import ConfigWriter
@@ -34,8 +39,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self,
         parent = None,
         config_paths = {
-            "system": "",
-            "users": ""
+            "run": "",
+            "user": ""
         }
     ):
 
@@ -43,7 +48,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         self.setupUi(self)
         self.__config_paths = config_paths
-        self.__config_data = {"system": {}, "users": {}}
+        self.__config_data = {"run": {}, "user": {}}
         self.__seat_map_widget = None
 
         self.modifyUi()
@@ -59,6 +64,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         self.setWindowFlags(Qt.WindowType.Window)
+        # replace the treewidget with ALUserTreeWidget
+        self.UserTreeWidget.setParent(None)
+        self.UserTreeWidget.deleteLater()
+        self.UserTreeWidget = ALUserTreeWidget()
+        self.UserListLayout.insertWidget(0, self.UserTreeWidget)
+        self.UserTreeWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.UserTreeWidget.customContextMenuRequested.connect(self.onUserTreeWidgetContextMenu)
         self.initlizeFloorRoomMap()
         self.initilizeUserInfoWidget()
 
@@ -70,13 +82,14 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.ShowPasswordCheckBox.clicked.connect(self.onShowPasswordCheckBoxChecked)
         self.FloorComboBox.currentIndexChanged.connect(self.onFloorComboBoxCurrentIndexChanged)
         self.SelectSeatsButton.clicked.connect(self.onSelectSeatsButtonClicked)
-        self.UserListWidget.currentItemChanged.connect(self.onUserListWidgetCurrentItemChanged)
+        self.UserTreeWidget.currentItemChanged.connect(self.onUserTreeWidgetCurrentItemChanged)
+        self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
         self.AddUserButton.clicked.connect(self.onAddUserButtonClicked)
         self.DelUserButton.clicked.connect(self.onDelUserButtonClicked)
         self.BrowseBrowserDriverButton.clicked.connect(self.onBrowseBrowserDriverButtonClicked)
-        self.BrowseCurrentSystemConfigButton.clicked.connect(self.onBrowseCurrentSystemConfigButtonClicked)
+        self.BrowseCurrentRunConfigButton.clicked.connect(self.onBrowseCurrentRunConfigButtonClicked)
         self.BrowseCurrentUserConfigButton.clicked.connect(self.onBrowseCurrentUserConfigButtonClicked)
-        self.BrowseExportSystemConfigButton.clicked.connect(self.onBrowseExportSystemConfigButtonClicked)
+        self.BrowseExportRunConfigButton.clicked.connect(self.onBrowseExportRunConfigButtonClicked)
         self.BrowseExportUserConfigButton.clicked.connect(self.onBrowseExportUserConfigButtonClicked)
         self.ExportConfigButton.clicked.connect(self.onExportConfigButtonClicked)
         self.NewConfigButton.clicked.connect(self.onNewConfigButtonClicked)
@@ -159,8 +172,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         script_path = sys.executable
         script_dir = QFileInfo(script_path).absoluteDir()
         self.__default_config_paths = {
-            "users": QDir.toNativeSeparators(script_dir.absoluteFilePath("users.json")),
-            "system": QDir.toNativeSeparators(script_dir.absoluteFilePath("system.json"))
+            "user": QDir.toNativeSeparators(script_dir.absoluteFilePath("user.json")),
+            "run": QDir.toNativeSeparators(script_dir.absoluteFilePath("run.json"))
         }
 
 
@@ -170,13 +183,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         config_data: dict
     ):
 
-        if which == "system":
-            self.setSystemConfigToWidget(config_data)
-            self.CurrentSystemConfigEdit.setText(self.__config_paths["system"])
-        elif which == "users":
+        if which == "run":
+            self.setRunConfigToWidget(config_data)
+            self.CurrentRunConfigEdit.setText(self.__config_paths["run"])
+        elif which == "user":
             self.initilizeUserInfoWidget()
-            self.fillUsersList(config_data)
-            self.CurrentUserConfigEdit.setText(self.__config_paths["users"])
+            self.fillUserTree(config_data)
+            self.CurrentUserConfigEdit.setText(self.__config_paths["user"])
 
 
     def initlizeConfig(
@@ -186,30 +199,30 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         msg = ""
         is_success = True
-        if which == "system":
-            system_config_path = self.__config_paths[which]
-            if not os.path.exists(system_config_path):
-                self.__config_data[which] = self.defaultSystemConfig()
+        if which == "run":
+            run_config_path = self.__config_paths[which]
+            if not os.path.exists(run_config_path):
+                self.__config_data[which] = self.defaultRunConfig()
                 self.__config_paths[which] = self.__default_config_paths[which]
-                if self.saveSystemConfig(self.__config_paths[which], self.__config_data[which]):
-                    msg += f"系统配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
+                if self.saveRunConfig(self.__config_paths[which], self.__config_data[which]):
+                    msg += f"运行配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
                 else:
                     is_success = False
             else:
-                self.__config_data[which] = self.loadSystemConfig(system_config_path)
+                self.__config_data[which] = self.loadRunConfig(run_config_path)
                 if self.__config_data[which] is None:
                     is_success = False
-        elif which == "users":
-            users_config_path = self.__config_paths[which]
-            if not os.path.exists(users_config_path):
-                self.__config_data[which] = self.defaultUsersConfig()
+        elif which == "user":
+            user_config_path = self.__config_paths[which]
+            if not os.path.exists(user_config_path):
+                self.__config_data[which] = self.defaultUserConfig()
                 self.__config_paths[which] = self.__default_config_paths[which]
-                if self.saveUsersConfig(self.__config_paths[which], self.__config_data[which]):
+                if self.saveUserConfig(self.__config_paths[which], self.__config_data[which]):
                     msg += f"用户配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
                 else:
                     is_success = False
             else:
-                self.__config_data[which] = self.loadUsersConfig(users_config_path)
+                self.__config_data[which] = self.loadUserConfig(user_config_path)
                 if self.__config_data[which] is None:
                     is_success = False
         if msg:
@@ -226,7 +239,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ) -> bool:
 
         is_success = True
-        for which in ["system", "users"]:
+        for which in ["run", "user"]:
             if not self.__config_paths[which]:
                 self.__config_paths[which] = self.__default_config_paths[which]
             if not self.initlizeConfig(which):
@@ -236,7 +249,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         return is_success
 
 
-    def defaultSystemConfig(
+    def defaultRunConfig(
         self
     ) -> dict:
 
@@ -260,7 +273,27 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         }
 
 
-    def defaultUsersConfig(
+    def defaultUserConfig(
+        self
+    ) -> dict:
+
+        return {
+            "groups": []
+        }
+
+
+    def defaultGroup(
+        self
+    ) -> dict:
+
+        return {
+            "name": "默认分组",
+            "enabled": True,
+            "users": []
+        }
+
+
+    def defaultUsers(
         self
     ) -> dict:
 
@@ -269,17 +302,17 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         }
 
 
-    def collectSystemConfigFromWidget(
+    def collectRunConfigFromWidget(
         self
     ) -> dict:
 
-        system_config = self.defaultSystemConfig()
+        run_config = self.defaultRunConfig()
         # library config is never changed
-        system_config["login"]["auto_captcha"] = self.AutoCaptchaCheckBox.isChecked()
-        system_config["login"]["max_attempt"] = self.LoginAttemptSpinBox.value()
-        system_config["web_driver"]["driver_type"] = self.BrowserTypeComboBox.currentText()
-        system_config["web_driver"]["driver_path"] = self.BrowseBrowserDriverEdit.text()
-        system_config["web_driver"]["headless"] = self.HeadlessCheckBox.isChecked()
+        run_config["login"]["auto_captcha"] = self.AutoCaptchaCheckBox.isChecked()
+        run_config["login"]["max_attempt"] = self.LoginAttemptSpinBox.value()
+        run_config["web_driver"]["driver_type"] = self.BrowserTypeComboBox.currentText()
+        run_config["web_driver"]["driver_path"] = self.BrowseBrowserDriverEdit.text()
+        run_config["web_driver"]["headless"] = self.HeadlessCheckBox.isChecked()
         run_mode = 0
         if self.AutoReserveCheckBox.isChecked():
             run_mode |= 0x01
@@ -287,24 +320,24 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             run_mode |= 0x02
         if self.AutoRenewalCheckBox.isChecked():
             run_mode |= 0x04
-        system_config["mode"]["run_mode"] = run_mode
-        return system_config
+        run_config["mode"]["run_mode"] = run_mode
+        return run_config
 
 
-    def setSystemConfigToWidget(
+    def setRunConfigToWidget(
         self,
-        system_config: dict
+        run_config: dict
     ):
 
-        self.HostUrlEdit.setText(system_config["library"]["host_url"])
-        self.LoginUrlEdit.setText(system_config["library"]["login_url"])
-        self.AutoCaptchaCheckBox.setChecked(system_config["login"]["auto_captcha"])
-        self.LoginAttemptSpinBox.setValue(system_config["login"]["max_attempt"])
-        self.BrowserTypeComboBox.setCurrentText(system_config["web_driver"]["driver_type"])
-        driver_path = os.path.abspath(system_config["web_driver"]["driver_path"])
+        self.HostUrlEdit.setText(run_config["library"]["host_url"])
+        self.LoginUrlEdit.setText(run_config["library"]["login_url"])
+        self.AutoCaptchaCheckBox.setChecked(run_config["login"]["auto_captcha"])
+        self.LoginAttemptSpinBox.setValue(run_config["login"]["max_attempt"])
+        self.BrowserTypeComboBox.setCurrentText(run_config["web_driver"]["driver_type"])
+        driver_path = os.path.abspath(run_config["web_driver"]["driver_path"])
         self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(driver_path))
-        self.HeadlessCheckBox.setChecked(system_config["web_driver"]["headless"])
-        run_mode = system_config["mode"]["run_mode"]
+        self.HeadlessCheckBox.setChecked(run_config["web_driver"]["headless"])
+        run_mode = run_config["mode"]["run_mode"]
         self.AutoReserveCheckBox.setChecked(run_mode&0x01)
         self.AutoCheckinCheckBox.setChecked(run_mode&0x02)
         self.AutoRenewalCheckBox.setChecked(run_mode&0x04)
@@ -316,7 +349,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         self.UsernameEdit.setText("")
         self.PasswordEdit.setText("")
-        self.UserListWidget.setSortingEnabled(True)
         self.PasswordEdit.setEchoMode(QLineEdit.EchoMode.Password)
         self.ShowPasswordCheckBox.setChecked(False)
         self.FloorComboBox.setCurrentIndex(0)
@@ -336,199 +368,217 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.PreferLateRenewTimeCheckBox.setChecked(False)
 
 
-    def collectUserConfigFromUserInfoWidget(
+    def collectUserFromUserInfoWidget(
         self
     ) -> dict:
 
-        user_config = {
+        user = {
             "username": self.UsernameEdit.text(),
             "password": self.PasswordEdit.text(),
+            "enabled": True,
             "reserve_info": {
                 "begin_time":{},
                 "end_time": {},
                 "renew_time": {}
             }
         }
-        user_config["reserve_info"]["date"] = self.DateEdit.dateTime().toString("yyyy-MM-dd")
-        user_config["reserve_info"]["place"] = self.PlaceComboBox.currentText()
-        user_config["reserve_info"]["floor"] = self.__floor_rmap[self.FloorComboBox.currentText()]
-        user_config["reserve_info"]["room"] = self.__room_rmap[self.RoomComboBox.currentText()]
-        user_config["reserve_info"]["seat_id"] = self.SeatIDEdit.text()
-        user_config["reserve_info"]["begin_time"]["time"] = self.BeginTimeEdit.time().toString("HH:mm")
-        user_config["reserve_info"]["begin_time"]["max_diff"] = self.MaxBeginTimeDiffSpinBox.value()
-        user_config["reserve_info"]["begin_time"]["prefer_early"] = self.PreferEarlyBeginTimeCheckBox.isChecked()
-        user_config["reserve_info"]["end_time"]["time"] = self.EndTimeEdit.time().toString("HH:mm")
-        user_config["reserve_info"]["end_time"]["max_diff"] = self.MaxEndTimeDiffSpinBox.value()
-        user_config["reserve_info"]["end_time"]["prefer_early"] = not self.PreferLateEndTimeCheckBox.isChecked()
-        user_config["reserve_info"]["expect_duration"] = self.ExpectDurationSpinBox.value()
-        user_config["reserve_info"]["satisfy_duration"] = self.SatisfyDurationCheckBox.isChecked()
-        user_config["reserve_info"]["renew_time"]["expect_duration"] = self.ExpectRenewDurationSpinBox.value()
-        user_config["reserve_info"]["renew_time"]["max_diff"] = self.MaxRenewTimeDiffSpinBox.value()
-        user_config["reserve_info"]["renew_time"]["prefer_early"] = not self.PreferLateRenewTimeCheckBox.isChecked()
-        return user_config
+        user["reserve_info"]["date"] = self.DateEdit.dateTime().toString("yyyy-MM-dd")
+        user["reserve_info"]["place"] = self.PlaceComboBox.currentText()
+        user["reserve_info"]["floor"] = self.__floor_rmap[self.FloorComboBox.currentText()]
+        user["reserve_info"]["room"] = self.__room_rmap[self.RoomComboBox.currentText()]
+        user["reserve_info"]["seat_id"] = self.SeatIDEdit.text()
+        user["reserve_info"]["begin_time"]["time"] = self.BeginTimeEdit.time().toString("HH:mm")
+        user["reserve_info"]["begin_time"]["max_diff"] = self.MaxBeginTimeDiffSpinBox.value()
+        user["reserve_info"]["begin_time"]["prefer_early"] = self.PreferEarlyBeginTimeCheckBox.isChecked()
+        user["reserve_info"]["end_time"]["time"] = self.EndTimeEdit.time().toString("HH:mm")
+        user["reserve_info"]["end_time"]["max_diff"] = self.MaxEndTimeDiffSpinBox.value()
+        user["reserve_info"]["end_time"]["prefer_early"] = not self.PreferLateEndTimeCheckBox.isChecked()
+        user["reserve_info"]["expect_duration"] = self.ExpectDurationSpinBox.value()
+        user["reserve_info"]["satisfy_duration"] = self.SatisfyDurationCheckBox.isChecked()
+        user["reserve_info"]["renew_time"]["expect_duration"] = self.ExpectRenewDurationSpinBox.value()
+        user["reserve_info"]["renew_time"]["max_diff"] = self.MaxRenewTimeDiffSpinBox.value()
+        user["reserve_info"]["renew_time"]["prefer_early"] = not self.PreferLateRenewTimeCheckBox.isChecked()
+        return user
 
 
-    def collectUserConfigFromUserListWidget(
-        self,
-        index: int
+    def collectUserConfigFromUserTreeWidget(
+        self
     ) -> dict:
 
-        user_config = self.defaultUsersConfig()
-        if index < 0 or index >= self.UserListWidget.count():
-            return user_config
-        user_item = self.UserListWidget.item(index)
-        if user_item:
-            user_config = user_item.data(Qt.UserRole)
+        user_config = self.defaultUserConfig()
+        for i in range(self.UserTreeWidget.topLevelItemCount()):
+            group_item = self.UserTreeWidget.topLevelItem(i)
+            group_config = {
+                "name": group_item.text(0),
+                "enabled": group_item.checkState(1) == Qt.CheckState.Checked,
+                "users": []
+            }
+            for j in range(group_item.childCount()):
+                user_item = group_item.child(j)
+                user = user_item.data(0, Qt.UserRole)
+                if not user:
+                    continue
+                user["enabled"] = user_item.checkState(1) == Qt.CheckState.Checked
+                group_config["users"].append(user)
+            user_config["groups"].append(group_config)
         return user_config
 
 
-    def setUserConfigToWidget(
+    def setUserToWidget(
         self,
-        user_config: dict
+        user: dict
     ) -> None:
 
         try:
-            self.UsernameEdit.setText(user_config["username"])
-            self.PasswordEdit.setText(user_config["password"])
-            self.DateEdit.setDate(QDate.fromString(user_config["reserve_info"]["date"], "yyyy-MM-dd"))
-            self.PlaceComboBox.setCurrentText(user_config["reserve_info"]["place"])
-            self.FloorComboBox.setCurrentText(self.__floor_map[user_config["reserve_info"]["floor"]])
-            self.RoomComboBox.setCurrentText(self.__room_map[user_config["reserve_info"]["room"]])
-            self.SeatIDEdit.setText(user_config["reserve_info"]["seat_id"])
-            self.BeginTimeEdit.setTime(QTime.fromString(user_config["reserve_info"]["begin_time"]["time"], "H:mm"))
-            self.MaxBeginTimeDiffSpinBox.setValue(user_config["reserve_info"]["begin_time"]["max_diff"])
-            self.PreferEarlyBeginTimeCheckBox.setChecked(user_config["reserve_info"]["begin_time"]["prefer_early"])
-            self.EndTimeEdit.setTime(QTime.fromString(user_config["reserve_info"]["end_time"]["time"], "H:mm"))
-            self.MaxEndTimeDiffSpinBox.setValue(user_config["reserve_info"]["end_time"]["max_diff"])
-            self.PreferLateEndTimeCheckBox.setChecked(not user_config["reserve_info"]["end_time"]["prefer_early"])
-            self.ExpectDurationSpinBox.setValue(user_config["reserve_info"]["expect_duration"])
-            self.SatisfyDurationCheckBox.setChecked(user_config["reserve_info"]["satisfy_duration"])
-            self.ExpectRenewDurationSpinBox.setValue(user_config["reserve_info"]["renew_time"]["expect_duration"])
-            self.MaxRenewTimeDiffSpinBox.setValue(user_config["reserve_info"]["renew_time"]["max_diff"])
-            self.PreferLateRenewTimeCheckBox.setChecked(not user_config["reserve_info"]["renew_time"]["prefer_early"])
+            self.UsernameEdit.setText(user["username"])
+            self.PasswordEdit.setText(user["password"])
+            self.DateEdit.setDate(QDate.fromString(user["reserve_info"]["date"], "yyyy-MM-dd"))
+            self.PlaceComboBox.setCurrentText(user["reserve_info"]["place"])
+            self.FloorComboBox.setCurrentText(self.__floor_map[user["reserve_info"]["floor"]])
+            self.RoomComboBox.setCurrentText(self.__room_map[user["reserve_info"]["room"]])
+            self.SeatIDEdit.setText(user["reserve_info"]["seat_id"])
+            self.BeginTimeEdit.setTime(QTime.fromString(user["reserve_info"]["begin_time"]["time"], "H:mm"))
+            self.MaxBeginTimeDiffSpinBox.setValue(user["reserve_info"]["begin_time"]["max_diff"])
+            self.PreferEarlyBeginTimeCheckBox.setChecked(user["reserve_info"]["begin_time"]["prefer_early"])
+            self.EndTimeEdit.setTime(QTime.fromString(user["reserve_info"]["end_time"]["time"], "H:mm"))
+            self.MaxEndTimeDiffSpinBox.setValue(user["reserve_info"]["end_time"]["max_diff"])
+            self.PreferLateEndTimeCheckBox.setChecked(not user["reserve_info"]["end_time"]["prefer_early"])
+            self.ExpectDurationSpinBox.setValue(user["reserve_info"]["expect_duration"])
+            self.SatisfyDurationCheckBox.setChecked(user["reserve_info"]["satisfy_duration"])
+            self.ExpectRenewDurationSpinBox.setValue(user["reserve_info"]["renew_time"]["expect_duration"])
+            self.MaxRenewTimeDiffSpinBox.setValue(user["reserve_info"]["renew_time"]["max_diff"])
+            self.PreferLateRenewTimeCheckBox.setChecked(not user["reserve_info"]["renew_time"]["prefer_early"])
         except:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
                 "用户配置文件读取发生错误 !\n"\
-                f"用户: {user_config['username']} 配置文件可能已损坏"
+                f"用户: {user['username']} 配置文件可能已损坏"
             )
 
 
-    def loadSystemConfig(
+    def loadRunConfig(
         self,
-        system_config_path: str
+        run_config_path: str
     ) -> dict:
 
         try:
-            if not system_config_path or not os.path.exists(system_config_path):
+            if not run_config_path or not os.path.exists(run_config_path):
                 raise Exception("文件路径不存在")
-            system_config = ConfigReader(system_config_path).getConfigs()
-            if system_config and "library" in system_config\
-                and "web_driver" in system_config\
-                and "login" in system_config:
-                return system_config
+            run_config = ConfigReader(run_config_path).getConfigs()
+            if run_config and "library" in run_config\
+                and "web_driver" in run_config\
+                and "login" in run_config:
+                return run_config
             return None
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"系统配置文件读取发生错误 ! : {e}\n"\
-                f"文件路径: {system_config_path}"
+                f"运行配置文件读取发生错误 ! : {e}\n"\
+                f"文件路径: {run_config_path}"
             )
             return None
 
 
-    def saveSystemConfig(
+    def saveRunConfig(
         self,
-        system_config_path: str,
-        system_config_data: dict
+        run_config_path: str,
+        run_config_data: dict
     ) -> bool:
 
         try:
-            if not system_config_path:
+            if not run_config_path:
                 raise Exception("文件路径为空")
-            if not system_config_data or not isinstance(system_config_data, dict):
-                raise Exception("系统配置数据为空或类型错误")
-            ConfigWriter(system_config_path, system_config_data)
+            if not run_config_data or not isinstance(run_config_data, dict):
+                raise Exception("运行配置数据为空或类型错误")
+            ConfigWriter(run_config_path, run_config_data)
             return True
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
                 f"配置文件写入发生错误 ! : {e}\n"\
-                f"文件路径: {system_config_path}"
+                f"文件路径: {run_config_path}"
             )
             return False
 
 
-    def loadUsersConfig(
+    def loadUserConfig(
         self,
-        users_config_path: str
+        user_config_path: str
     ) -> dict:
 
         try:
-            if not users_config_path or not os.path.exists(users_config_path):
+            if not user_config_path or not os.path.exists(user_config_path):
                 raise Exception("文件路径不存在")
-            users_config = ConfigReader(users_config_path).getConfigs()
-            if users_config and "users" in users_config:
-                return users_config
+            user_config = ConfigReader(user_config_path).getConfigs()
+            if user_config and "groups" in user_config:
+                return user_config
+            # compatibility with old version config format
+            if user_config and "users" in user_config:
+                user_config = {
+                    "groups": [
+                        {
+                            "name": f"兼容分组-{QFileInfo(user_config_path).fileName()}",
+                            "enabled": True,
+                            "users": user_config["users"]
+                        }
+                    ]
+                }
+                return user_config
             return None
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
                 f"用户配置文件读取发生错误 ! : {e}\n"\
-                f"文件路径: {users_config_path}"
+                f"文件路径: {user_config_path}"
             )
             return None
 
 
-    def saveUsersConfig(
+    def saveUserConfig(
         self,
-        users_config_path: str,
-        users_config_data: dict
+        user_config_path: str,
+        user_config_data: dict
     ) -> bool:
 
         try:
-            if not users_config_path:
+            if not user_config_path:
                 raise Exception("文件路径为空")
-            if not users_config_data or not isinstance(users_config_data, dict):
+            if not user_config_data or not isinstance(user_config_data, dict):
                 raise Exception("用户配置数据为空或类型错误")
-            ConfigWriter(users_config_path, users_config_data)
+            ConfigWriter(user_config_path, user_config_data)
             return True
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
                 f"用户配置文件写入发生错误 ! : {e}\n"\
-                f"文件路径: \n{users_config_path}"
+                f"文件路径: \n{user_config_path}"
             )
             return False
 
 
     def saveConfigs(
         self,
-        system_config_path: str,
-        users_config_path: str
+        run_config_path: str,
+        user_config_path: str
     ) -> bool:
 
-        if users_config_path:
-            self.__config_data["users"] = self.defaultUsersConfig()
-            for index in range(self.UserListWidget.count()):
-                user_config = self.collectUserConfigFromUserListWidget(index)
-                if user_config:
-                    self.__config_data["users"]["users"].append(user_config)
-            if not self.saveUsersConfig(
-                users_config_path,
-                self.__config_data["users"]
+        if user_config_path:
+            self.__config_data["user"] = self.collectUserConfigFromUserTreeWidget()
+            if not self.saveUserConfig(
+                user_config_path,
+                self.__config_data["user"]
             ):
                 return False
-        if system_config_path:
-            self.__config_data["system"] = self.collectSystemConfigFromWidget()
-            if not self.saveSystemConfig(
-                system_config_path,
-                self.__config_data["system"]
+        if run_config_path:
+            self.__config_data["run"] = self.collectRunConfigFromWidget()
+            if not self.saveRunConfig(
+                run_config_path,
+                self.__config_data["run"]
             ):
                 return False
         return True
@@ -549,40 +599,78 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             if not config_path:
                 return False
         try:
-            system_config = self.loadSystemConfig(config_path)
-            users_config = self.loadUsersConfig(config_path)
-            if system_config is not None:
-                self.__config_data["system"].update(system_config)
-                self.setSystemConfigToWidget(self.__config_data["system"])
+            run_config = self.loadRunConfig(config_path)
+            user_config = self.loadUserConfig(config_path)
+            if run_config is not None:
+                self.__config_data["run"].update(run_config)
+                self.setRunConfigToWidget(self.__config_data["run"])
                 return True
-            if users_config is not None:
-                self.__config_data["users"].update(users_config)
-                self.fillUsersList(self.__config_data["users"])
+            if user_config is not None:
+                self.__config_data["user"].update(user_config)
+                self.fillUserTree(self.__config_data["user"])
                 return True
         except:
             return False
 
 
-    def fillUsersList(
+    def fillUserTree(
         self,
-        users_config_data: list[dict]
+        user_config_data: dict
     ):
 
-        self.UserListWidget.clear()
-        if "users" in users_config_data:
-            for user in users_config_data["users"]:
-                user_item = QListWidgetItem(user["username"])
-                user_item.setData(Qt.UserRole, user)
-                self.UserListWidget.addItem(user_item)
+        self.UserTreeWidget.clear()
+        self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
+        try:
+            if "groups" in user_config_data:
+                for group_config in user_config_data["groups"]:
+                    group_item = QTreeWidgetItem(self.UserTreeWidget, TreeItemType.GROUP.value)
+                    group_item.setText(0, group_config["name"])
+                    group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
+                    group_item.setCheckState(1, Qt.Checked if group_config.get("enabled", True) else Qt.Unchecked)
+                    for user_config in group_config["users"]:
+                        user_item = QTreeWidgetItem(group_item, TreeItemType.USER.value)
+                        user_item.setText(0, user_config["username"])
+                        user_item.setText(1, "" if user_config.get("enabled", True) else "跳过")
+                        user_item.setData(0, Qt.UserRole, user_config)
+                        user_item.setCheckState(1, Qt.Checked if user_config.get("enabled", True) else Qt.Unchecked)
+                        user_item.setDisabled(not group_config.get("enabled", True))
+                    group_item.setExpanded(True)
+        finally:
+            self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
+
+
+    def addGroup(
+        self,
+        group_name: str = ""
+    ) -> QTreeWidgetItem:
+
+        self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
+        group_item = QTreeWidgetItem(self.UserTreeWidget, TreeItemType.GROUP.value)
+        if not group_name:
+            group_name = f"新分组-{self.UserTreeWidget.topLevelItemCount()}"
+        group_item.setText(0, group_name)
+        group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
+        group_item.setCheckState(1, Qt.Checked)
+        self.UserTreeWidget.setCurrentItem(group_item)
+        self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
+        return group_item
 
 
     def addUser(
-        self
-    ):
+        self,
+        group_item: QTreeWidgetItem = None
+    ) -> QTreeWidgetItem:
 
+        if group_item is None:
+            current_item = self.UserTreeWidget.currentItem()
+            if current_item is None:
+                group_item = self.addGroup()
+        if group_item.type() == TreeItemType.USER.value:
+            group_item = group_item.parent()
         new_user = {
-            "username": f"新用户-{self.UserListWidget.count()}",
+            "username": f"新用户-{group_item.childCount()}",
             "password": "000000",
+            "enabled": True,
             "reserve_info": {
                 "date": f"{QDate.currentDate().toString("yyyy-MM-dd")}",
                 "place": "\u56fe\u4e66\u9986",
@@ -608,25 +696,76 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 }
             }
         }
-        user_item = QListWidgetItem(new_user["username"])
-        user_item.setData(Qt.UserRole, new_user)
-        self.UserListWidget.addItem(user_item)
-        self.UserListWidget.setCurrentItem(user_item)
-        self.setUserConfigToWidget(new_user)
+        self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
+        user_item = QTreeWidgetItem(group_item, TreeItemType.USER.value)
+        user_item.setText(0, new_user["username"])
+        user_item.setText(1, "")
+        user_item.setData(0, Qt.UserRole, new_user)
+        user_item.setCheckState(1, Qt.CheckState.Checked)
+        group_item.setExpanded(True)
+        self.UserTreeWidget.setCurrentItem(user_item)
+        self.setUserToWidget(new_user)
+        self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
+        return user_item
 
 
     def delUser(
-        self
+        self,
+        user_item: QTreeWidgetItem = None
     ):
 
-        current_item = self.UserListWidget.currentItem()
-        if current_item:
-            current_index = self.UserListWidget.row(current_item)
-            self.UserListWidget.takeItem(current_index)
-            if current_index < self.UserListWidget.count():
-                self.UserListWidget.setCurrentRow(current_index)
-            else:
-                self.UserListWidget.setCurrentItem(None)
+        if user_item is None:
+            return
+        if user_item.type() != TreeItemType.USER.value:
+            return
+        parent_item = user_item.parent()
+        index = parent_item.indexOfChild(user_item)
+        parent_item.takeChild(index)
+        if parent_item.childCount() == 0:
+            self.UserTreeWidget.setCurrentItem(None)
+
+
+    def delGroup(
+        self,
+        group_item: QTreeWidgetItem = None
+    ):
+
+        if group_item is None:
+            return
+        if group_item.type() != TreeItemType.GROUP.value:
+            return
+        index = self.UserTreeWidget.indexOfTopLevelItem(group_item)
+        self.UserTreeWidget.takeTopLevelItem(index)
+
+
+    def renameItem(
+        self,
+        item: QTreeWidgetItem,
+    ):
+
+        if item is None:
+            return
+        old_name = item.text(0)
+        if item.parent() is None:
+            item_type = "分组"
+        else:
+            item_type = "用户"
+        new_name, ok = QInputDialog.getText(
+            self, f"重命名{item_type}项 : '{old_name}'", f"请输入新的{item_type}名:", text=old_name
+        )
+        new_name = new_name.strip()
+        if not ok or not new_name:
+            return
+        item.setText(0, new_name)
+        if item.type() == TreeItemType.GROUP.value:
+            item.setText(0, new_name)
+        else:
+            user = item.data(0, Qt.UserRole)
+            user["username"] = new_name
+            item.setText(0, new_name)
+            item.setData(0, Qt.UserRole, user)
+            self.setUserToWidget(user)
+
 
     @Slot()
     def onShowPasswordCheckBoxChecked(
@@ -685,40 +824,129 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.__seat_map_widget.selectSeats(self.SeatIDEdit.text().split(","))
 
     @Slot()
-    def onUserListWidgetCurrentItemChanged(
+    def onUserTreeWidgetCurrentItemChanged(
         self,
-        current: QListWidgetItem,
-        previous: QListWidgetItem
+        current: QTreeWidgetItem,
+        previous: QTreeWidgetItem
     ):
-        # dont care about the 'self.__users_config_data', we already
+        # dont care about the 'self.__config_data["user"]', we already
         # cant effectively update the data of each user, due to the
         # possiblity of frequency edit. we just let the QListWidget
         # help us.
-        if not current:
+        if previous and previous.type() == TreeItemType.USER.value:
+            user = self.collectUserFromUserInfoWidget()
+            if user:
+                self.UsernameEdit.textEdited.disconnect()
+                user["enabled"] = previous.checkState(1) == Qt.Checked
+                previous.setText(0, user["username"])
+                previous.setText(1, "" if user.get("enabled", True) else "跳过")
+                previous.setData(0, Qt.UserRole, user)
+        if current is None:
             self.initilizeUserInfoWidget()
             return
-        if previous:
-            user = self.collectUserConfigFromUserInfoWidget()
+        if current.type() == TreeItemType.USER.value:
+            user = current.data(0, Qt.UserRole)
             if user:
-                previous.setText(user["username"])
-                previous.setData(Qt.UserRole, user)
-        user = current.data(Qt.UserRole)
-        if user:
-            self.setUserConfigToWidget(user)
+                self.setUserToWidget(user)
+                self.UsernameEdit.textEdited.connect(lambda text: current.setText(0, text))
+        else:
+            self.initilizeUserInfoWidget()
+
+    @Slot()
+    def onUserTreeWidgetItemChanged(
+        self,
+        item: QTreeWidgetItem,
+        column: int
+    ):
+
+        if item is None:
+            return
+        if column != 1:
+            return
+        if item.type() == TreeItemType.GROUP.value:
+            is_checked = item.checkState(1) == Qt.CheckState.Checked
+            for i in range(item.childCount()):
+                child = item.child(i)
+                child.setDisabled(not is_checked)
+        else:
+            is_checked = item.checkState(1) == Qt.CheckState.Checked
+            item.setText(1, "" if is_checked else "跳过")
+
+
+    def showTreeMenu(
+        self,
+        menu: QMenu
+    ):
+
+        add_group_action = QAction("添加分组", menu)
+        add_group_action.triggered.connect(self.addGroup)
+        menu.addAction(add_group_action)
+
+
+    def showGroupMenu(
+        self,
+        menu: QMenu,
+        group_item: QTreeWidgetItem = None
+    ):
+
+        add_user_action = QAction("添加用户", menu)
+        rename_group_action = QAction("重命名分组", menu)
+        del_group_action = QAction("删除分组", menu)
+        add_user_action.triggered.connect(lambda: self.addUser(group_item))
+        rename_group_action.triggered.connect(lambda: self.renameItem(group_item))
+        del_group_action.triggered.connect(lambda: self.delGroup(group_item))
+        menu.addAction(add_user_action)
+        menu.addSeparator()
+        menu.addAction(rename_group_action)
+        menu.addAction(del_group_action)
+        if group_item.checkState(1) == Qt.CheckState.Unchecked:
+            add_user_action.setEnabled(False)
+
+
+    def showUserMenu(
+        self,
+        menu: QMenu,
+        user_item: QTreeWidgetItem = None
+    ):
+
+        rename_user_action = QAction("重命名用户", menu)
+        del_user_action = QAction("删除用户", menu)
+        rename_user_action.triggered.connect(lambda: self.renameItem(user_item))
+        del_user_action.triggered.connect(lambda: self.delUser(user_item))
+        menu.addAction(rename_user_action)
+        menu.addAction(del_user_action)
+
+    @Slot()
+    def onUserTreeWidgetContextMenu(
+        self,
+        pos
+    ):
+
+        current_item = self.UserTreeWidget.itemAt(pos)
+        menu = QMenu(self.UserTreeWidget)
+        if current_item is None:
+            self.showTreeMenu(menu)
+        elif current_item.type() == TreeItemType.GROUP.value:
+            self.showGroupMenu(menu, current_item)
+        else:
+            self.showUserMenu(menu, current_item)
+        menu.exec_(self.UserTreeWidget.mapToGlobal(pos))
 
     @Slot()
     def onAddUserButtonClicked(
         self
     ):
 
-        self.addUser()
+        current_item = self.UserTreeWidget.currentItem()
+        self.addUser(current_item)
 
     @Slot()
     def onDelUserButtonClicked(
         self
     ):
 
-        self.delUser()
+        current_item = self.UserTreeWidget.currentItem()
+        self.delUser(current_item)
 
     @Slot()
     def onBrowseBrowserDriverButtonClicked(
@@ -735,66 +963,66 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(browser_driver_path))
 
     @Slot()
-    def onBrowseCurrentSystemConfigButtonClicked(
+    def onBrowseCurrentRunConfigButtonClicked(
         self
     ):
 
-        system_config_path = QFileDialog.getOpenFileName(
+        run_config_path = QFileDialog.getOpenFileName(
             self,
-            "选择其它的系统配置 - AutoLibrary",
-            self.CurrentSystemConfigEdit.text(),
+            "选择其它的运行配置 - AutoLibrary",
+            self.CurrentRunConfigEdit.text(),
             "JSON 文件 (*.json);;所有文件 (*)"
         )[0]
-        if system_config_path:
-            system_config_path = QDir.toNativeSeparators(system_config_path)
-            if self.loadConfig(system_config_path):
-                self.__config_paths["system"] = system_config_path
-                self.CurrentSystemConfigEdit.setText(system_config_path)
+        if run_config_path:
+            run_config_path = QDir.toNativeSeparators(run_config_path)
+            if self.loadConfig(run_config_path):
+                self.__config_paths["run"] = run_config_path
+                self.CurrentRunConfigEdit.setText(run_config_path)
 
     @Slot()
     def onBrowseCurrentUserConfigButtonClicked(
         self
     ):
 
-        users_config_path = QFileDialog.getOpenFileName(
+        user_config_path = QFileDialog.getOpenFileName(
             self,
             "选择其它的用户配置 - AutoLibrary",
             self.CurrentUserConfigEdit.text(),
             "JSON 文件 (*.json);;所有文件 (*)"
         )[0]
-        if users_config_path:
-            users_config_path = QDir.toNativeSeparators(users_config_path)
-            if self.loadConfig(users_config_path):
-                self.__config_paths["users"] = users_config_path
-                self.CurrentUserConfigEdit.setText(users_config_path)
+        if user_config_path:
+            user_config_path = QDir.toNativeSeparators(user_config_path)
+            if self.loadConfig(user_config_path):
+                self.__config_paths["user"] = user_config_path
+                self.CurrentUserConfigEdit.setText(user_config_path)
 
     @Slot()
-    def onBrowseExportSystemConfigButtonClicked(
+    def onBrowseExportRunConfigButtonClicked(
         self
     ):
 
-        system_config_path = QFileDialog.getSaveFileName(
+        run_config_path = QFileDialog.getSaveFileName(
             self,
-            "导出系统配置 - AutoLibrary",
-            self.CurrentSystemConfigEdit.text(),
+            "导出运行配置 - AutoLibrary",
+            self.CurrentRunConfigEdit.text(),
             "JSON 文件 (*.json);;所有文件 (*)"
         )[0]
-        if system_config_path:
-            self.ExportSystemConfigEdit.setText(QDir.toNativeSeparators(system_config_path))
+        if run_config_path:
+            self.ExportRunConfigEdit.setText(QDir.toNativeSeparators(run_config_path))
 
     @Slot()
     def onBrowseExportUserConfigButtonClicked(
         self
     ):
 
-        users_config_path = QFileDialog.getSaveFileName(
+        user_config_path = QFileDialog.getSaveFileName(
             self,
             "导出用户配置 - AutoLibrary",
             self.CurrentUserConfigEdit.text(),
             "JSON 文件 (*.json);;所有文件 (*)"
         )[0]
-        if users_config_path:
-            self.ExportUserConfigEdit.setText(QDir.toNativeSeparators(users_config_path))
+        if user_config_path:
+            self.ExportUserConfigEdit.setText(QDir.toNativeSeparators(user_config_path))
 
     @Slot()
     def onExportConfigButtonClicked(
@@ -803,22 +1031,22 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         msg = ""
 
-        system_config_path = self.ExportSystemConfigEdit.text()
-        users_config_path = self.ExportUserConfigEdit.text()
-        if system_config_path:
+        run_config_path = self.ExportRunConfigEdit.text()
+        user_config_path = self.ExportUserConfigEdit.text()
+        if run_config_path:
             if self.saveConfigs(
-                system_config_path, ""
+                run_config_path, ""
             ):
-                msg += f"系统配置文件已导出到: \n'{system_config_path}'\n"
+                msg += f"运行配置文件已导出到: \n'{run_config_path}'\n"
             else:
-                msg += f"系统配置文件导出失败: \n'{system_config_path}'\n"
-        if users_config_path:
+                msg += f"运行配置文件导出失败: \n'{run_config_path}'\n"
+        if user_config_path:
             if self.saveConfigs(
-                "", users_config_path
+                "", user_config_path
             ):
-                msg += f"用户配置文件已导出到: \n'{users_config_path}'\n"
+                msg += f"用户配置文件已导出到: \n'{user_config_path}'\n"
             else:
-                msg += f"用户配置文件导出失败: \n'{users_config_path}'\n"
+                msg += f"用户配置文件导出失败: \n'{user_config_path}'\n"
         if msg:
             QMessageBox.information(
                 self,
@@ -838,7 +1066,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self
     ):
 
-        file_path = self.CurrentSystemConfigEdit.text()
+        file_path = self.CurrentRunConfigEdit.text()
         folder_dir = QFileDialog.getExistingDirectory(
             self,
             "选择新建配置的文件夹 - AutoLibrary",
@@ -846,16 +1074,16 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         )
         if not folder_dir:
             return
-        system_config_path = QDir.toNativeSeparators(os.path.join(folder_dir, "system.json"))
-        users_config_path = QDir.toNativeSeparators(os.path.join(folder_dir, "users.json"))
-        system_exists = os.path.isfile(system_config_path)
-        users_exists = os.path.isfile(users_config_path)
-        if system_exists or users_exists:
+        run_config_path = QDir.toNativeSeparators(os.path.join(folder_dir, "run.json"))
+        user_config_path = QDir.toNativeSeparators(os.path.join(folder_dir, "user.json"))
+        run_exists = os.path.isfile(run_config_path)
+        user_exists = os.path.isfile(user_config_path)
+        if run_exists or user_exists:
             exist_files = []
-            if system_exists:
-                exist_files.append(system_config_path)
-            if users_exists:
-                exist_files.append(users_config_path)
+            if run_exists:
+                exist_files.append(run_config_path)
+            if user_exists:
+                exist_files.append(user_config_path)
             reply = QMessageBox.information(
                 self,
                 "提示 - AutoLibrary",
@@ -865,34 +1093,33 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             )
             if reply == QMessageBox.No:
                 return
-        self.__config_data["system"] = self.defaultSystemConfig()
-        self.__config_data["users"] = self.defaultUsersConfig()
+        self.__config_data["run"] = self.defaultRunConfig()
+        self.__config_data["user"] = self.defaultUserConfig()
         self.__config_paths = {
-            "system": system_config_path,
-            "users": users_config_path
+            "run": run_config_path,
+            "user": user_config_path
         }
-        self.initlizeConfigToWidget("system", self.__config_data["system"])
-        self.initlizeConfigToWidget("users", self.__config_data["users"])
+        self.initlizeConfigToWidget("run", self.__config_data["run"])
+        self.initlizeConfigToWidget("user", self.__config_data["user"])
 
     @Slot()
     def onConfirmButtonClicked(
         self
     ):
 
-        if self.UserListWidget.currentItem() is not None:
-            user_config = self.collectUserConfigFromUserInfoWidget()
-            if user_config:
-                self.UserListWidget.currentItem().setData(Qt.UserRole, user_config)
+        current_item = self.UserTreeWidget.currentItem()
+        if current_item and current_item.type() == TreeItemType.USER.value:
+            self.UserTreeWidget.setCurrentItem(None)
         if self.saveConfigs(
-            self.__config_paths["system"],
-            self.__config_paths["users"]
+            self.__config_paths["run"],
+            self.__config_paths["user"]
         ):
             QMessageBox.information(
                 self,
                 "提示 - AutoLibrary",
                 "配置文件保存成功 !\n"
-                f"系统配置文件路径: \n{self.__config_paths['system']}\n"\
-                f"用户配置文件路径: \n{self.__config_paths['users']}"
+                f"运行配置文件路径: \n{self.__config_paths['run']}\n"\
+                f"用户配置文件路径: \n{self.__config_paths['user']}"
             )
         else:
             QMessageBox.warning(

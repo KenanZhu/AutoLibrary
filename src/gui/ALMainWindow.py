@@ -53,9 +53,9 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         script_path = sys.executable
         script_dir = QFileInfo(script_path).absoluteDir()
         self.__config_paths = {
-            "system":   QDir.toNativeSeparators(script_dir.absoluteFilePath("system.json")),
-            "users": QDir.toNativeSeparators(script_dir.absoluteFilePath("users.json")),
-            "timer_tasks": QDir.toNativeSeparators(script_dir.absoluteFilePath("timer_tasks.json")),
+            "run":   QDir.toNativeSeparators(script_dir.absoluteFilePath("run.json")),
+            "user": QDir.toNativeSeparators(script_dir.absoluteFilePath("user.json")),
+            "timer_task": QDir.toNativeSeparators(script_dir.absoluteFilePath("timer_task.json")),
         }
         self.__alTimerTaskWidget = None
         self.__alConfigWidget = None
@@ -81,7 +81,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
 
         # initialize timer task widget, but not show it
-        self.__alTimerTaskWidget = ALTimerTaskWidget(self, self.__config_paths["timer_tasks"])
+        self.__alTimerTaskWidget = ALTimerTaskWidget(self, self.__config_paths["timer_task"])
         self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
         self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
         self.__alTimerTaskWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)

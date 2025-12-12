@@ -93,11 +93,26 @@
           <string>用户列表</string>
          </property>
          <layout class="QVBoxLayout" name="UserListLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
-           <widget class="QListWidget" name="UserListWidget">
+           <widget class="QTreeWidget" name="UserTreeWidget">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>230</width>
               <height>0</height>
              </size>
             </property>
@@ -107,18 +122,58 @@
               <height>16777215</height>
              </size>
             </property>
-            <property name="isWrapping" stdset="0">
-             <bool>false</bool>
+            <property name="sizeAdjustPolicy">
+             <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
             </property>
-            <property name="viewMode">
-             <enum>QListView::ViewMode::ListMode</enum>
+            <property name="tabKeyNavigation">
+             <bool>true</bool>
             </property>
-            <property name="currentRow">
-             <number>-1</number>
+            <property name="dragEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="dragDropMode">
+             <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
+            </property>
+            <property name="defaultDropAction">
+             <enum>Qt::DropAction::MoveAction</enum>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
             </property>
             <property name="sortingEnabled">
              <bool>false</bool>
             </property>
+            <property name="animated">
+             <bool>true</bool>
+            </property>
+            <property name="allColumnsShowFocus">
+             <bool>false</bool>
+            </property>
+            <property name="headerHidden">
+             <bool>false</bool>
+            </property>
+            <property name="columnCount">
+             <number>2</number>
+            </property>
+            <attribute name="headerCascadingSectionResizes">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="headerHighlightSections">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="headerShowSortIndicator" stdset="0">
+             <bool>false</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string notr="true">分组/用户</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>状态</string>
+             </property>
+            </column>
            </widget>
           </item>
           <item>
@@ -236,7 +291,7 @@
               <widget class="QLabel" name="PasswordLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -325,7 +380,7 @@
               <widget class="QLabel" name="UsernameKabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -416,7 +471,7 @@
               <widget class="QLabel" name="RoomLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -435,7 +490,7 @@
               <widget class="QLabel" name="FloorLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -454,7 +509,7 @@
               <widget class="QLabel" name="ExpectRenewDurationLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -473,7 +528,7 @@
               <widget class="QLabel" name="EndTimeLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>30</height>
                 </size>
                </property>
@@ -556,7 +611,7 @@
               <widget class="QLabel" name="SeatIDLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -575,7 +630,7 @@
               <widget class="QLabel" name="ExpectDurationLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -594,7 +649,7 @@
               <widget class="QLabel" name="DateLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -738,7 +793,7 @@
                 </time>
                </property>
                <property name="displayFormat">
-                <string>H:mm</string>
+                <string>HH:mm</string>
                </property>
               </widget>
              </item>
@@ -746,7 +801,7 @@
               <widget class="QLabel" name="PlaceLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -869,6 +924,9 @@
                  <property name="stepType">
                   <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
                  </property>
+                 <property name="value">
+                  <number>0</number>
+                 </property>
                 </widget>
                </item>
                <item>
@@ -902,7 +960,7 @@
               <widget class="QLabel" name="MaxBeginTimeDiffLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -921,7 +979,7 @@
               <widget class="QLabel" name="MaxEndTimeDiffLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -965,7 +1023,7 @@
                 </time>
                </property>
                <property name="displayFormat">
-                <string>H:mm</string>
+                <string>HH:mm</string>
                </property>
               </widget>
              </item>
@@ -973,7 +1031,7 @@
               <widget class="QLabel" name="BeginTimeLabel">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -1024,7 +1082,7 @@
               <widget class="QLabel" name="label">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>80</width>
                  <height>25</height>
                 </size>
                </property>
@@ -1047,9 +1105,9 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="SystemConfigWidget">
+     <widget class="QWidget" name="RunConfigWidget">
       <attribute name="title">
-       <string>系统设置</string>
+       <string>运行设置</string>
       </attribute>
       <layout class="QGridLayout" name="SystemConfigWidgetLayout">
        <property name="leftMargin">
@@ -1579,7 +1637,7 @@
          </property>
          <layout class="QGridLayout" name="CurrentConfigLayout">
           <item row="1" column="0">
-           <widget class="QLineEdit" name="CurrentSystemConfigEdit">
+           <widget class="QLineEdit" name="CurrentRunConfigEdit">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -1620,7 +1678,7 @@
            </widget>
           </item>
           <item row="0" column="0">
-           <widget class="QLabel" name="CurrentSystemConfigLabel">
+           <widget class="QLabel" name="CurrentRunConfigLabel">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -1634,7 +1692,7 @@
              </size>
             </property>
             <property name="text">
-             <string>当前系统配置路径：</string>
+             <string>当前运行配置路径：</string>
             </property>
            </widget>
           </item>
@@ -1658,7 +1716,7 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QPushButton" name="BrowseCurrentSystemConfigButton">
+           <widget class="QPushButton" name="BrowseCurrentRunConfigButton">
             <property name="minimumSize">
              <size>
               <width>35</width>
@@ -1721,7 +1779,7 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLineEdit" name="ExportSystemConfigEdit">
+           <widget class="QLineEdit" name="ExportRunConfigEdit">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -1737,7 +1795,7 @@
            </widget>
           </item>
           <item row="0" column="0">
-           <widget class="QLabel" name="ExportSystemConfigLabel">
+           <widget class="QLabel" name="ExportRunConfigLabel">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -1751,7 +1809,7 @@
              </size>
             </property>
             <property name="text">
-             <string>系统配置导出路径：</string>
+             <string>运行配置导出路径：</string>
             </property>
            </widget>
           </item>
@@ -1794,7 +1852,7 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QPushButton" name="BrowseExportSystemConfigButton">
+           <widget class="QPushButton" name="BrowseExportRunConfigButton">
             <property name="minimumSize">
              <size>
               <width>35</width>
@@ -1836,12 +1894,12 @@
           </item>
          </layout>
          <zorder>ExportUserConfigEdit</zorder>
-         <zorder>ExportSystemConfigLabel</zorder>
+         <zorder>ExportRunConfigLabel</zorder>
          <zorder>BrowseExportUserConfigButton</zorder>
          <zorder>ExportUserConfigLabel</zorder>
-         <zorder>BrowseExportSystemConfigButton</zorder>
+         <zorder>BrowseExportRunConfigButton</zorder>
          <zorder>ExportConfigButton</zorder>
-         <zorder>ExportSystemConfigEdit</zorder>
+         <zorder>ExportRunConfigEdit</zorder>
         </widget>
        </item>
        <item>
