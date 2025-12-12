@@ -405,7 +405,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.__auto_lib_thread.finishedSignal.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
             self.__auto_lib_thread = None
-        self.setControlButtons(True, True, False)
+        self.setControlButtons(True, False, True)
 
     @Slot()
     def onSendButtonClicked(
