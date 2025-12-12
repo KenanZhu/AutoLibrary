@@ -58,6 +58,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self
     ):
 
+        self.setWindowFlags(Qt.WindowType.Window)
         self.initlizeFloorRoomMap()
         self.initilizeUserInfoWidget()
 

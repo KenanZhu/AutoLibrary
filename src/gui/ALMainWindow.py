@@ -181,7 +181,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.__alTimerTaskWidget.deleteLater()
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
-            self.__alConfigWidget.deleteLater()
+            # the config widget is already deleted in the 'self.onConfigWidgetClosed'
         super().closeEvent(event)
 
 
@@ -369,8 +369,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                 self.__config_paths
             )
             self.__alConfigWidget.configWidgetCloseSingal.connect(self.onConfigWidgetClosed)
-        self.__alConfigWidget.setWindowFlags(Qt.WindowType.Window)
-        self.__alConfigWidget.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.__alConfigWidget.show()
         self.__alConfigWidget.raise_()
         self.__alConfigWidget.activateWindow()
