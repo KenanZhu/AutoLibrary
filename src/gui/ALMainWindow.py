@@ -38,6 +38,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
     timerTaskIsRunning = Signal(dict)
     timerTaskIsExecuted = Signal(dict)
+    timerTaskIsError = Signal(dict)
 
     def __init__(
         self
@@ -84,6 +85,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__alTimerTaskWidget = ALTimerTaskWidget(self, self.__config_paths["timer_task"])
         self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
         self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
+        self.timerTaskIsError.connect(self.__alTimerTaskWidget.onTimerTaskIsError)
         self.__alTimerTaskWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
         self.__alTimerTaskWidget.timerTaskWidgetClosed.connect(self.onTimerTaskWidgetClosed)
         self.__alTimerTaskWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
@@ -245,8 +247,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                     self.__config_paths
                 )
                 self.__current_timer_task_thread.finishedSignal_TimerWorker.connect(self.onTimerTaskFinished)
-                self.__current_timer_task_thread.showTraceSignal.connect(self.showTrace)
-                self.__current_timer_task_thread.showMsgSignal.connect(self.showMsg)
                 self.__current_timer_task_thread.start()
         except queue.Empty:
             self.__is_running_timer_task = False
@@ -293,14 +293,12 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         except queue.Empty:
             pass
 
-
     @Slot()
     def onTimerTaskWidgetClosed(
         self
     ):
 
         self.TimerTaskWidgetButton.setEnabled(True)
-
 
     @Slot(dict)
     def onConfigWidgetClosed(
@@ -326,13 +324,12 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     @Slot(dict)
     def onTimerTaskFinished(
         self,
+        is_error: bool,
         timer_task: dict
     ):
 
         self.__current_timer_task_thread.wait(1000)
         self.__current_timer_task_thread.finishedSignal_TimerWorker.disconnect(self.onTimerTaskFinished)
-        self.__current_timer_task_thread.showTraceSignal.disconnect(self.showTrace)
-        self.__current_timer_task_thread.showMsgSignal.disconnect(self.showMsg)
         self.__current_timer_task_thread.deleteLater()
         self.__current_timer_task_thread = None
         self.setControlButtons(True, False, True)
@@ -341,12 +338,17 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         timer_task["executed"] = True
         self.TrayIcon.showMessage(
             "定时任务 - AutoLibrary",
-            f"\n定时任务 '{timer_task['name']}' 执行完成",
+            f"\n定时任务 '{timer_task['name']}' 执行{'失败' if is_error else '完成'}",
             QSystemTrayIcon.MessageIcon.Information,
             1000
         )
-        self.showTrace(f"定时任务 {timer_task['name']} 执行完成, uuid: {timer_task['task_uuid']}")
-        self.timerTaskIsExecuted.emit(timer_task)
+        self.showTrace(
+            f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['task_uuid']}"
+        )
+        if not is_error:
+            self.timerTaskIsExecuted.emit(timer_task)
+        else:
+            self.timerTaskIsError.emit(timer_task)
 
     @Slot()
     def onTimerTaskWidgetButtonClicked(
@@ -387,8 +389,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                 self.__config_paths
             )
             self.__auto_lib_thread.finishedSignal.connect(self.onStopButtonClicked)
-            self.__auto_lib_thread.showMsgSignal.connect(self.showMsg)
-            self.__auto_lib_thread.showTraceSignal.connect(self.showTrace)
+            self.__auto_lib_thread.finishedWithErrorSignal.connect(self.onStopButtonClicked)
         self.__auto_lib_thread.start()
 
     @Slot()
@@ -400,9 +401,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.showTrace("正在停止操作......")
             self.__auto_lib_thread.wait(2000)
             self.showTrace("操作已停止")
-            self.__auto_lib_thread.showMsgSignal.disconnect(self.showMsg)
-            self.__auto_lib_thread.showTraceSignal.disconnect(self.showTrace)
             self.__auto_lib_thread.finishedSignal.disconnect(self.onStopButtonClicked)
+            self.__auto_lib_thread.finishedWithErrorSignal.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
             self.__auto_lib_thread = None
         self.setControlButtons(True, False, True)
