@@ -41,10 +41,10 @@ class AutoLib(MsgBase):
         self.__user_config = None
         self.__driver = None
         if not self.__initBrowserDriver():
-            return None
+            raise Exception("浏览器驱动初始化失败")
         else:
             if not self.__initDriverUrl():
-                return None
+                raise Exception("浏览器驱动URL初始化失败")
             self.__initLibOperators()
 
 
