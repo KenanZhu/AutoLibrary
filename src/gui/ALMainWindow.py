@@ -229,7 +229,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                 self.timerTaskIsRunning.emit(timer_task)
                 self.__timer_task_timer.stop()
                 self.__is_running_timer_task = True
-                self.setControlButtons(False, False, True)
+                self.setControlButtons(True, True, False)
                 if not timer_task["silent"]:
                     self.TrayIcon.showMessage(
                         "定时任务 - AutoLibrary",
@@ -270,7 +270,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         msg: str
     ):
 
-        self.appendToTextEdit(f"[{self.__class_name:<12}] >>> : {msg}")
+        self.__output_queue.put(f"[{self.__class_name:<15}] >>> : {msg}")
 
     @Slot()
     def showTrace(
@@ -279,7 +279,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        self.appendToTextEdit(f"{timestamp}-[{self.__class_name:<12}] : {msg}")
+        self.__output_queue.put(f"{timestamp}-[{self.__class_name:<15}] : {msg}")
 
     @Slot()
     def pollMsgQueue(
@@ -379,7 +379,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.setControlButtons(False, False, True)
+        self.setControlButtons(True, True, False)
         if self.__auto_lib_thread is None:
             self.__auto_lib_thread = AutoLibWorker(
                 self.__input_queue,

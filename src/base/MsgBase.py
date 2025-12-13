@@ -29,7 +29,7 @@ class MsgBase:
         msg: str
     ):
 
-        self._output_queue.put(f"[{self._class_name:<12}] >>> : {msg}")
+        self._output_queue.put(f"[{self._class_name:<15}] >>> : {msg}")
 
 
     def _showTrace(
@@ -38,7 +38,7 @@ class MsgBase:
     ):
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        self._output_queue.put(f"{timestamp}-[{self._class_name:<12}] : {msg}")
+        self._output_queue.put(f"{timestamp}-[{self._class_name:<15}] : {msg}")
 
 
     def _waitMsg(
