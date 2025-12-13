@@ -36,6 +36,7 @@ class TimerTaskStatus(Enum):
     READY = "已就绪"
     RUNNING = "执行中"
     EXECUTED = "已执行"
+    ERROR = "执行失败"
     OUTDATED = "已过期"
 
 

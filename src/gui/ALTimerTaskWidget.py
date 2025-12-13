@@ -94,6 +94,9 @@ class TimerTaskItemWidget(QWidget):
             case TimerTaskStatus.EXECUTED:
                 TaskStatusText = "已执行"
                 TaskStatusColor = "#4CAF50"
+            case TimerTaskStatus.ERROR:
+                TaskStatusText = "执行失败"
+                TaskStatusColor = "#FF5722"
             case TimerTaskStatus.OUTDATED:
                 TaskStatusText = "已过期"
                 TaskStatusColor = "#FF5722"
@@ -315,6 +318,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         pending = 0
         in_queue = 0
         executed = 0
+        invalid = 0
         total = len(self.__timer_tasks)
         for timer_task in self.__timer_tasks:
             if timer_task["status"] == TimerTaskStatus.PENDING:
@@ -324,10 +328,14 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
                 in_queue += 1
             elif timer_task["status"] == TimerTaskStatus.EXECUTED:
                 executed += 1
+            elif timer_task["status"] == TimerTaskStatus.ERROR\
+            or timer_task["status"] == TimerTaskStatus.OUTDATED:
+                invalid += 1
         self.TotalTaskLabel.setText(f"总任务：{total}")
         self.PendingTaskLabel.setText(f"待执行：{pending}")
         self.InQueueTaskLabel.setText(f"队列中：{in_queue}")
         self.ExecutedTaskLabel.setText(f"已执行：{executed}")
+        self.InvalidTaskLabel.setText(f"无效的：{invalid}")
 
 
     def updateTimerTaskList(
@@ -469,4 +477,15 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         for task in self.__timer_tasks:
             if task["task_uuid"] == timer_task["task_uuid"]:
                 task["status"] = TimerTaskStatus.EXECUTED
+        self.timerTasksChanged.emit()
+
+    @Slot(dict)
+    def onTimerTaskIsError(
+        self,
+        timer_task: dict
+    ):
+
+        for task in self.__timer_tasks:
+            if task["task_uuid"] == timer_task["task_uuid"]:
+                task["status"] = TimerTaskStatus.ERROR
         self.timerTasksChanged.emit()
