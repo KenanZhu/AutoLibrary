@@ -1,1 +1,1 @@
-AL_VERSION = "1.0.0-beta"
+AL_VERSION = "1.0.0"
