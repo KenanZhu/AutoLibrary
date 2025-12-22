@@ -60,6 +60,7 @@ class ALUserTreeWidget(QTreeWidget):
         self.setDefaultDropAction(Qt.DropAction.IgnoreAction)
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
+        self.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.setAnimated(True)
         self.setAllColumnsShowFocus(False)
         self.setHeaderHidden(False)

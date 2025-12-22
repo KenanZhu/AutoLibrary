@@ -154,6 +154,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         self.__timer_tasks = []
         self.__check_timer = None
         self.__sort_policy = SortPolicy.BY_EXECUTE_TIME
+        self.__sort_order = Qt.SortOrder.AscendingOrder
         self.__timer_tasks_config_path = timer_tasks_config_path
 
         self.setupUi(self)
@@ -170,6 +171,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         self.AddTimerTaskButton.clicked.connect(self.addTask)
         self.ClearAllTimerTasksButton.clicked.connect(self.clearAllTasks)
         self.TimerTaskSortTypeComboBox.currentIndexChanged.connect(self.onSortPolicyComboBoxChanged)
+        self.TimerTaskSortOrderToggleButton.clicked.connect(self.onSortOrderToggleButtonClicked)
         self.timerTasksChanged.connect(self.onTimerTasksChanged)
 
 
@@ -294,20 +296,24 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
 
     def sortTimerTasks(
         self,
-        policy: SortPolicy = SortPolicy.BY_EXECUTE_TIME
+        policy: SortPolicy = SortPolicy.BY_EXECUTE_TIME,
+        order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
     ):
 
         if policy == SortPolicy.BY_NAME:
             self.__timer_tasks.sort(
-                key = lambda x: x["name"]
+                key = lambda x: x["name"],
+                reverse = order is Qt.SortOrder.DescendingOrder
             )
         elif policy == SortPolicy.BY_ADD_TIME:
             self.__timer_tasks.sort(
-                key = lambda x: x["add_time"]
+                key = lambda x: x["add_time"],
+                reverse = order is Qt.SortOrder.DescendingOrder
             )
         elif policy == SortPolicy.BY_EXECUTE_TIME:
             self.__timer_tasks.sort(
-                key = lambda x: x["execute_time"]
+                key = lambda x: x["execute_time"],
+                reverse = order is Qt.SortOrder.DescendingOrder
             )
 
 
@@ -343,7 +349,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
     ):
 
         self.TimerTasksListWidget.clear()
-        self.sortTimerTasks(self.__sort_policy)
+        self.sortTimerTasks(self.__sort_policy, self.__sort_order)
         for timer_task in self.__timer_tasks:
             item = QListWidgetItem()
             item.setData(Qt.UserRole, timer_task)
@@ -445,6 +451,18 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         self.__sort_policy = mapping[policy]
         self.updateTimerTaskList()
 
+    @Slot()
+    def onSortOrderToggleButtonClicked(
+        self
+    ):
+
+        self.__sort_order = Qt.SortOrder.AscendingOrder\
+            if self.__sort_order is Qt.SortOrder.DescendingOrder\
+            else Qt.SortOrder.DescendingOrder
+        self.TimerTaskSortOrderToggleButton.setText(
+            "↑" if self.__sort_order is Qt.SortOrder.AscendingOrder else "↓"
+        )
+        self.updateTimerTaskList()
 
     @Slot()
     def onTimerTasksChanged(
