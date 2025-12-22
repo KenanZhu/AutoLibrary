@@ -43,7 +43,7 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
         self
     ):
 
-        self.LogoIconLabel.setPixmap(QIcon(":/res/icon/icons/AutoLibrary.ico").pixmap(48, 48))
+        self.LogoIconLabel.setPixmap(QIcon(":/res/icon/icons/AutoLibrary_32x32.ico").pixmap(48, 48))
         info_text = self.generateAboutText()
         self.AboutInfoEdit.setHtml(info_text)
         self.AboutInfoEdit.setTextInteractionFlags(Qt.TextBrowserInteraction)

@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/res/icon">
-        <file>icons/AutoLibrary.ico</file>
+        <file>icons/AutoLibrary_32x32.ico</file>
     </qresource>
     <qresource prefix="/res/trans">
         <file>translators/qtbase_zh_CN.qm</file>
