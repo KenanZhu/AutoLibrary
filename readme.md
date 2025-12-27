@@ -21,7 +21,7 @@
 4. 批量操作 - 支持同时预约多个用户，可以指定当前需要跳过的用户，并将用户分成多个组
 5. 定时任务 - 使用内置定时任务管理，添加定时任务，指定时间后按当前预约信息自动运行
 
-_1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://autolibrary.cv/docs/manual_lists.html)_
+*1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://autolibrary.cv/docs/manual_lists.html)*
 
 ### 特点
 
@@ -44,7 +44,7 @@ _1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](htt
 
 ### 如何使用
 
-1. 下载最新版本的 AutoLibrary 工具压缩包，[点击这里](https://github.com/KenanZhu/AutoLibrary/releases)。
+1. 下载最新版本的 [AutoLibrary 压缩包](https://github.com/KenanZhu/AutoLibrary/releases)。
 2. 解压下载的文件到任意目录。
 3. 下载对应浏览器的驱动文件，并在配置界面的运行配置选项卡对应位置选择你下载好的浏览器驱动
 4. 运行 `AutoLibrary.exe` 文件。
@@ -64,34 +64,38 @@ _1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](htt
 
 *注意 1*：如果 python 使用的是虚拟环境，请在虚拟环境安装依赖后，在激活的虚拟环境终端中使用 `cd src/gui/batchs` 命令切换到 `batchs` 目录下，再运行编译脚本。否则会提示缺少必要的 Qt PySide 依赖库。
 
-*注意 2*：由于 ddddocr 的代码版本问题，其中的 `__init__.py` 文件中的函数 `def classification(self, img: bytes):` 中的 `image.resize` 方法传入了不符合当前版本的 `resample` 参数，导致在 Python 3.13 中运行时会报错。请将 `image.resize` 方法中的参数替换为 `resample=Image.Resampling.LANCZOS`，具体函数如下：
+*注意 2*：由于 ddddocr 的代码版本问题，其中 `__init__.py` 文件中的函数 `def classification(self, img: bytes):` 中的 `image.resize` 方法传入了不符合当前 pillow 版本的 `resample` 参数 `Image.ANTIALIAS`，该重采样常量已经在 10.0.0 版中删除 [1](@ref)。请将 `image.resize` 方法中的参数替换为 `resample=Image.Resampling.LANCZOS`，具体函数如下：
 ```python
 def classification(self, img: bytes):
         image = Image.open(io.BytesIO(img))
-        image = image.resize((int(image.size[0]*(64/image.size[1])), 64), Image.Resampling.LANCZOS).convert('L')
+        image = image.resize((int(image.size[0]*(64/image.size[1])), 64), Image.ANTIALIAS).convert('L')
                                                                               ^^^^^
-                                                                     请将上述参数替换为如上所示的 `Image.Resampling.LANCZOS`
+                                                                     请将上述参数替换为 `Image.Resampling.LANCZOS`
 
         ...
 ```
+
+[1](@ref)：[pillow 中已经删除或已经弃用的常量](https://pillow.ac.cn/en/stable/deprecations.html#constants)
 
 ### Q&A
 
 #### 为什么开发这个工具？
 
-其实是因为自己在使用图书馆时，发现预约和续约等操作比较麻烦，图书馆的登录系统也比较老旧，验证码错误后需要重复输入。有时候网络环境不好的时候，登录很慢，想赶紧签到或者预约明天的座位。有时候也会有朋友让帮忙预约座位，这时候就需要一个工具来帮助自己快速完成这些操作，自己则不需要管这些事情，只需要专注自己的事情就可以了。
+当前图书馆的座位预约系统在使用中确实会遇到一些不便。例如，系统登录界面较为陈旧，在输入验证码时，若出现错误常常需要全部重新填写，过程繁琐。尤其在网络环境不稳定的情况下，登录和加载速度缓慢，让人难以快速完成当天的签到或预约次日座位。
+此外，当朋友需要帮忙预约座位时，手动操作也会分散自己学习和工作的注意力。
+因此，很希望有一个便捷的工具能自动处理这些预约、续约和签到等操作，从而让自己从这些琐碎事务中解脱出来，更专注于手头的重要事项。
 
 #### 工具后续会收费吗？
 
-不会，本工具完全免费使用，也不会有任何收费项，如果你觉工具对你有帮助，可以为我捐助一瓶可乐的价格，以用于 AutoLibrary 网站的维护和软件的稳定更新。
+不会，本工具完全免费使用，也不会有任何额外收费项。如果你觉工具对你很有帮助，可以为我捐助一瓶饮料的价格，以用于 AutoLibrary 网站的维护和软件的稳定更新。
+
+<a href="https://afdian.com/a/autolibrary" style="display:inline-block;padding:10px 30px;background:linear-gradient(135deg,#946CE6,#946CE6);color:white;text-decoration:none;border-radius:6px;font-weight:bold;">❤ 支持作者</a>
 
 #### 会有手机端的版本吗？
 
-暂时没有考虑，而且也没有足够的能力和精力开发多平台的版本并维护，所以暂时只提供 Windows 版本。
+暂时没有考虑，而且也没有足够的时间和能力开发多平台的版本并测试维护，所以暂时只提供 Windows 版本。
 
 #### 后续会有哪些功能？
-
-由于本人的时间和精力有限，开发后续功能会有所取舍，如果你有什么功能建议或者想参与开发，欢迎联系我。
 
 当前 v1.0.0 版本的功能对于正常使用已经足够，不过后续会着重考虑完善 2-4 人预约时的使用体验，暂时有以下构想：
 
@@ -99,13 +103,12 @@ def classification(self, img: bytes):
 2. 预约时会考虑到组内用户的预约时间是否冲突，若冲突则会提示用户是否继续预约，若用户选择继续预约，则会按需要调整预约时间，再进行预约。
 3. 对于比较固定的用户，会考虑在定时任务管理中添加如 ‘每日任务’ ‘每周任务’ 等选项，用户可以根据需要设置定时任务重复的日期范围，自动完成预约，签到，续约等操作。
 
-不过以上功能的实现，需要一定的时间和精力进行测试，也需要考虑到图书馆的正常运行，所以暂时不会着手开发，也许会进行一些小的功能验证。
+不过由于本人的时间和能力有限，也需要考虑到图书馆的正常运行，所以后续功能会有所取舍，但也许会进行一些小的功能验证。
 
 #### 其他功能建议？
 
-如果有其他功能建议，或者遇到了什么功能性，操作上的问题，欢迎提交 Issue 到本项目。
-
-如果你有足够的开发能力，也可以 Fork 本项目，根据自己的需求进行修改和完善，也欢迎提交 PR 到本项目。
+如果你有其他功能建议，或者遇到了什么功能性，操作上的问题，欢迎提交 Issue 到本项目。
+如果你有足够的开发能力，欢迎为本项目提交 PR，也可以 Fork 本项目，根据自己的需求进行修改和完善。
 
 ### 联系我
 
