@@ -58,8 +58,8 @@
 
 1. 确保系统安装了 Python 3.13 版本 （推荐，过低或高版本会导致兼容问题）。
 2. 安装 pyside6 selenium ddddocr 库，命令为 `pip install pyside6 selenium ddddocr`。
-3. 在 `src/gui/batchs` 目录下运行 `complie_ui.bat` （linux 和 macOS 系统使用 `complie_ui.sh`） 文件来编译 Qt 的 UI 文件。
-4. 在上一步相同目录内运行 `complie_rc.bat` （linux 和 macOS 系统使用 `complie_rc.sh`） 文件来编译 Qt 的资源文件。
+3. 在 `src/gui/batchs` 目录下运行 `compile_ui.bat` （linux 和 macOS 系统使用 `compile_ui.sh`） 文件来编译 Qt 的 UI 文件。
+4. 在上一步相同目录内运行 `compile_rc.bat` （linux 和 macOS 系统使用 `compile_rc.sh`） 文件来编译 Qt 的资源文件。
 5. 待上述步骤完成后，运行 `src/Main.py` 文件即可。
 
 *注意 1*：如果 python 使用的是虚拟环境，请在虚拟环境安装依赖后，在激活的虚拟环境终端中使用 `cd src/gui/batchs` 命令切换到 `batchs` 目录下，再运行编译脚本。否则会提示缺少必要的 Qt PySide 依赖库。
