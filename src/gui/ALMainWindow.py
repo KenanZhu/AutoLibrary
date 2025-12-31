@@ -260,9 +260,13 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         start_button_enabled: bool
     ):
 
-        self.ConfigButton.setEnabled(config_button_enabled)
-        self.StopButton.setEnabled(stop_button_enabled)
-        self.StartButton.setEnabled(start_button_enabled)
+        # if the enable is None, then keep the original state
+        if config_button_enabled is not None:
+            self.ConfigButton.setEnabled(config_button_enabled)
+        if stop_button_enabled is not None:
+            self.StopButton.setEnabled(stop_button_enabled)
+        if start_button_enabled is not None:
+            self.StartButton.setEnabled(start_button_enabled)
 
     @Slot()
     def showMsg(
@@ -310,7 +314,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget.configWidgetCloseSingal.disconnect(self.onConfigWidgetClosed)
             self.__alConfigWidget.deleteLater()
             self.__alConfigWidget = None
-        self.setControlButtons(True, False, True)
+        self.setControlButtons(True, None, None)
         self.__config_paths = config_paths
 
     @Slot(dict)
@@ -332,7 +336,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__current_timer_task_thread.finishedSignal_TimerWorker.disconnect(self.onTimerTaskFinished)
         self.__current_timer_task_thread.deleteLater()
         self.__current_timer_task_thread = None
-        self.setControlButtons(True, False, True)
+        self.setControlButtons(None, False, True)
         self.__is_running_timer_task = False
         self.__timer_task_timer.start(500)
         timer_task["executed"] = True
@@ -381,7 +385,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.setControlButtons(True, True, False)
+        self.setControlButtons(None, True, False)
         if self.__auto_lib_thread is None:
             self.__auto_lib_thread = AutoLibWorker(
                 self.__input_queue,
@@ -405,7 +409,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.__auto_lib_thread.finishedWithErrorSignal.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
             self.__auto_lib_thread = None
-        self.setControlButtons(True, False, True)
+        self.setControlButtons(None, False, True)
 
     @Slot()
     def onSendButtonClicked(
