@@ -667,6 +667,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 group_item = self.addGroup()
         if group_item.type() == TreeItemType.USER.value:
             group_item = group_item.parent()
+        if group_item.checkState(1) == Qt.CheckState.Unchecked:
+            return None
         new_user = {
             "username": f"新用户-{group_item.childCount()}",
             "password": "000000",
@@ -867,6 +869,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             is_checked = item.checkState(1) == Qt.CheckState.Checked
             for i in range(item.childCount()):
                 child = item.child(i)
+                if self.UserTreeWidget.currentItem() == child:
+                    self.UserTreeWidget.setCurrentItem(item)
                 child.setDisabled(not is_checked)
         else:
             is_checked = item.checkState(1) == Qt.CheckState.Checked
