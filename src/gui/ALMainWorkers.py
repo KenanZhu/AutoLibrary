@@ -44,8 +44,7 @@ class AutoLibWorker(QThread, MsgBase):
         current_time = time.strftime("%H:%M", time.localtime())
         if current_time >= "23:30" or current_time <= "07:30":
             self._showTrace(
-                "当前时间不在图书馆开放时间内\n"\
-                "    请在 07:30 - 23:30 之间尝试"
+                "当前时间不在图书馆开放时间内, 请在 07:30 - 23:30 之间尝试"
             )
             return False
         return True
@@ -58,7 +57,7 @@ class AutoLibWorker(QThread, MsgBase):
         if not all(
             os.path.exists(path) for path in self.__config_paths.values()
         ):
-            self._showTrace("配置文件路径不存在, 请检查配置文件路径是否正确。")
+            self._showTrace("配置文件路径不存在, 请检查配置文件路径是否正确")
             return False
         return True
 
@@ -96,32 +95,33 @@ class AutoLibWorker(QThread, MsgBase):
     ):
 
         auto_lib = None
-        try:
-            if not self.checkTimeAvailable():
-                return
-            if not self.checkConfigPaths():
-                return
-            self._showTrace("AutoLibrary 开始运行")
-            if not self.loadConfigs():
-                raise Exception("配置文件加载失败")
-            auto_lib = AutoLib(
-                self._input_queue,
-                self._output_queue,
-                self.__run_config
-            )
-            groups = self.__user_config.get("groups")
-            for group in groups:
-                if not group["enabled"]:
-                    self._showTrace(f"任务组 {group["name"]} 已跳过")
-                    continue
-                self._showTrace(f"正在运行任务组 {group["name"]}")
-                auto_lib.run(
-                    { "users": group.get("users", []) }
+        self._showTrace("AutoLibrary 开始运行")
+        if not self.checkTimeAvailable()\
+        or not self.checkConfigPaths():
+            # time or config existence check failed, skip and finish
+            pass
+        else:
+            try:
+                if not self.loadConfigs():
+                    raise Exception("配置文件加载失败")
+                auto_lib = AutoLib(
+                    self._input_queue,
+                    self._output_queue,
+                    self.__run_config
                 )
-        except Exception as e:
-            self._showTrace(f"AutoLibrary 运行时发生异常 : {e}")
-            self.finishedWithErrorSignal.emit()
-            return
+                groups = self.__user_config.get("groups")
+                for group in groups:
+                    if not group["enabled"]:
+                        self._showTrace(f"任务组 {group["name"]} 已跳过")
+                        continue
+                    self._showTrace(f"正在运行任务组 {group["name"]}")
+                    auto_lib.run(
+                        { "users": group.get("users", []) }
+                    )
+            except Exception as e:
+                self._showTrace(f"AutoLibrary 运行时发生异常 : {e}")
+                self.finishedWithErrorSignal.emit()
+                return
         if auto_lib:
             auto_lib.close()
         self._showTrace("AutoLibrary 运行结束")
