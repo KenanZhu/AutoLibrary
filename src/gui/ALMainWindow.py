@@ -420,4 +420,5 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         if not msg:
             return
         self.showMsg(msg)
+        self.__input_queue.put(msg) # put message to input queue
         self.MessageEdit.clear()

@@ -88,13 +88,12 @@ class LibLogin(LibOperator):
             captcha_img = base64.b64decode(base64_str)
             captcha_text = self.__ddddocr.classification(captcha_img)
             captcha_text = ''.join(filter(str.isalnum, captcha_text)).lower()
-            self._showTrace(f"识别到验证码为 : '{captcha_text}'.")
+            self._showTrace(f"识别到验证码为 : '{captcha_text}'")
             if len(captcha_text) != 4:
                 raise Exception("识别到的验证码长度不等于 4 个字符 !")
             return captcha_text
         except Exception as e:
             self._showTrace(f"验证码识别失败 ! : {e}")
-            self.__refreshCaptcha()
             return ""
 
 
@@ -104,15 +103,14 @@ class LibLogin(LibOperator):
 
         # manual recognize captcha
         try:
-            self._show_msg("请输入验证码:")
-            captcha_text = self._wait_msg(timeout=15)
-            self._showTrace(f"输入的验证码为 : '{captcha_text}'.")
+            self._showMsg("请输入验证码:")
+            captcha_text = self._waitMsg(timeout=15)
+            self._showTrace(f"输入的验证码为 : '{captcha_text}'")
             if len(captcha_text) != 4:
                 raise Exception("输入的验证码长度不等于 4 个字符 !")
             return captcha_text
         except Exception as e:
             self._showTrace(f"输入验证码失败 ! : {e}")
-            self.__refreshCaptcha()
             return ""
 
 
@@ -126,11 +124,9 @@ class LibLogin(LibOperator):
             self.__driver.find_element(
                 By.ID, "loadImgId"
             ).click()
-            time.sleep(1)
             return True
         except Exception as e:
             self._showTrace(f"刷新验证码失败 ! : {e}")
-            self.__refreshCaptcha()
             return False
 
 
@@ -139,8 +135,7 @@ class LibLogin(LibOperator):
         auto_captcha: bool = True
     ) -> str:
 
-        max_attempts = 5
-
+        max_attempts = 3 # the possibility of 3 times failed is less than (10%^3)
         for _ in range(max_attempts):
             if auto_captcha:
                 captcha_text = self.__autoRecognizeCaptcha()
@@ -149,7 +144,10 @@ class LibLogin(LibOperator):
                 captcha_text = self.__manualRecognizeCaptcha()
             if captcha_text:
                 return captcha_text
-        self._showTrace(f"验证码识别失败 {max_attempts} 次, 请检查验证码是否正确 !")
+            else:
+                if not self.__refreshCaptcha():
+                    return ""
+        self._showTrace(f"验证码识别失败 {max_attempts} 次, 达到最大尝试次数 !")
         return ""
 
 
@@ -165,7 +163,6 @@ class LibLogin(LibOperator):
             return True
         except Exception as e:
             self._showTrace(f"验证码填写失败 ! : {e}")
-            self.__refreshCaptcha()
             return False
 
 
@@ -200,7 +197,7 @@ class LibLogin(LibOperator):
                     "//input[@type='button' and @value='登录']"
                 ).click()
             except Exception as e:
-                self._showTrace(f"登录失败 ! : {e}")
+                self._showTrace(f"尝试登录失败 ! : {e}")
                 continue
             if self._waitResponseLoad():
                 self._showTrace(f"用户 {username} 第 {attempt + 1} 次登录成功 !")
