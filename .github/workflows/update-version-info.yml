@@ -1,0 +1,115 @@
+name: Update Version Info
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: 'Tag name (e.g., v1.0.0)'
+        required: true
+        type: string
+      ref:
+        description: 'Git ref to checkout'
+        required: true
+        type: string
+    outputs:
+      tag_name:
+        description: 'The tag name'
+        value: ${{ jobs.update-version-info.outputs.tag_name }}
+      version:
+        description: 'The version number'
+        value: ${{ jobs.update-version-info.outputs.version }}
+      has_changes:
+        description: 'Whether ALVersionInfo.py was modified'
+        value: ${{ jobs.update-version-info.outputs.has_changes }}
+
+jobs:
+  update-version-info:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
+      version: ${{ steps.get_version.outputs.VERSION }}
+      has_changes: ${{ steps.check_changes.outputs.has_changes }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: 0
+
+    - name: Get tag name and version
+      id: get_version
+      env:
+        TZ: UTC
+      run: |
+        TAG_NAME="${{ inputs.tag_name }}"
+        VERSION="${TAG_NAME#v}"
+        COMMIT_SHA="${GITHUB_SHA:0:7}"
+        COMMIT_DATE=$(TZ=UTC git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M:%S UTC')
+
+        echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+        echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_OUTPUT
+
+        echo "✓ Tag: $TAG_NAME"
+        echo "✓ Version: $VERSION"
+        echo "✓ Commit SHA: $COMMIT_SHA"
+        echo "✓ Commit Date: $COMMIT_DATE"
+
+    - name: Update ALVersionInfo.py with version info
+      run: |
+        VERSION="${{ steps.get_version.outputs.VERSION }}"
+        TAG_NAME="${{ steps.get_version.outputs.TAG_NAME }}"
+        COMMIT_SHA="${{ steps.get_version.outputs.COMMIT_SHA }}"
+        COMMIT_DATE="${{ steps.get_version.outputs.COMMIT_DATE }}"
+        APP_INFO_FILE="src/gui/ALVersionInfo.py"
+        BUILD_DATE=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+        echo "Updating $APP_INFO_FILE with build information..."
+
+        {
+          echo '# -*- coding: utf-8 -*-'
+          echo ''
+          echo '"""'
+          echo '    The contents of this file will automatically be updated by the'
+          echo '    workflow process. Do not edit manually.'
+          echo '    '
+          echo '    This file is auto-generated during the workflow process.'
+          echo "    Last updated: ${BUILD_DATE}"
+          echo '"""'
+          echo ''
+          echo "AL_VERSION = \"${VERSION}\""
+          echo "AL_TAG = \"${TAG_NAME}\""
+          echo "AL_COMMIT_SHA = \"${COMMIT_SHA}\""
+          echo "AL_COMMIT_DATE = \"${COMMIT_DATE}\"  # time zone : UTC"
+          echo "AL_BUILD_DATE = \"${BUILD_DATE}\"  # time zone : UTC"
+          echo 'AL_VERSION_FULL = f"{AL_VERSION} ({AL_COMMIT_SHA})"'
+        } > "$APP_INFO_FILE"
+
+        echo "✓ ALVersionInfo.py updated successfully"
+        echo ""
+        echo "=== Updated ALVersionInfo.py ==="
+        cat "$APP_INFO_FILE"
+        echo "=========================="
+
+    - name: Check if ALVersionInfo.py was modified
+      id: check_changes
+      run: |
+        if git diff --quiet src/gui/ALVersionInfo.py; then
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "! No changes detected in ALVersionInfo.py"
+        else
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "✓ ALVersionInfo.py has been modified"
+        fi
+
+    - name: Upload modified ALVersionInfo.py
+      if: steps.check_changes.outputs.has_changes == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: updated-version-info
+        path: src/gui/ALVersionInfo.py
+        retention-days: 1

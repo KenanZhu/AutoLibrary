@@ -1,0 +1,102 @@
+name: Commit and Move Tag
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: 'Tag name to move (e.g., v1.0.0)'
+        required: true
+        type: string
+      version:
+        description: 'Version number for commit message'
+        required: true
+        type: string
+      file_path:
+        description: 'File path to commit'
+        required: true
+        type: string
+    outputs:
+      new_commit_sha:
+        description: 'The new commit SHA after moving the tag'
+        value: ${{ jobs.commit-and-move-tag.outputs.new_commit_sha }}
+
+jobs:
+  commit-and-move-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_commit_sha: ${{ steps.commit_info.outputs.commit_sha }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        fetch-depth: 0
+
+    - name: Download modified file
+      uses: actions/download-artifact@v4
+      with:
+        name: updated-version-info
+        path: downloaded-file/
+
+    - name: Replace file with updated version
+      run: |
+        FILE_PATH="${{ inputs.file_path }}"
+        FILE_NAME=$(basename "$FILE_PATH")
+        TARGET_DIR=$(dirname "$FILE_PATH")
+
+        mkdir -p "$TARGET_DIR"
+        cp "downloaded-file/$FILE_NAME" "$FILE_PATH"
+
+        echo "✓ File replaced: $FILE_PATH"
+        echo ""
+        echo "=== Updated file content ==="
+        cat "$FILE_PATH"
+        echo "============================"
+
+    - name: Commit changes
+      id: commit_changes
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+        FILE_PATH="${{ inputs.file_path }}"
+        VERSION="${{ inputs.version }}"
+
+        if [ ! -f "$FILE_PATH" ]; then
+          echo "✗ Error: File $FILE_PATH not found"
+          exit 1
+        fi
+
+        git add "$FILE_PATH"
+        git commit -m "chore(release): v${VERSION} [auto release commit]"
+        echo "✓ Changes committed"
+
+    - name: Push to main branch
+      run: |
+        MAIN_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+        if [ -z "$MAIN_BRANCH" ]; then
+          MAIN_BRANCH="main"
+        fi
+
+        echo "Pushing to branch: ${MAIN_BRANCH}"
+        git push origin HEAD:${MAIN_BRANCH}
+        echo "✓ Changes pushed to ${MAIN_BRANCH}"
+
+    - name: Move tag to new commit
+      run: |
+        TAG_NAME="${{ inputs.tag_name }}"
+
+        echo "Moving tag ${TAG_NAME} to the new commit..."
+        git tag -f ${TAG_NAME}
+        git push origin ${TAG_NAME} --force
+        echo "✓ Tag ${TAG_NAME} moved to commit $(git rev-parse --short HEAD)"
+
+    - name: Output commit info
+      id: commit_info
+      run: |
+        COMMIT_SHA=$(git rev-parse --short HEAD)
+        echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+        echo "✓ New commit SHA: $COMMIT_SHA"
