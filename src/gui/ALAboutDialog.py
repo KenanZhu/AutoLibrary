@@ -20,7 +20,9 @@ from PySide6.QtCore import (
     QTimer, Qt
 )
 
-from gui.AppInfo import AL_VERSION
+from gui.ALVersionInfo import (
+    AL_VERSION, AL_COMMIT_SHA, AL_COMMIT_DATE, AL_BUILD_DATE
+)
 from gui.Ui_ALAboutDialog import Ui_ALAboutDialog
 
 from gui import AutoLibraryResource
@@ -64,6 +66,9 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
         about_text = f"""
 <h4>Version Information:</h4>
 Version: {AL_VERSION}<br>
+Commit SHA: {AL_COMMIT_SHA}<br>
+Commit date: {AL_COMMIT_DATE}<br>
+Build date: {AL_BUILD_DATE}<br>
 Python version: {platform.python_version()}<br>
 Qt version: {self.getQtVersion()}<br>
 
