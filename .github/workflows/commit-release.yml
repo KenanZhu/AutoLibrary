@@ -1,4 +1,4 @@
-name: Commit and Move Tag
+name: Commit Release
 
 on:
   workflow_call:
@@ -18,10 +18,10 @@ on:
     outputs:
       new_commit_sha:
         description: 'The new commit SHA after moving the tag'
-        value: ${{ jobs.commit-and-move-tag.outputs.new_commit_sha }}
+        value: ${{ jobs.commit-release.outputs.new_commit_sha }}
 
 jobs:
-  commit-and-move-tag:
+  commit-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -52,9 +52,9 @@ jobs:
 
         echo "✓ File replaced: $FILE_PATH"
         echo ""
-        echo "=== Updated file content ==="
-        cat "$FILE_PATH"
-        echo "============================"
+        echo "Updated file content ==================="
+        cat  "$FILE_PATH"
+        echo "========================================"
 
     - name: Commit changes
       id: commit_changes
@@ -85,7 +85,7 @@ jobs:
         git push origin HEAD:${MAIN_BRANCH}
         echo "✓ Changes pushed to ${MAIN_BRANCH}"
 
-    - name: Move tag to new commit
+    - name: Move tag to new release commit
       run: |
         TAG_NAME="${{ inputs.tag_name }}"
 

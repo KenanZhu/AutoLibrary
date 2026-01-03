@@ -1,48 +1,41 @@
-name: Build and Release
+name: Build
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version number'
+        required: true
+        type: string
+      tag_name:
+        description: 'Tag name'
+        required: true
+        type: string
+    outputs:
+      version:
+        description: 'The version number'
+        value: ${{ jobs.build-windows.outputs.version }}
+      tag_name:
+        description: 'The tag name'
+        value: ${{ jobs.build-windows.outputs.tag_name }}
 
 jobs:
-  update-version-info:
-    uses: ./.github/workflows/update-version-info.yml
-    permissions:
-      contents: write
-    with:
-      tag_name: ${{ github.ref_name }}
-      ref: ${{ github.ref }}
-
-  commit-and-move-tag:
-    needs: update-version-info
-    if: ${{ needs.update-version-info.outputs.has_changes == 'true' }}
-    uses: ./.github/workflows/commit-and-move-tag.yml
-    permissions:
-      contents: write
-    with:
-      tag_name: ${{ needs.update-version-info.outputs.tag_name }}
-      version: ${{ needs.update-version-info.outputs.version }}
-      file_path: src/gui/ALVersionInfo.py
-
-  build-and-release:
+  build-windows:
     runs-on: windows-latest
-    needs: [update-version-info, commit-and-move-tag]
-    if: always() && needs.update-version-info.result == 'success'
-    permissions:
-      contents: write
-
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
+      tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
     steps:
-    - name: Checkout code with updated version info
+    - name: Checkout code
       uses: actions/checkout@v4
       with:
         ref: main
 
-    - name: Get version info from previous job
-      id: get_tag
+    - name: Get version info
+      id: get_version
       run: |
-        $tagName = "${{ needs.update-version-info.outputs.tag_name }}"
-        $version = "${{ needs.update-version-info.outputs.version }}"
+        $version = "${{ inputs.version }}"
+        $tagName = "${{ inputs.tag_name }}"
 
         echo "TAG_NAME=$tagName" >> $env:GITHUB_OUTPUT
         echo "VERSION=$version" >> $env:GITHUB_OUTPUT
@@ -50,17 +43,17 @@ jobs:
         Write-Host "✓ Version: $version"
       shell: pwsh
 
-    - name: Verify ALVersionInfo.py was updated
+    - name: Verify 'ALVersionInfo.py' was updated
       run: |
         $versionInfoFile = "src/gui/ALVersionInfo.py"
         Write-Host "Verifying $versionInfoFile content:"
-        Write-Host "================================"
+        Write-Host "=================================="
         Get-Content $versionInfoFile | Write-Host
-        Write-Host "================================"
+        Write-Host "=================================="
       shell: pwsh
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.13'
 
@@ -69,7 +62,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirement.txt
 
-    - name: Fix ddddocr compatibility and copy model files
+    - name: Solve ddddocr compatibility and copy model files
       run: |
         $ddddocrPath = python -c "import ddddocr, os; print(os.path.dirname(ddddocr.__file__))"
         Write-Host "ddddocr package location: $ddddocrPath"
@@ -121,9 +114,9 @@ jobs:
         ./compile_rc.bat
       shell: cmd
 
-    - name: Generate Main.spec dynamically
+    - name: Generate 'Main.spec'
       run: |
-        $version = "${{ steps.get_tag.outputs.VERSION }}"
+        $version = "${{ steps.get_version.outputs.VERSION }}"
         $exeName = "AutoLibrary-$version"
 
         Write-Host "Generating Main.spec for version: $version"
@@ -173,28 +166,29 @@ jobs:
           "    icon=['src\\gui\\icons\\AutoLibrary_32x32.ico'],"
           ")"
         )
-
         $specLines | Out-File -FilePath "Main.spec" -Encoding UTF8
 
         Write-Host "✓ Main.spec generated successfully"
-        Write-Host "`n=== Generated Main.spec ==="
+        Write-Host "`nGenerated Main.spec ============"
         Get-Content "Main.spec" | Write-Host
-        Write-Host "==========================`n"
+        Write-Host "==================================`n"
       shell: pwsh
 
     - name: Build with PyInstaller
       run: |
         pyinstaller Main.spec
 
-    - name: Create Release Archive
+    - name: Zip windows release
+      id: zip_release
       run: |
-        $tagName = "${{ steps.get_tag.outputs.TAG_NAME }}"
-        $version = "${{ steps.get_tag.outputs.VERSION }}"
+        $tagName = "${{ steps.get_version.outputs.TAG_NAME }}"
+        $version = "${{ steps.get_version.outputs.VERSION }}"
         $exeName = "AutoLibrary-$version.exe"
         $zipName = "AutoLibrary.$tagName-windows-x86_64.zip"
 
-        Write-Host "Looking for executable: dist/$exeName"
+        echo "ZIP_PATH=$zipName" >> $env:GITHUB_OUTPUT
 
+        Write-Host "Looking for executable: dist/$exeName"
         if (Test-Path "dist/$exeName") {
           Compress-Archive -Path "dist/$exeName" -DestinationPath $zipName
           Write-Host "✓ Created release archive: $zipName"
@@ -206,31 +200,9 @@ jobs:
         }
       shell: pwsh
 
-    - name: Create Release
-      id: create_release
-      uses: softprops/action-gh-release@v2
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: ${{ steps.get_tag.outputs.TAG_NAME }}
-        name: AutoLibrary ${{ steps.get_tag.outputs.TAG_NAME }}
-        files: |
-          AutoLibrary.${{ steps.get_tag.outputs.TAG_NAME }}-windows-x86_64.zip
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-        body: |
-          ### 下载获取
-          - **Windows x86_64**: `AutoLibrary.${{ steps.get_tag.outputs.TAG_NAME }}-windows-x86_64.zip`
-
-          ### 如何使用
-          1. 下载 `AutoLibrary.${{ steps.get_tag.outputs.TAG_NAME }}-windows-x86_64.zip` 文件
-          2. 解压到任意目录
-          3. 下载对应浏览器的驱动文件
-          4. 运行 `AutoLibrary-${{ steps.get_tag.outputs.VERSION }}.exe` (首次运行会初始化配置文件)
-          5. 按照提示操作即可
-
-          更多详情请访问 [AutoLibrary 网站](http://autolibrary.cv) 和查看 [帮助手册](https://autolibrary.cv/docs/manual_lists.html)
-
-          ---
-          **完整更新日志见下方自动生成的 Release Notes**
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: AutoLibrary.${{ steps.get_version.outputs.TAG_NAME }}-windows-x86_64
+        path: |
+          ${{ steps.zip_release.outputs.ZIP_PATH }}

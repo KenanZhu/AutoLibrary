@@ -1,0 +1,129 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  #
+  # Start :
+  #   virtual job that indacates the start of the release process
+  #
+
+  start:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Start release
+      run: |
+        echo "✓ Starting release"
+
+  #
+  # Update version :
+  #   this job updates the version in the file 'ALVersionInfo.py'
+  #
+
+  update-version:
+    needs:
+      - start
+    uses: ./.github/workflows/update-version.yml
+    permissions:
+      contents: write
+    with:
+      tag_name: ${{ github.ref_name }}
+      ref: ${{ github.ref }}
+
+  #
+  # Commit release :
+  #   this job commits the updated version file and move the release
+  #   tag to this new commit
+  #
+
+  commit-release:
+    needs:
+      - update-version
+    if: ${{ needs.update-version.outputs.has_changes == 'true' }}
+    uses: ./.github/workflows/commit-release.yml
+    permissions:
+      contents: write
+    with:
+      tag_name: ${{ needs.update-version.outputs.tag_name }}
+      version: ${{ needs.update-version.outputs.version }}
+      file_path: src/gui/ALVersionInfo.py
+
+  #
+  # Build :
+  #   this job builds the application and archives them
+
+  build:
+    needs:
+      - update-version
+      - commit-release
+    if: always() && needs.update-version.result == 'success' && needs.commit-release.result == 'success'
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: write
+    with:
+      version: ${{ needs.update-version.outputs.version }}
+      tag_name: ${{ needs.update-version.outputs.tag_name }}
+
+  #
+  # Release :
+  #   this job creates a GitHub release and uploads the archive files
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    if: always() && needs.build.result == 'success'
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64
+        path: artifacts/
+
+    - name: Create release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ needs.build.outputs.tag_name }}
+        name: AutoLibrary ${{ needs.build.outputs.tag_name }}
+        files: |
+          artifacts/AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ### 下载获取
+          - **Windows x86_64**: `AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64.zip`
+
+          ### 如何使用
+          1. 下载 `AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64.zip` 文件
+          2. 解压到任意目录
+          3. 下载对应浏览器的驱动文件
+          4. 运行 `AutoLibrary-${{ needs.build.outputs.version }}.exe` (首次运行会初始化配置文件)
+          5. 按照提示操作即可
+
+          更多详情请访问 [AutoLibrary 网站](http://autolibrary.cv) 和查看 [帮助手册](https://autolibrary.cv/docs/manual_lists.html)
+
+          ---
+          **完整更新日志见下方自动生成的 Release Notes**
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # End :
+  #   virtual job that indacates the end of the release process
+  #
+
+  end:
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    steps:
+    - name: End release
+      run: |
+        echo "✓ Ending release"
