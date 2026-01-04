@@ -1,5 +1,10 @@
 name: Build
 
+# This workflow compiles the application for Windows platform using PyInstaller, and
+# archives the built artifacts as 'AutoLibrary.<tag_name>-windows-x86_64.zip'.
+#
+# It is triggered when called by the release workflow.
+
 on:
   workflow_call:
     inputs:
@@ -19,6 +24,10 @@ on:
         description: 'The tag name'
         value: ${{ jobs.build-windows.outputs.tag_name }}
 
+#
+# Build Windows
+#
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -30,6 +39,14 @@ jobs:
       uses: actions/checkout@v4
       with:
         ref: main
+
+    # here we download the build version of ALVersionInfo.py from artifacts
+    # and replace the committed version
+    - name: Download build version of ALVersionInfo.py
+      uses: actions/download-artifact@v4
+      with:
+        name: updated-version-info-for-build
+        path: src/gui/
 
     - name: Get version info
       id: get_version

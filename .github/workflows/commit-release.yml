@@ -1,5 +1,10 @@
 name: Commit Release
 
+# This workflow commits version changes in 'ALVersionInfo.py' (get from artifacts) and
+# moves the release tag to this new release commit.
+#
+# It is triggered when called by the release workflow.
+
 on:
   workflow_call:
     inputs:
@@ -35,10 +40,12 @@ jobs:
         ref: main
         fetch-depth: 0
 
-    - name: Download modified file
+    # here we download the commit version of ALVersionInfo.py from artifacts
+    # and replace the original file with it.
+    - name: Download commit version of ALVersionInfo.py
       uses: actions/download-artifact@v4
       with:
-        name: updated-version-info
+        name: updated-version-info-for-commit
         path: downloaded-file/
 
     - name: Replace file with updated version

@@ -1,5 +1,32 @@
 name: Release
 
+# This workflow automates the complete release process for AutoLibrary application
+# It is triggered when a new version tag (vX.Y.Z) is pushed to the repository
+#
+# Workflow Steps:
+# START >
+
+# 1. Update Version:
+#       Updates version information in 'ALVersionInfo.py' with build metadata and archives
+#       the updated version file as an artifact.
+#
+#       for more information, please refer to the comment in the workflow 'update-version.yml'
+
+# 2. Commit Release:
+#       Commits version changes and moves the release tag to this new release commit.
+
+# 3. Build:
+#       Compiles the application for Windows platform using PyInstaller, and
+#       archives the built artifacts as 'AutoLibrary.<tag_name>-windows-x86_64.zip'.
+
+# 4. Release:
+#       Creates GitHub release with generated artifacts and release notes
+
+# < END
+#
+# The workflow ensures version consistency between source code, built artifacts, and GitHub releases
+# while maintaining proper commit history and tag management.
+
 on:
   push:
     tags:
@@ -53,7 +80,7 @@ jobs:
 
   #
   # Build :
-  #   this job builds the application and archives them
+  #   this job builds the application artifacts and archives them
 
   build:
     needs:
