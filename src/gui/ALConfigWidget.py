@@ -264,7 +264,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             },
             "web_driver": {
                 "driver_type": "edge",
-                "driver_path": "msedgedriver.exe",
+                "driver_path": "",
                 "headless": False
             },
             "mode": {
@@ -334,7 +334,10 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.AutoCaptchaCheckBox.setChecked(run_config["login"]["auto_captcha"])
         self.LoginAttemptSpinBox.setValue(run_config["login"]["max_attempt"])
         self.BrowserTypeComboBox.setCurrentText(run_config["web_driver"]["driver_type"])
-        driver_path = os.path.abspath(run_config["web_driver"]["driver_path"])
+        if run_config["web_driver"]["driver_path"]:
+            driver_path = os.path.abspath(run_config["web_driver"]["driver_path"])
+        else:
+            driver_path = ""
         self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(driver_path))
         self.HeadlessCheckBox.setChecked(run_config["web_driver"]["headless"])
         run_mode = run_config["mode"]["run_mode"]
