@@ -63,7 +63,7 @@
      </property>
      <widget class="QWidget" name="UserConfigWidget">
       <attribute name="title">
-       <string>用户设置</string>
+       <string>用户配置</string>
       </attribute>
       <layout class="QHBoxLayout" name="UserConfigWidgetLayout">
        <property name="spacing">
@@ -1107,7 +1107,7 @@
      </widget>
      <widget class="QWidget" name="RunConfigWidget">
       <attribute name="title">
-       <string>运行设置</string>
+       <string>运行配置</string>
       </attribute>
       <layout class="QGridLayout" name="SystemConfigWidgetLayout">
        <property name="leftMargin">
@@ -1730,7 +1730,7 @@
              </size>
             </property>
             <property name="text">
-             <string>;;;</string>
+             <string>...</string>
             </property>
            </widget>
           </item>
