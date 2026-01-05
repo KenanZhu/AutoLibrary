@@ -14,7 +14,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
 
 from base.MsgBase import MsgBase
 from operators.LibChecker import LibChecker
@@ -53,54 +55,75 @@ class AutoLib(MsgBase):
     ) -> bool:
 
         self._showTrace("正在初始化浏览器驱动......")
-        edge_options = webdriver.EdgeOptions()
 
         web_driver_config = self.__run_config.get("web_driver", None)
+        self.__driver_type = web_driver_config.get("driver_type")
+        match self.__driver_type.lower():
+            case "edge":
+                driver_options = webdriver.EdgeOptions()
+            case "chrome":
+                driver_options = webdriver.ChromeOptions()
+            case "firefox":
+                driver_options = webdriver.FirefoxOptions()
+            case _:
+                raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type} !")
+
         if not web_driver_config:
             self._showTrace("未配置浏览器驱动参数 !")
             return False
         if web_driver_config.get("headless"):
-            edge_options.add_argument("--headless")
-            edge_options.add_argument("--disable-gpu")
-            edge_options.add_argument("--no-sandbox")
-            edge_options.add_argument("--disable-dev-shm-usage")
+            driver_options.add_argument("--headless")
+            driver_options.add_argument("--disable-gpu")
+            driver_options.add_argument("--no-sandbox")
+            driver_options.add_argument("--disable-dev-shm-usage")
 
         # must be 1920x1080, otherwise the page will cause some elements not accessible
-        edge_options.add_argument("--window-size=1920,1080")
-        edge_options.add_argument("--remote-allow-origins=*")
+        driver_options.add_argument("--window-size=1920,1080")
 
         # omit ssl errors and verbose log level
-        edge_options.add_argument("--ignore-certificate-errors")
-        edge_options.add_argument("--ignore-ssl-errors")
-        edge_options.add_argument("--log-level=OFF")
-        edge_options.add_argument("--silent")
+        driver_options.add_argument("--ignore-certificate-errors")
+        driver_options.add_argument("--ignore-ssl-errors")
+        driver_options.add_argument("--log-level=OFF")
+        driver_options.add_argument("--silent")
 
-        edge_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        edge_options.add_experimental_option("useAutomationExtension", False)
-        edge_options.add_argument("--disable-blink-features=AutomationControlled")
-        edge_options.add_argument(
-            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "\
-            "AppleWebKit/537.36 (KHTML, like Gecko) "\
-            "Chrome/120.0.0.0 "\
-            "Safari/537.36 "\
-            "Edg/120.0.0.0"
-        )
+        # set options for chrome and edge
+        if self.__driver_type.lower() in ["edge", "chrome"]:
+            driver_options.add_argument("--remote-allow-origins=*")
+            driver_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            driver_options.add_experimental_option("useAutomationExtension", False)
+            driver_options.add_argument("--disable-blink-features=AutomationControlled")
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "\
+                         "AppleWebKit/537.36 (KHTML, like Gecko) "\
+                         "Chrome/120.0.0.0 "\
+                         "Safari/537.36"
+            if self.__driver_type.lower() == "edge":
+                user_agent += " Edg/120.0.0.0"
+        # set options for firefox
+        elif self.__driver_type.lower() == "firefox":
+            driver_options.set_preference("dom.webdriver.enabled", False)
+            driver_options.set_preference("useAutomationExtension", False)
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) "\
+                         "Gecko/20100101 Firefox/120.0"
+        driver_options.add_argument(f"user-agent={user_agent}")
 
         # init browser driver
         self.__driver_path = web_driver_config.get("driver_path")
-        self.__driver_type = web_driver_config.get("driver_type")
+        if not self.__driver_path:
+            raise Exception(f"未配置浏览器驱动路径 !")
         self.__driver_path = os.path.abspath(self.__driver_path)
         try:
             service = None
-            if self.__driver_path:
-                service = Service(executable_path=self.__driver_path)
             match self.__driver_type.lower():
                 case "edge":
-                    self.__driver = webdriver.Edge(service=service, options=edge_options)
+                    service = EdgeService(executable_path=self.__driver_path)
+                    self.__driver = webdriver.Edge(service=service, options=driver_options)
                 case "chrome":
-                    self.__driver = webdriver.Chrome(service=service, options=edge_options)
+                    service = ChromeService(executable_path=self.__driver_path)
+                    self.__driver = webdriver.Chrome(service=service, options=driver_options)
                 case "firefox":
-                    self.__driver = webdriver.Firefox(service=service, options=edge_options)
+                    self._showTrace(f"Firefox 浏览器驱动初始化略慢, 请耐心等待...")
+                    service = FirefoxService(executable_path=self.__driver_path)
+                    self.__driver = webdriver.Firefox(service=service, options=driver_options)
                 case _:
                     raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type}")
             self.__driver.implicitly_wait(1)
@@ -294,6 +317,8 @@ class AutoLib(MsgBase):
     ) -> bool:
 
         if self.__driver:
+            if self.__driver_type.lower() == "firefox":
+                self._showTrace(f"Firefox 浏览器驱动关闭略慢, 请耐心等待...")
             self.__driver.quit()
             self.__driver = None
             self._showTrace(f"浏览器驱动已关闭")
