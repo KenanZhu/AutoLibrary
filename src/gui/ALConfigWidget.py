@@ -143,12 +143,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         }
         self.__room_map = {
             "1": "二层内环",
-            "2": "二层外环",
+            "2": "二层西区",
             "3": "三层内环",
             "4": "三层外环",
             "5": "四层内环",
             "6": "四层外环",
-            "7": "四层期刊区",
+            "7": "四层期刊",
             "8": "五层考研"
         }
         self.__floor_rmap = {
@@ -158,9 +158,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             v: k for k, v in self.__room_map.items()
         }
         self.__floor_room_map = {
-            "二层": ["二层内环", "二层外环"],
+            "二层": ["二层内环", "二层西区"],
             "三层": ["三层内环", "三层外环"],
-            "四层": ["四层内环", "四层外环", "四层期刊区"],
+            "四层": ["四层内环", "四层外环", "四层期刊"],
             "五层": ["五层考研"]
         }
 
