@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2025 KenanZhu.
+Copyright (c) 2025 - 2026 KenanZhu.
 All rights reserved.
 
 This software is provided "as is", without any warranty of any kind.
