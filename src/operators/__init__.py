@@ -8,5 +8,6 @@
     - LibReserve: Library operator for reserving seat.
     - LibCheckin: Library operator for checking in seat.
     - LibCheckout: Library operator for checking out seat.
+    - LibChecker: Library operator for checking record status.
     - LibRenew: Library operator for renewing seat.
 """
