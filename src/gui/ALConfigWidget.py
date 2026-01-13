@@ -803,6 +803,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.__seat_map_widget.deleteLater()
         self.__seat_map_widget = None
         if len(selected_seats) == 0:
+            self.SeatIDEdit.clear() # no selected seat, we clear the edit
             return
         self.SeatIDEdit.setText(",".join(selected_seats))
 

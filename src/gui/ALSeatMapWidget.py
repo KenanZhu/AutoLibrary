@@ -40,6 +40,7 @@ class ALSeatMapWidget(QWidget):
         self.__seats_data = seats_data
         self.__selected_seats = []
         self.__seat_frames = {}
+        self.__confirmed = False
         self.setupUi()
         self.connectSignals()
 
@@ -144,6 +145,8 @@ class ALSeatMapWidget(QWidget):
         event: QCloseEvent
     ):
 
+        if not self.__confirmed:
+            self.clearSelections()
         self.seatMapWidgetClosed.emit(self.__selected_seats)
         super().closeEvent(event)
 
@@ -265,6 +268,7 @@ class ALSeatMapWidget(QWidget):
         self
     ):
 
+        self.__confirmed = True
         self.close()
 
     @Slot()
@@ -272,5 +276,5 @@ class ALSeatMapWidget(QWidget):
         self
     ):
 
-        self.clearSelections()
+        self.__confirmed = False
         self.close()
