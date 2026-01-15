@@ -336,15 +336,15 @@ class LibChecker(LibOperator):
     def postRenewCheck(
         self,
         record: dict
-    ):
+    ) -> bool:
         """
-        Check if the renew operation is successful
+            Check if the renew operation is successful
 
-        Args:
-            record (dict): The expected record after renewal
+            Args:
+                record (dict): The expected record after renewal
 
-        Returns:
-            bool: True if the renew operation is successful, False otherwise
+            Returns:
+                bool: True if the renew operation is successful, False otherwise
         """
         # because the special circumstance that the renew operation
         # do not show the success message or anything else,

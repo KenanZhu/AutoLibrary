@@ -214,9 +214,7 @@ class AutoLib(MsgBase):
             login_config.get("auto_captcha", True),
         ):
             return 1
-        """
-            Here, we collect the run mode from the run config.
-        """
+        # Here, we collect the run mode from the run config.
         run_mode = run_mode_config.get("run_mode", 0)
         run_mode = {
             "auto_reserve": run_mode&0x1,
