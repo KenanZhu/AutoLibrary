@@ -26,8 +26,6 @@ from operators.LibReserve import LibReserve
 from operators.LibCheckin import LibCheckin
 from operators.LibRenew import LibRenew
 
-from utils.ConfigReader import ConfigReader
-
 
 class AutoLib(MsgBase):
 

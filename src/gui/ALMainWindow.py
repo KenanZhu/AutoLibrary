@@ -7,7 +7,6 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import os
 import sys
 import time
 import queue
@@ -29,9 +28,6 @@ from gui.ALAboutDialog import ALAboutDialog
 from gui.ALMainWorkers import TimerTaskWorker, AutoLibWorker
 
 from gui import AutoLibraryResource
-
-from utils.ConfigReader import ConfigReader
-from utils.ConfigWriter import ConfigWriter
 
 
 class ALMainWindow(QMainWindow, Ui_ALMainWindow):

@@ -7,24 +7,17 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import os
-import sys
-import time
 import uuid
-import queue
 
 from enum import Enum
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QDateTime
+    Slot, QDateTime
 )
 from PySide6.QtWidgets import (
-    QLabel, QDialog, QWidget, QSpinBox, QVBoxLayout,
+    QLabel, QDialog, QWidget, QSpinBox,
     QHBoxLayout, QGridLayout, QDateTimeEdit
-)
-from PySide6.QtGui import (
-    QCloseEvent
 )
 
 from gui.Ui_ALAddTimerTaskDialog import Ui_ALAddTimerTaskDialog

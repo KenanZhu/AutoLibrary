@@ -8,10 +8,7 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import os
-import sys
-import time
 import copy
-import queue
 
 from enum import Enum
 from datetime import datetime, timedelta
@@ -24,7 +21,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QVBoxLayout, QLabel, QPushButton
 )
 from PySide6.QtGui import (
-    QCloseEvent, QScreen
+    QCloseEvent
 )
 
 from gui.Ui_ALTimerTaskWidget import Ui_ALTimerTaskWidget
