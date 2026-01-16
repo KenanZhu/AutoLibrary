@@ -12,6 +12,22 @@ import queue
 
 
 class MsgBase:
+    """
+        Base class for message and trace abilities (thread-safe).
+
+        This class provides the foundation for message handling and tracing
+        abilities based on the provided input and output queues. It enables
+        thread-safe communication between components using queue-based messaging.
+
+        Args:
+            input_queue (queue.Queue): The input queue for receiving messages.
+            output_queue (queue.Queue): The output queue for sending messages.
+
+        Usage:
+            This class must be initialized with input and output queues. The queue
+            provider (the caller of this class or its subclasses) must explicitly
+            implement queue polling to retrieve and process messages.
+    """
 
     def __init__(
         self,

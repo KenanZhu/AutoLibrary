@@ -13,6 +13,13 @@ from base.MsgBase import MsgBase
 
 
 class LibOperator(MsgBase):
+    """
+        Base abstract class for library operation.
+
+        This class provides the foundation for library-related operations, inheriting
+        message handling and tracing abilities from MsgBase. It serves as an abstract
+        base class that must be subclassed to implement specific library functionality.
+    """
 
     def __init__(
         self,
