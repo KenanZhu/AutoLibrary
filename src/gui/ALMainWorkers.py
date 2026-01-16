@@ -69,15 +69,11 @@ class AutoLibWorker(QThread, MsgBase):
         self._showTrace(
             f"正在加载配置文件, 运行配置文件路径: {self.__config_paths["run"]}"
         )
-        self.__run_config = ConfigReader(
-            self.__config_paths["run"]
-        ).getConfigs()
+        self.__run_config = ConfigReader(self.__config_paths["run"]).getConfigs()
         self._showTrace(
             f"正在加载配置文件, 用户配置文件路径: {self.__config_paths["user"]}"
         )
-        self.__user_config = ConfigReader(
-            self.__config_paths["user"]
-        ).getConfigs()
+        self.__user_config = ConfigReader(self.__config_paths["user"]).getConfigs()
         if self.__run_config is None or self.__user_config is None:
             self._showTrace("配置文件加载失败, 请检查配置文件是否正确")
             self._showTrace("配置文件加载失败, 请检查配置文件是否正确")
