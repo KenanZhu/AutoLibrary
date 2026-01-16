@@ -9,8 +9,35 @@ See the LICENSE file for details.
 """
 import json
 
+from typing import Any
+
 
 class ConfigWriter:
+    """
+        Config writer class.
+
+        This class is used to write config file in JSON format.
+
+        Args:
+            config_path (str): The path of config file.
+            config_data (dict): The config data to be written.
+
+        Examples:
+            >>> config_data = {
+            ...     "key1": {
+            ...         "key2": "value1"
+            ...     }
+            ... }
+            >>> config_writer = ConfigWriter("config.json", config_data)
+            >>> config_writer.set("key1/key2", "value1")
+            True
+            >>>  print(open("config.json", "r", encoding="utf-8").read())
+            {
+                "key1": {
+                    "key2": "value1"
+                }
+            }
+    """
 
     def __init__(
         self,
@@ -19,23 +46,25 @@ class ConfigWriter:
     ):
 
         self.__config_path = config_path
-        self.__config_data = config_data if config_data is not None else {}
-        if config_data is None:
-            return None
-        if not self.__writeConfig():
-            return None
+        self.__config_data = config_data.copy() if config_data is not None else {}
+        self.__writeConfig()
 
 
     def __writeConfig(
         self
-    ) -> bool:
+    ):
 
         try:
-            with open(self.__config_path, "w") as f:
+            with open(self.__config_path, "w", encoding="utf-8") as f:
                 json.dump(self.__config_data, f, indent=4, sort_keys=False)
-            return True
-        except:
-            return False
+        except PermissionError as e:
+            raise Exception(f"Without enough permission to write config file: {self.__config_path}") from e
+        except IOError as e:
+            raise Exception(f"IO error occurred while writing config file: {self.__config_path}") from e
+        except TypeError as e:
+            raise Exception(f"Config data contains invalid type that can not be JSON serialized: {e}") from e
+        except Exception as e:
+            raise Exception(f"Unknown error occurred while writing config file: {e}") from e
 
 
     def setConfigs(
@@ -60,7 +89,7 @@ class ConfigWriter:
     def set(
         self,
         key: str,
-        value: dict
+        value: Any
     ) -> bool:
 
         keys = key.replace("\\", "/").split("/")

@@ -8,63 +8,89 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import json
+import copy
+
+from typing import Any
 
 
 class ConfigReader:
+    """
+        Config reader class.
+
+        This class is used to read config file in JSON format.
+
+        Args:
+            config_path (str): The path of config file.
+
+        Examples:
+            >>>  print(open("config.json", "r", encoding="utf-8").read())
+            {
+                "key1": {
+                    "key2": "value1"
+                }
+            }
+            >>> config_reader = ConfigReader("config.json")
+            >>> config_reader.get("key1/key2")
+            "value1"
+    """
 
     def __init__(
         self,
         config_path: str
     ):
 
-        self._config_path = config_path
-        self._config_data = {}
-        if not self.__readConfig():
-            return None
+        self.__config_path = config_path
+        self.__config_data = None
+        self.__readConfig()
 
 
     def __readConfig(
         self
-    ) -> bool:
+    ):
 
         try:
-            with open(self._config_path, 'r', encoding='utf-8') as file:
-                self._config_data = json.load(file)
-            return True
+            with open(self.__config_path, 'r', encoding='utf-8') as file:
+                self.__config_data = json.load(file)
+        except FileNotFoundError as e:
+            raise Exception(f"Config file not found: {self.__config_path}") from e
+        except PermissionError as e:
+            raise Exception(f"Without enough permission to read config file: {self.__config_path}") from e
+        except json.JSONDecodeError as e:
+            raise Exception(f"JSON decode error in config file: {self.__config_path}") from e
         except Exception as e:
-            print(f"Error reading config file: {e}")
-            return False
+            raise Exception(f"Unknown error occurred while reading config file: {e}") from e
 
 
     def getConfigs(
         self
     ) -> dict:
 
-        return self._config_data.copy()
+        return self.__config_data.copy()
 
 
     def getConfig(
         self,
         key: str
-    ) -> dict:
+    ) -> Any:
 
-        return self._config_data.get(key, {})
+        config = self.__config_data.get(key, {})
+        return copy.deepcopy(config)
 
 
     def get(
         self,
         key: str,
-        default: any = None
-    ) -> any:
+        default: Any = None
+    ) -> Any:
 
         keys = key.split('/')
-        current = self._config_data
+        current = self.__config_data
         for k in keys:
             if isinstance(current, dict) and k in current:
                 current = current[k]
             else:
                 return default
-        return current
+        return copy.deepcopy(current)
 
 
     def hasConfig(
@@ -86,4 +112,4 @@ class ConfigReader:
         self
     ) -> str:
 
-        return self._config_path
+        return self.__config_path
