@@ -13,6 +13,7 @@ import queue
 
 from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -25,7 +26,7 @@ class LibCheckout(LibOperator):
         self,
         input_queue: queue.Queue,
         output_queue: queue.Queue,
-        driver: any
+        driver: WebDriver
     ):
 
         super().__init__(input_queue, output_queue)
