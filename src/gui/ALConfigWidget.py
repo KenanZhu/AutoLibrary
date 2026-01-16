@@ -45,12 +45,11 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         super().__init__(parent)
-
-        self.setupUi(self)
         self.__config_paths = config_paths
         self.__config_data = {"run": {}, "user": {}}
         self.__seat_map_widget = None
 
+        self.setupUi(self)
         self.modifyUi()
         self.connectSignals()
         self.initlizeFloorRoomMap()

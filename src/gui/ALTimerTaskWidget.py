@@ -50,8 +50,8 @@ class TimerTaskItemWidget(QWidget):
     ):
 
         super().__init__(parent)
-
         self.__timer_task = timer_task
+
         self.modifyUi()
 
 

@@ -32,7 +32,7 @@ class AutoLibWorker(QThread, MsgBase):
         config_paths: dict
     ):
 
-        super().__init__(input_queue = input_queue, output_queue = output_queue)
+        super().__init__(input_queue=input_queue, output_queue=output_queue)
 
         self.__config_paths = config_paths
 

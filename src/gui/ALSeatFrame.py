@@ -28,6 +28,7 @@ class ALSeatFrame(QFrame):
         super().__init__(parent)
         self.__seat_number = seat_number
         self.__is_selected = False
+        
         self.setupUi()
 
     def setupUi(

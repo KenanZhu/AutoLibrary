@@ -46,8 +46,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
 
         super().__init__()
         self.__class_name = self.__class__.__name__
-
-        self.setupUi(self)
         self.__input_queue = queue.Queue()
         self.__output_queue = queue.Queue()
         self.__timer_task_queue = queue.Queue()
@@ -64,6 +62,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.__current_timer_task_thread = None
         self.__is_running_timer_task = False
 
+        self.setupUi(self)
         self.modifyUi()
         self.setupTray()
         self.connectSignals()

@@ -34,13 +34,13 @@ class ALSeatMapWidget(QWidget):
     ):
 
         super().__init__(parent)
-
         self.__floor = floor
         self.__room = room
         self.__seats_data = seats_data
         self.__selected_seats = []
         self.__seat_frames = {}
         self.__confirmed = False
+
         self.setupUi()
         self.connectSignals()
 
