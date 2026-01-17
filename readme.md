@@ -4,10 +4,11 @@
 
 ![AutoLibrary Logo](./src/gui/icons/AutoLibrary_128x128.ico)
 
+[![GitHub stars](https://img.shields.io/github/stars/KenanZhu/AutoLibrary.svg?style=social&label=Star)](https://github.com/KenanZhu/AutoLibrary)
 ![License](https://img.shields.io/github/license/KenanZhu/AutoLibrary)
-![Issue](https://img.shields.io/github/issues/KenanZhu/AutoLibrary)
-![Release](https://img.shields.io/github/v/release/KenanZhu/AutoLibrary)
-![Download](https://img.shields.io/github/downloads/KenanZhu/AutoLibrary/total)
+[![Build](https://img.shields.io/github/actions/workflow/status/KenanZhu/AutoLibrary/release.yml)](https://github.com/KenanZhu/AutoLibrary/actions/workflows/release.yml)
+[![Release](https://img.shields.io/github/v/release/KenanZhu/AutoLibrary)](https://github.com/KenanZhu/AutoLibrary/releases)
+![Downloads](https://img.shields.io/github/downloads/KenanZhu/AutoLibrary/total)
 
 了解更多请访问 [_AutoLibrary 网站_](http://autolibrary.cv)
 
@@ -23,9 +24,9 @@
 
 *1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://autolibrary.cv/docs/manual_lists.html)*
 
-### 特点
+### 注意事项
 
-#### 关于预约等操作的注意事项
+#### 关于预约等操作
 
 工具会自动处理登录过程的验证码识别过程，正常情况下单次识别准确率在 90% 以上，如遇验证码识别错误，大概率是校园网网络环境不佳导致的。
 
@@ -34,11 +35,11 @@
 > [!NOTE]
 > 工具仅作为正常的预约，签到和续约的图书馆辅助工具，请勿干扰图书馆的正常运行（如故意预约多个座位，或同时预约大量的用户等，对此影响图书馆正常运行本工具概不负责，请在善用工具方便自己的情况下尽量不用影响其他同学的使用）。
 
-#### 关于批量操作的注意事项
+#### 关于批量操作
 
 批量操作时，建议将需要操作的用户分成多个组，每个组的用户数量不要超过 4 人（即一整张桌子的数量），否则会影响操作效率，大量用户同时预约会一定程度上增加图书馆服务器的压力，影响正常使用。根据需要在用户管理界面中可以勾选本次操作是否跳过该用户，以提高运行效率。
 
-#### 关于定时任务的注意事项
+#### 关于定时任务
 
 定时任务会在指定的时间自动运行，运行时会根据当前预约信息进行操作。一般情况下不建议设置两个运行开始时间比较接近的定时任务，否则后一个任务会等待前一个任务完成后才会运行，按照队列的顺序执行。
 
@@ -97,7 +98,7 @@ def classification(self, img: bytes):
 
 #### 后续会有哪些功能？
 
-当前 v1.0.0 版本的功能对于正常使用已经足够，不过后续会着重考虑完善 2-4 人预约时的使用体验，暂时有以下构想：
+当前版本的功能对于正常使用已经足够，不过后续会着重考虑完善 2-4 人预约时的使用体验，暂时有以下构想：
 
 1. 2-4 人一起预约时，往往会偏向于预约并排或对面的整个空座位，这时候工具会按照一定策略查询搜索符合条件的座位，并预约并排或对面的整个座位，而不是各自独立预约。
 2. 预约时会考虑到组内用户的预约时间是否冲突，若冲突则会提示用户是否继续预约，若用户选择继续预约，则会按需要调整预约时间，再进行预约。
