@@ -33,7 +33,7 @@ from utils.ConfigWriter import ConfigWriter
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
-    configWidgetCloseSingal = Signal(dict)
+    configWidgetIsClosed = Signal(dict)
 
     def __init__(
         self,
@@ -126,7 +126,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         event: QCloseEvent
     ):
 
-        self.configWidgetCloseSingal.emit(self.__config_paths)
+        self.configWidgetIsClosed.emit(self.__config_paths)
         super().closeEvent(event)
 
 

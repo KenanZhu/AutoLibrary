@@ -241,7 +241,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                     self.__output_queue,
                     self.__config_paths
                 )
-                self.__current_timer_task_thread.finishedSignal_TimerWorker.connect(self.onTimerTaskFinished)
+                self.__current_timer_task_thread.TimerTaskWorkerIsFinished.connect(self.onTimerTaskFinished)
                 self.__current_timer_task_thread.start()
         except queue.Empty:
             self.__is_running_timer_task = False
@@ -306,7 +306,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         if self.__alConfigWidget:
-            self.__alConfigWidget.configWidgetCloseSingal.disconnect(self.onConfigWidgetClosed)
+            self.__alConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
             self.__alConfigWidget.deleteLater()
             self.__alConfigWidget = None
         self.setControlButtons(True, None, None)
@@ -328,7 +328,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         self.__current_timer_task_thread.wait(1000)
-        self.__current_timer_task_thread.finishedSignal_TimerWorker.disconnect(self.onTimerTaskFinished)
+        self.__current_timer_task_thread.TimerTaskWorkerIsFinished.disconnect(self.onTimerTaskFinished)
         self.__current_timer_task_thread.deleteLater()
         self.__current_timer_task_thread = None
         self.setControlButtons(None, False, True)
@@ -369,7 +369,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                 self,
                 self.__config_paths
             )
-            self.__alConfigWidget.configWidgetCloseSingal.connect(self.onConfigWidgetClosed)
+            self.__alConfigWidget.configWidgetIsClosed.connect(self.onConfigWidgetClosed)
         self.__alConfigWidget.show()
         self.__alConfigWidget.raise_()
         self.__alConfigWidget.activateWindow()
@@ -387,8 +387,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                 self.__output_queue,
                 self.__config_paths
             )
-            self.__auto_lib_thread.finishedSignal.connect(self.onStopButtonClicked)
-            self.__auto_lib_thread.finishedWithErrorSignal.connect(self.onStopButtonClicked)
+            self.__auto_lib_thread.AutoLibWorkerIsFinished.connect(self.onStopButtonClicked)
+            self.__auto_lib_thread.AutoLibWorkerFinishedWithError.connect(self.onStopButtonClicked)
         self.__auto_lib_thread.start()
 
     @Slot()
@@ -400,8 +400,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.showTrace("正在停止操作......")
             self.__auto_lib_thread.wait(2000)
             self.showTrace("操作已停止")
-            self.__auto_lib_thread.finishedSignal.disconnect(self.onStopButtonClicked)
-            self.__auto_lib_thread.finishedWithErrorSignal.disconnect(self.onStopButtonClicked)
+            self.__auto_lib_thread.AutoLibWorkerIsFinished.disconnect(self.onStopButtonClicked)
+            self.__auto_lib_thread.AutoLibWorkerFinishedWithError.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
             self.__auto_lib_thread = None
         self.setControlButtons(None, False, True)

@@ -22,8 +22,8 @@ from utils.ConfigReader import ConfigReader
 
 class AutoLibWorker(QThread, MsgBase):
 
-    finishedSignal = Signal()
-    finishedWithErrorSignal = Signal()
+    AutoLibWorkerIsFinished = Signal()
+    AutoLibWorkerFinishedWithError = Signal()
 
     def __init__(
         self,
@@ -116,17 +116,17 @@ class AutoLibWorker(QThread, MsgBase):
                     )
             except Exception as e:
                 self._showTrace(f"AutoLibrary 运行时发生异常 : {e}")
-                self.finishedWithErrorSignal.emit()
+                self.AutoLibWorkerFinishedWithError.emit()
                 return
         if auto_lib:
             auto_lib.close()
         self._showTrace("AutoLibrary 运行结束")
-        self.finishedSignal.emit()
+        self.AutoLibWorkerIsFinished.emit()
 
 
 class TimerTaskWorker(AutoLibWorker):
 
-    finishedSignal_TimerWorker = Signal(bool, dict)
+    TimerTaskWorkerIsFinished = Signal(bool, dict)
 
     def __init__(
         self,
@@ -139,8 +139,8 @@ class TimerTaskWorker(AutoLibWorker):
         super().__init__(input_queue, output_queue, config_paths)
 
         self.__timer_task = timer_task
-        self.finishedSignal.connect(self.onTimerTaskIsFinished)
-        self.finishedWithErrorSignal.connect(self.onTimerTaskIsError)
+        self.AutoLibWorkerIsFinished.connect(self.onTimerTaskIsFinished)
+        self.AutoLibWorkerFinishedWithError.connect(self.onTimerTaskIsError)
 
     def run(
         self
@@ -149,18 +149,18 @@ class TimerTaskWorker(AutoLibWorker):
         self._showTrace(f"定时任务 {self.__timer_task['name']} 开始运行")
         super().run()
 
-    @Slot(dict)
+    @Slot()
     def onTimerTaskIsError(
         self
     ):
 
         self._showTrace(f"定时任务 {self.__timer_task['name']} 运行时发生异常")
-        self.finishedSignal_TimerWorker.emit(True, self.__timer_task)
+        self.TimerTaskWorkerIsFinished.emit(True, self.__timer_task)
 
-    @Slot(dict)
+    @Slot()
     def onTimerTaskIsFinished(
         self
     ):
 
         self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
-        self.finishedSignal_TimerWorker.emit(False, self.__timer_task)
+        self.TimerTaskWorkerIsFinished.emit(False, self.__timer_task)
