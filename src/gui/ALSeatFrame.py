@@ -22,7 +22,7 @@ class ALSeatFrame(QFrame):
     def __init__(
         self,
         seat_number,
-        parent=None
+        parent = None
     ):
 
         super().__init__(parent)
