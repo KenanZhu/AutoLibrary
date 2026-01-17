@@ -40,15 +40,16 @@ class ALSeatFrame(QFrame):
         self.setLineWidth(2)
         self.setStyleSheet("""
             QFrame {
-                background-color: #4196EB;
-                border: 2px solid #4196EB;
+                background-color: #2294FF;
+                border: 2px solid #2294FF;
                 border-radius: 5px;
             }
             QLabel {
-                color: #F0F0F0;
+                color: #FFFFFF;
                 font-weight: bold;
             }
         """)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.Label = QLabel(self.__seat_number, self)
         self.Label.setAlignment(Qt.AlignCenter)
         self.Label.setGeometry(0, 0, 60, 40)
@@ -77,24 +78,24 @@ class ALSeatFrame(QFrame):
             self.setStyleSheet("""
                 QFrame {
                     background-color: #4CAF50;
-                    border: 2px solid #388E3C;
+                    border: 2px solid #4CAF50;
                     border-radius: 5px;
                     color: white;
                 }
                 QLabel {
-                    color: #F0F0F0;
+                    color: #FFFFFF;
                     font-weight: bold;
                 }
             """)
         else:
             self.setStyleSheet("""
                 QFrame {
-                    background-color: #4196EB;
-                    border: 2px solid #4196EB;
+                    background-color: #2294FF;
+                    border: 2px solid #2294FF;
                     border-radius: 5px;
                 }
                 QLabel {
-                    color: #F0F0F0;
+                    color: #FFFFFF;
                     font-weight: bold;
                 }
             """)

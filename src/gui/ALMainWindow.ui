@@ -156,11 +156,9 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(10, 170, 10);
-font: 12pt &quot;Microsoft YaHei UI&quot;;
-color: rgb(255, 255, 255);
-font: 9pt &quot;Segoe UI&quot;;
-font: 700 9pt &quot;Microsoft YaHei UI&quot;;</string>
+         <string notr="true">background-color: #0AAA0A;
+color: #FFFFFF;
+font: 700 9pt;</string>
         </property>
         <property name="text">
          <string>启动脚本</string>

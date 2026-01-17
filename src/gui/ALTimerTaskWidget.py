@@ -71,7 +71,7 @@ class TimerTaskItemWidget(QWidget):
 
         ExecuteTimeStr = self.__timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
         ExecuteTimeLabel = QLabel(f"执行时间: {ExecuteTimeStr}")
-        ExecuteTimeLabel.setStyleSheet("color: gray;")
+        ExecuteTimeLabel.setStyleSheet("color: #969696;")
         ExecuteTimeLabel.setFixedHeight(20)
         self.TaskInfoLayout.addWidget(ExecuteTimeLabel)
 
@@ -93,15 +93,15 @@ class TimerTaskItemWidget(QWidget):
                 TaskStatusColor = "#4CAF50"
             case TimerTaskStatus.ERROR:
                 TaskStatusText = "执行失败"
-                TaskStatusColor = "#FF5722"
+                TaskStatusColor = "#DC0000"
             case TimerTaskStatus.OUTDATED:
                 TaskStatusText = "已过期"
-                TaskStatusColor = "#FF5722"
+                TaskStatusColor = "#DC0000"
         TaskStatusLabel = QLabel(TaskStatusText)
         TaskStatusLabel.setStyleSheet(f"""
             QLabel {{
                 background-color: {TaskStatusColor};
-                color: white;
+                color: #FFFFFF;
                 border-radius: 5px;
                 font-weight: bold;
             }}
@@ -116,7 +116,7 @@ class TimerTaskItemWidget(QWidget):
         TaskModeLabel.setStyleSheet(f"""
             QLabel {{
                 background-color: {TaskModeColor};
-                color: white;
+                color: #FFFFFF;
                 border-radius: 5px;
                 font-weight: bold;
             }}
