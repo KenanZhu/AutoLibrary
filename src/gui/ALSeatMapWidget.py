@@ -67,6 +67,8 @@ class ALSeatMapWidget(QWidget):
         self.setWindowTitle(f"选择楼层座位 - AutoLibrary")
 
         self.SeatMapWidgetMainLayout = QVBoxLayout(self)
+        self.SeatMapWidgetMainLayout.setContentsMargins(5, 5, 5, 5)
+        self.SeatMapWidgetMainLayout.setSpacing(5)
         self.TitleLabel = QLabel(f"楼层座位分布图: {self.__floor}-{self.__room}")
         self.TitleLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.TitleLabel.setStyleSheet("font-size: 16px; font-weight: bold; margin: 10px;")
@@ -99,9 +101,13 @@ class ALSeatMapWidget(QWidget):
 
         self.ConfirmButton = QPushButton("确认")
         self.ConfirmButton.setFixedSize(80, 25)
+        self.ConfirmButton.setAutoDefault(True)
+        self.ConfirmButton.setDefault(True)
         self.CancelButton = QPushButton("取消")
         self.CancelButton.setFixedSize(80, 25)
         self.SeatMapWidgetControlLayout = QHBoxLayout()
+        self.SeatMapWidgetControlLayout.setContentsMargins(0, 0, 0, 0)
+        self.SeatMapWidgetControlLayout.setSpacing(5)
         self.SeatMapWidgetControlLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.SeatMapWidgetControlLayout.addWidget(self.CancelButton)
         self.SeatMapWidgetControlLayout.addWidget(self.ConfirmButton)

@@ -104,7 +104,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QFrame" name="frame">
+      <widget class="QFrame" name="AboutInfoSpaceFrame">
        <property name="minimumSize">
         <size>
          <width>56</width>

@@ -28,7 +28,7 @@ class ALSeatFrame(QFrame):
         super().__init__(parent)
         self.__seat_number = seat_number
         self.__is_selected = False
-        
+
         self.setupUi()
 
     def setupUi(
@@ -49,9 +49,9 @@ class ALSeatFrame(QFrame):
                 font-weight: bold;
             }
         """)
-        self.label = QLabel(self.__seat_number, self)
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setGeometry(0, 0, 60, 40)
+        self.Label = QLabel(self.__seat_number, self)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.Label.setGeometry(0, 0, 60, 40)
 
     def mousePressEvent(
         self,

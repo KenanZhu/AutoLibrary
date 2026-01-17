@@ -94,19 +94,19 @@
          </property>
          <layout class="QVBoxLayout" name="UserListLayout">
           <property name="spacing">
-           <number>0</number>
+           <number>5</number>
           </property>
           <property name="leftMargin">
-           <number>5</number>
+           <number>3</number>
           </property>
           <property name="topMargin">
-           <number>5</number>
+           <number>3</number>
           </property>
           <property name="rightMargin">
-           <number>5</number>
+           <number>3</number>
           </property>
           <property name="bottomMargin">
-           <number>5</number>
+           <number>3</number>
           </property>
           <item>
            <widget class="QTreeWidget" name="UserTreeWidget">
@@ -178,6 +178,9 @@
           </item>
           <item>
            <layout class="QHBoxLayout" name="UserListControlLayout">
+            <property name="spacing">
+             <number>5</number>
+            </property>
             <item>
              <widget class="QPushButton" name="DelUserButton">
               <property name="minimumSize">
@@ -309,7 +312,7 @@
              <item row="2" column="1">
               <layout class="QHBoxLayout" name="PasswordLayout">
                <property name="spacing">
-                <number>0</number>
+                <number>5</number>
                </property>
                <item>
                 <widget class="QLineEdit" name="PasswordEdit">
@@ -546,7 +549,7 @@
              <item row="4" column="4">
               <layout class="QHBoxLayout" name="SeatIDLayout">
                <property name="spacing">
-                <number>0</number>
+                <number>5</number>
                </property>
                <item>
                 <widget class="QLineEdit" name="SeatIDEdit">
@@ -703,7 +706,7 @@
              <item row="10" column="4">
               <layout class="QHBoxLayout" name="EndTimeDiffLayout">
                <property name="spacing">
-                <number>0</number>
+                <number>5</number>
                </property>
                <item>
                 <widget class="QSpinBox" name="MaxEndTimeDiffSpinBox">
@@ -899,7 +902,7 @@
              <item row="7" column="4">
               <layout class="QHBoxLayout" name="BeginTimeDiffLayout">
                <property name="spacing">
-                <number>0</number>
+                <number>5</number>
                </property>
                <item>
                 <widget class="QSpinBox" name="MaxBeginTimeDiffSpinBox">
@@ -1049,7 +1052,7 @@
              <item row="15" column="4">
               <layout class="QHBoxLayout" name="RenewTimeDiffLayout">
                <property name="spacing">
-                <number>0</number>
+                <number>5</number>
                </property>
                <item>
                 <widget class="QSpinBox" name="MaxRenewTimeDiffSpinBox">
@@ -1092,7 +1095,7 @@
               </layout>
              </item>
              <item row="15" column="1">
-              <widget class="QLabel" name="label">
+              <widget class="QLabel" name="MaxRenewTimeDiffLabel">
                <property name="minimumSize">
                 <size>
                  <width>80</width>
@@ -1153,10 +1156,10 @@
           <property name="rightMargin">
            <number>3</number>
           </property>
-          <property name="horizontalSpacing">
+          <property name="bottomMargin">
            <number>3</number>
           </property>
-          <property name="verticalSpacing">
+          <property name="spacing">
            <number>5</number>
           </property>
           <item row="0" column="0" colspan="2">
@@ -1649,6 +1652,21 @@
           <string>当前配置</string>
          </property>
          <layout class="QGridLayout" name="CurrentConfigLayout">
+          <property name="leftMargin">
+           <number>3</number>
+          </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
+          <property name="rightMargin">
+           <number>3</number>
+          </property>
+          <property name="bottomMargin">
+           <number>3</number>
+          </property>
+          <property name="spacing">
+           <number>5</number>
+          </property>
           <item row="1" column="0">
            <widget class="QLineEdit" name="CurrentRunConfigEdit">
             <property name="minimumSize">
@@ -1775,6 +1793,21 @@
           <string>导出路径</string>
          </property>
          <layout class="QGridLayout" name="ExportConfigLayout">
+          <property name="leftMargin">
+           <number>3</number>
+          </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
+          <property name="rightMargin">
+           <number>3</number>
+          </property>
+          <property name="bottomMargin">
+           <number>3</number>
+          </property>
+          <property name="spacing">
+           <number>5</number>
+          </property>
           <item row="3" column="0">
            <widget class="QLineEdit" name="ExportUserConfigEdit">
             <property name="minimumSize">

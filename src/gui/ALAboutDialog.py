@@ -60,7 +60,7 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
 
     def generateAboutText(
         self
-    ):
+    ) -> str:
 
         os_info = self.getOSInfo()
         about_text = f"""
