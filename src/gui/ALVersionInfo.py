@@ -5,11 +5,11 @@
     workflow process. Do not edit manually.
 
     This file is auto-generated during the workflow process.
-    Last updated: 2026-01-05 04:04:54 UTC
+    Last updated: 2026-01-17 17:51:55 UTC
 """
 
-AL_VERSION = "1.0.2"
-AL_TAG = "v1.0.2"
+AL_VERSION = "1.0.3"
+AL_TAG = "v1.0.3"
 AL_COMMIT_SHA = "local"
 AL_COMMIT_DATE = "null"  # time zone : UTC
 AL_BUILD_DATE = "null"  # time zone : UTC
