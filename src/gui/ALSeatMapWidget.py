@@ -21,28 +21,19 @@ from PySide6.QtGui import (
 from gui.ALSeatFrame import ALSeatFrame
 
 
-class ALSeatMapWidget(QWidget):
-
-    seatMapWidgetClosed = Signal(list)
+class ALSeatMapView(QGraphicsView):
 
     def __init__(
         self,
         parent: QWidget = None,
-        floor: str = "",
-        room: str = "",
         seats_data: dict = {},
     ):
-
         super().__init__(parent)
-        self.__floor = floor
-        self.__room = room
         self.__seats_data = seats_data
         self.__selected_seats = []
         self.__seat_frames = {}
-        self.__confirmed = False
 
         self.setupUi()
-        self.connectSignals()
 
     @staticmethod
     def formatSeatNumber(
@@ -56,114 +47,13 @@ class ALSeatMapWidget(QWidget):
         return seat_number.zfill(3)
 
 
-    def setupUi(
-        self
-    ):
-
-        self.setWindowFlags(Qt.WindowType.Window)
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setMinimumSize(800, 600)
-        self.resize(800, 600)
-        self.setWindowTitle(f"选择楼层座位 - AutoLibrary")
-
-        self.SeatMapWidgetMainLayout = QVBoxLayout(self)
-        self.SeatMapWidgetMainLayout.setContentsMargins(5, 5, 5, 5)
-        self.SeatMapWidgetMainLayout.setSpacing(5)
-        self.TitleLabel = QLabel(f"楼层座位分布图: {self.__floor}-{self.__room}")
-        self.TitleLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.TitleLabel.setStyleSheet("font-size: 16px; font-weight: bold; margin: 10px;")
-        self.SeatMapWidgetMainLayout.addWidget(self.TitleLabel)
-
-        self.SeatMapGraphicsView = QGraphicsView(self)
-        self.SeatMapGraphicsScene = QGraphicsScene(self)
-        self.SeatMapGraphicsView.setScene(self.SeatMapGraphicsScene)
-        self.SeatMapGraphicsView.setRenderHint(QPainter.RenderHint.LosslessImageRendering)
-        self.SeatMapGraphicsView.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.SeatMapGraphicsView.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.SeatMapGraphicsView.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.SeatMapGraphicsView.viewport().installEventFilter(self)
-
-        self.SeatsContainerWidget = QWidget()
-        self.SeatsContainerLayout = QGridLayout(self.SeatsContainerWidget)
-        self.createSeatMap()
-
-        self.ContainerProxy = self.SeatMapGraphicsScene.addWidget(self.SeatsContainerWidget)
-        self.ContainerProxy.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
-        self.SeatMapWidgetMainLayout.addWidget(self.SeatMapGraphicsView)
-
-        self.TipsLabel = QLabel(
-            "  点击座位进行选择/取消选择, 最多选择1个座位 \n"
-            "  [操作方法: Ctrl+鼠标滚轮缩放 | 滚轮/拖拽/方向键 移动]"
-        )
-        self.TipsLabel.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.TipsLabel.setStyleSheet("color: #666; margin: 5px;")
-        self.SeatMapWidgetMainLayout.addWidget(self.TipsLabel)
-
-        self.ConfirmButton = QPushButton("确认")
-        self.ConfirmButton.setFixedSize(80, 25)
-        self.ConfirmButton.setAutoDefault(True)
-        self.ConfirmButton.setDefault(True)
-        self.CancelButton = QPushButton("取消")
-        self.CancelButton.setFixedSize(80, 25)
-        self.SeatMapWidgetControlLayout = QHBoxLayout()
-        self.SeatMapWidgetControlLayout.setContentsMargins(0, 0, 0, 0)
-        self.SeatMapWidgetControlLayout.setSpacing(5)
-        self.SeatMapWidgetControlLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.SeatMapWidgetControlLayout.addWidget(self.CancelButton)
-        self.SeatMapWidgetControlLayout.addWidget(self.ConfirmButton)
-        self.SeatMapWidgetMainLayout.addLayout(self.SeatMapWidgetControlLayout)
-
-
-    def connectSignals(
-        self
-    ):
-
-        self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
-        self.CancelButton.clicked.connect(self.onCancelButtonClicked)
-
-
-    def showEvent(
-        self,
-        event
-    ):
-
-        result = super().showEvent(event)
-
-        screen_rect = self.screen().geometry()
-        target_pos = self.parent().geometry().center()
-        target_pos.setX(target_pos.x() - self.width()//2)
-        target_pos.setY(target_pos.y() - self.height()//2)
-        if target_pos.x() < 0:
-            target_pos.setX(0)
-        if target_pos.x() + self.width() > screen_rect.width():
-            target_pos.setX(screen_rect.width() - self.width())
-        if target_pos.y() < 0:
-            target_pos.setY(0)
-        if target_pos.y() + self.height() > screen_rect.height():
-            target_pos.setY(screen_rect.height() - self.height())
-        self.move(target_pos)
-
-        return result
-
-
-    def closeEvent(
-        self,
-        event: QCloseEvent
-    ):
-
-        if not self.__confirmed:
-            self.clearSelections()
-        self.seatMapWidgetClosed.emit(self.__selected_seats)
-        super().closeEvent(event)
-
-
     def eventFilter(
         self,
         watched,
         event
     ):
 
-        if (watched is self.SeatMapGraphicsView.viewport() and
+        if (watched is self.viewport() and
             event.type() == QEvent.Type.Wheel and
             event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
@@ -178,12 +68,40 @@ class ALSeatMapWidget(QWidget):
     ):
 
         delta = event.angleDelta().y()
+        min_scale = 0.1
+        max_scale = 4.0
+        current_scale = self.transform().m11()
         zoom_factor = 1.2 if delta > 0 else 1/1.2
-        self.SeatMapGraphicsView.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
-        self.SeatMapGraphicsView.scale(zoom_factor, zoom_factor)
+        target_scale = current_scale*zoom_factor
+        if target_scale < min_scale and delta < 0:
+            return
+        if target_scale > max_scale and delta > 0:
+            return
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.scale(zoom_factor, zoom_factor)
 
 
-    def createSeatMap(
+    def setupUi(
+        self
+    ):
+
+        self.SeatMapGraphicsScene = QGraphicsScene(self)
+        self.setScene(self.SeatMapGraphicsScene)
+        self.setRenderHint(QPainter.RenderHint.LosslessImageRendering)
+        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.viewport().installEventFilter(self)
+
+        self.SeatsContainerWidget = QWidget()
+        self.SeatsContainerLayout = QGridLayout(self.SeatsContainerWidget)
+        self.setupSeatMap()
+
+        self.ContainerProxy = self.SeatMapGraphicsScene.addWidget(self.SeatsContainerWidget)
+        self.ContainerProxy.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
+
+
+    def setupSeatMap(
         self
     ):
 
@@ -268,6 +186,145 @@ class ALSeatMapWidget(QWidget):
                 self.__selected_seats.append(seat_number)
             else:
                 self.__seat_frames[seat_number].toggleSelection()
+
+
+class ALSeatMapWidget(QWidget):
+
+    seatMapWidgetClosed = Signal(list)
+
+    def __init__(
+        self,
+        parent: QWidget = None,
+        floor: str = "",
+        room: str = "",
+        seats_data: str = ""
+    ):
+
+        super().__init__(parent)
+        self.__floor = floor
+        self.__room = room
+        self.__seats_data = seats_data
+        self.__confirmed = False
+
+        self.setupUi()
+        self.connectSignals()
+
+
+    def setupUi(
+        self
+    ):
+
+        self.setWindowFlags(Qt.WindowType.Window)
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        self.setMinimumSize(800, 600)
+        self.resize(800, 600)
+        self.setWindowTitle(f"选择楼层座位 - AutoLibrary")
+
+        self.SeatMapWidgetMainLayout = QVBoxLayout(self)
+        self.SeatMapWidgetMainLayout.setContentsMargins(5, 5, 5, 5)
+        self.SeatMapWidgetMainLayout.setSpacing(5)
+        self.TitleLabel = QLabel(f"楼层座位分布图: {self.__floor}-{self.__room}")
+        self.TitleLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.TitleLabel.setStyleSheet("font-size: 16px; font-weight: bold; margin: 10px;")
+        self.SeatMapWidgetMainLayout.addWidget(self.TitleLabel)
+
+        self.SeatMapGraphicsView = ALSeatMapView(None, self.__seats_data)
+        self.SeatMapWidgetMainLayout.addWidget(self.SeatMapGraphicsView)
+
+        self.TipsLabel = QLabel(
+            "  点击座位进行选择/取消选择, 最多选择1个座位 \n"
+            "  [操作方法: Ctrl+鼠标滚轮缩放 | 滚轮/拖拽/方向键 移动]"
+        )
+        self.TipsLabel.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.TipsLabel.setStyleSheet("color: #666; margin: 5px;")
+        self.SeatMapWidgetMainLayout.addWidget(self.TipsLabel)
+
+        self.ConfirmButton = QPushButton("确认")
+        self.ConfirmButton.setFixedSize(80, 25)
+        self.ConfirmButton.setAutoDefault(True)
+        self.ConfirmButton.setDefault(True)
+        self.CancelButton = QPushButton("取消")
+        self.CancelButton.setFixedSize(80, 25)
+        self.SeatMapWidgetControlLayout = QHBoxLayout()
+        self.SeatMapWidgetControlLayout.setContentsMargins(0, 0, 0, 0)
+        self.SeatMapWidgetControlLayout.setSpacing(5)
+        self.SeatMapWidgetControlLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.SeatMapWidgetControlLayout.addWidget(self.CancelButton)
+        self.SeatMapWidgetControlLayout.addWidget(self.ConfirmButton)
+        self.SeatMapWidgetMainLayout.addLayout(self.SeatMapWidgetControlLayout)
+
+
+    def connectSignals(
+        self
+    ):
+
+        self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
+        self.CancelButton.clicked.connect(self.onCancelButtonClicked)
+
+
+    def showEvent(
+        self,
+        event
+    ):
+
+        result = super().showEvent(event)
+
+        screen_rect = self.screen().geometry()
+        target_pos = self.parent().geometry().center()
+        target_pos.setX(target_pos.x() - self.width()//2)
+        target_pos.setY(target_pos.y() - self.height()//2)
+        if target_pos.x() < 0:
+            target_pos.setX(0)
+        if target_pos.x() + self.width() > screen_rect.width():
+            target_pos.setX(screen_rect.width() - self.width())
+        if target_pos.y() < 0:
+            target_pos.setY(0)
+        if target_pos.y() + self.height() > screen_rect.height():
+            target_pos.setY(screen_rect.height() - self.height())
+        self.move(target_pos)
+
+        return result
+
+
+    def closeEvent(
+        self,
+        event: QCloseEvent
+    ):
+
+        if not self.__confirmed:
+            self.clearSelections()
+        self.seatMapWidgetClosed.emit(self.getSelectedSeats())
+        super().closeEvent(event)
+
+
+    def selectSeat(
+        self,
+        seat_number: str
+    ):
+
+        self.SeatMapGraphicsView.selectSeat(seat_number)
+
+
+    def selectSeats(
+        self,
+        seat_numbers: list[str]
+    ) -> bool:
+
+        return self.SeatMapGraphicsView.selectSeats(seat_numbers)
+
+
+    def getSelectedSeats(
+        self
+    ) -> list[str]:
+
+        return self.SeatMapGraphicsView.getSelectedSeats()
+
+
+    def clearSelections(
+        self
+    ):
+
+        self.SeatMapGraphicsView.clearSelections()
 
     @Slot()
     def onConfirmButtonClicked(
