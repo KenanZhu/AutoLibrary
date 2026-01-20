@@ -20,7 +20,7 @@ from operators.AutoLib import AutoLib
 from utils.ConfigReader import ConfigReader
 
 
-class AutoLibWorker(QThread, MsgBase):
+class AutoLibWorker(MsgBase, QThread):
 
     AutoLibWorkerIsFinished = Signal()
     AutoLibWorkerFinishedWithError = Signal()
@@ -32,8 +32,8 @@ class AutoLibWorker(QThread, MsgBase):
         config_paths: dict
     ):
 
-        super().__init__(input_queue=input_queue, output_queue=output_queue)
-
+        MsgBase.__init__(self, input_queue, output_queue)
+        QThread.__init__(self)
         self.__config_paths = config_paths
 
 
