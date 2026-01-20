@@ -21,6 +21,8 @@ from PySide6.QtGui import (
     QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
 )
 
+from base.MsgBase import MsgBase
+
 from gui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.ALConfigWidget import ALConfigWidget
 from gui.ALTimerTaskWidget import ALTimerTaskWidget
@@ -30,7 +32,7 @@ from gui.ALMainWorkers import TimerTaskWorker, AutoLibWorker
 from gui import AutoLibraryResource
 
 
-class ALMainWindow(QMainWindow, Ui_ALMainWindow):
+class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
     timerTaskIsRunning = Signal(dict)
     timerTaskIsExecuted = Signal(dict)
@@ -40,10 +42,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        super().__init__()
-        self.__class_name = self.__class__.__name__
-        self.__input_queue = queue.Queue()
-        self.__output_queue = queue.Queue()
+        MsgBase.__init__(self, queue.Queue(), queue.Queue())
+        QMainWindow.__init__(self)
         self.__timer_task_queue = queue.Queue()
         script_path = sys.executable
         script_dir = QFileInfo(script_path).absoluteDir()
@@ -237,8 +237,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
                     self.showNormal()
                 self.__current_timer_task_thread = TimerTaskWorker(
                     timer_task,
-                    self.__input_queue,
-                    self.__output_queue,
+                    self._input_queue,
+                    self._output_queue,
                     self.__config_paths
                 )
                 self.__current_timer_task_thread.TimerTaskWorkerIsFinished.connect(self.onTimerTaskFinished)
@@ -264,30 +264,13 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             self.StartButton.setEnabled(start_button_enabled)
 
     @Slot()
-    def showMsg(
-        self,
-        msg: str
-    ):
-
-        self.__output_queue.put(f"[{self.__class_name:<15}] >>> : {msg}")
-
-    @Slot()
-    def showTrace(
-        self,
-        msg: str
-    ):
-
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        self.__output_queue.put(f"{timestamp}-[{self.__class_name:<15}] : {msg}")
-
-    @Slot()
     def pollMsgQueue(
         self
     ):
 
         try:
             while True:
-                msg = self.__output_queue.get_nowait()
+                msg = self._output_queue.get_nowait()
                 self.appendToTextEdit(msg)
         except queue.Empty:
             pass
@@ -341,7 +324,7 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
             QSystemTrayIcon.MessageIcon.Information,
             1000
         )
-        self.showTrace(
+        self._showTrace(
             f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['task_uuid']}"
         )
         if not is_error:
@@ -383,8 +366,8 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         self.setControlButtons(None, True, False)
         if self.__auto_lib_thread is None:
             self.__auto_lib_thread = AutoLibWorker(
-                self.__input_queue,
-                self.__output_queue,
+                self._input_queue,
+                self._output_queue,
                 self.__config_paths
             )
             self.__auto_lib_thread.AutoLibWorkerIsFinished.connect(self.onStopButtonClicked)
@@ -397,9 +380,9 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
     ):
 
         if self.__auto_lib_thread:
-            self.showTrace("正在停止操作......")
+            self._showTrace("正在停止操作......")
             self.__auto_lib_thread.wait(2000)
-            self.showTrace("操作已停止")
+            self._showTrace("操作已停止")
             self.__auto_lib_thread.AutoLibWorkerIsFinished.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.AutoLibWorkerFinishedWithError.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
@@ -414,6 +397,6 @@ class ALMainWindow(QMainWindow, Ui_ALMainWindow):
         msg = self.MessageEdit.text().strip()
         if not msg:
             return
-        self.showMsg(msg)
-        self.__input_queue.put(msg) # put message to input queue
+        self._showMsg(msg)
+        self._input_queue.put(msg) # put message to input queue
         self.MessageEdit.clear()
