@@ -7,8 +7,8 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import time
 import queue
+import datetime
 
 
 class MsgBase:
@@ -53,7 +53,7 @@ class MsgBase:
         msg: str
     ):
 
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         self._output_queue.put(f"{timestamp}-[{self._class_name:<15}] : {msg}")
 
 
@@ -67,15 +67,3 @@ class MsgBase:
             return msg
         except queue.Empty:
             return None
-
-
-    def _inputMsg(
-        self,
-        timeout: float = 1.0
-    ) -> bool:
-
-        try:
-            self._input_queue.get(timeout=timeout)
-            return True
-        except queue.Empty:
-            return False
