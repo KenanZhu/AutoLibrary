@@ -11,6 +11,7 @@ import os
 import queue
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -41,10 +42,11 @@ class AutoLib(MsgBase):
         self.__user_config = None
         self.__driver = None
         if not self.__initBrowserDriver():
-            raise Exception("浏览器驱动初始化失败")
+            raise Exception("浏览器驱动初始化失败 !")
         else:
             if not self.__initDriverUrl():
-                raise Exception("浏览器驱动URL初始化失败")
+                self.close()
+                raise Exception("浏览器驱动URL初始化失败 !")
             self.__initLibOperators()
 
 
@@ -186,10 +188,16 @@ class AutoLib(MsgBase):
 
         lib_config = self.__run_config.get("library", None)
         if not lib_config:
-            self._showError("未配置图书馆参数 !")
+            self._showTrace("未配置图书馆参数 !")
             return False
         url = lib_config.get("host_url") + lib_config.get("login_url")
-        self.__driver.get(url)
+        self.__driver.set_page_load_timeout(5)
+        try:
+            self.__driver.get(url)
+        except TimeoutException:
+            self.__driver.execute_script("window.stop();")
+            self._showTrace(f"图书馆登录页面加载超时 ! 请检查网络环境是否正常")
+            return False
         if not self.__waitResponseLoad():
             return False
         return True
