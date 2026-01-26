@@ -64,7 +64,8 @@ class AutoLib(MsgBase):
             case "firefox":
                 driver_options = webdriver.FirefoxOptions()
             case _:
-                raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type} !")
+                self._showTrace(f"不支持的浏览器驱动类型: {self.__driver_type} !")
+                return False
 
         if not web_driver_config:
             self._showTrace("未配置浏览器驱动参数 !")
@@ -107,7 +108,8 @@ class AutoLib(MsgBase):
         # init browser driver
         self.__driver_path = web_driver_config.get("driver_path")
         if not self.__driver_path:
-            raise Exception(f"未配置浏览器驱动路径 !")
+            self._showTrace("未配置浏览器驱动路径 !")
+            return False
         self.__driver_path = os.path.abspath(self.__driver_path)
         try:
             service = None
@@ -122,7 +124,8 @@ class AutoLib(MsgBase):
                     self._showTrace(f"Firefox 浏览器驱动初始化略慢, 请耐心等待...")
                     service = FirefoxService(executable_path=self.__driver_path)
                     self.__driver = webdriver.Firefox(service=service, options=driver_options)
-                case _:
+                case _: # actually will not happen, beacuse we have checked it at the initlization
+                    # of 'driver_options'
                     raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type}")
             self.__driver.implicitly_wait(1)
             self.__driver.execute_script(
