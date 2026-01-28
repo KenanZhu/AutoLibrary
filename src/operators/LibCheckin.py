@@ -88,6 +88,31 @@ class LibCheckin(LibOperator):
             return False
 
 
+    def __enableCheckinBtn(
+        self
+    ) -> bool:
+
+        script = """
+        try {
+            var checkin_btn = document.getElementById('btnCheckIn');
+            if (checkin_btn) {
+                checkin_btn.classList.remove('disabled');
+                return true;
+            }
+            return false;
+        } catch (e) {
+            return false;
+        }
+        """
+        result = self.__driver.execute_script(script)
+        time.sleep(0.1)
+        if result:
+            self._showTrace("签到按钮已启用")
+        else:
+            self._showTrace("签到按钮启用失败")
+        return result
+
+
     def checkin(
         self,
         username: str
@@ -104,8 +129,10 @@ class LibCheckin(LibOperator):
             self._showTrace(f"用户 {username} 签到界面加载失败 !")
             return False
         if "disabled" in checkin_btn.get_attribute("class"):
-            self._showTrace("签到按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试")
-            return False
+            self._showTrace("签到按钮不可用, 可能不在场馆内, 正在尝试启用......")
+            if not self.__enableCheckinBtn():
+                self._showTrace(f"签到按钮启用失败 !")
+                return False
         checkin_btn.click()
         if self._waitResponseLoad():
             self._showTrace(f"用户 {username} 签到成功 !")

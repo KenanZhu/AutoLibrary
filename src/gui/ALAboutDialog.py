@@ -81,7 +81,7 @@ System architecture: {os_info['architecture']}<br>
 <h4>Project Information:</h4>
 License: MIT License<br>
 Project repository: <a href="https://www.github.com/KenanZhu/AutoLibrary" style="text-decoration: none;">https://www.github.com/KenanZhu/AutoLibrary</a><br>
-Project website: <a href="https://www.autolibrary.cv/" style="text-decoration: none;">https://www.autolibrary.cv/</a><br>
+Project website: <a href="https://www.autolibrary.top" style="text-decoration: none;">https://www.autolibrary.top</a><br>
 
 <h4>Author Information:</h4>
 Developer: KenanZhu<br>

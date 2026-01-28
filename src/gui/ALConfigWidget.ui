@@ -1356,7 +1356,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅 &lt;a href=&quot;https://www.autolibrary.cv/docs/manual_lists.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#69fcff;&quot;&gt;用户手册&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅 &lt;a href=&quot;https://www.autolibrary.top/docs&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#69fcff;&quot;&gt;用户手册&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="whatsThis">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
