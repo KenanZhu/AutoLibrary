@@ -10,7 +10,7 @@
 [![Release](https://img.shields.io/github/v/release/KenanZhu/AutoLibrary)](https://github.com/KenanZhu/AutoLibrary/releases)
 ![Downloads](https://img.shields.io/github/downloads/KenanZhu/AutoLibrary/total)
 
-了解更多请访问 [_AutoLibrary 网站_](http://autolibrary.cv)
+了解更多请访问 [_AutoLibrary 网站_](http://www.autolibrary.top)
 
 ---
 
@@ -22,7 +22,7 @@
 4. 批量操作 - 支持同时预约多个用户，可以指定当前需要跳过的用户，并将用户分成多个组
 5. 定时任务 - 使用内置定时任务管理，添加定时任务，指定时间后按当前预约信息自动运行
 
-*1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://autolibrary.cv/docs/manual_lists.html)*
+*1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://www.autolibrary.top/docs)*
 
 ### 如何使用
 
@@ -32,7 +32,7 @@
 4. 运行 `AutoLibrary.exe` 文件。
 5. 按照提示操作即可。
 
-*注意 1*: 关于浏览器驱动的下载和其它相关问题，请参考我们的 [帮助手册](https://autolibrary.cv/docs/manual_lists.html) 中对应软件版本的内容。
+*注意 1*: 关于浏览器驱动的下载和其它相关问题，请参考我们的 [帮助手册](https://www.autolibrary.top/docs) 中对应软件版本的内容。
 
 #### 平台支持 & 编译步骤
 
