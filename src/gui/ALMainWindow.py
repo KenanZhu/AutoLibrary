@@ -98,7 +98,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        url = QUrl("https://www.autolibrary.top/docs")
+        url = QUrl("https://www.autolibrary.top/manuals")
         QDesktopServices.openUrl(url)
 
 

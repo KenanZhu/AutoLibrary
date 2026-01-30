@@ -135,7 +135,7 @@ jobs:
           4. 运行 `AutoLibrary-${{ needs.build.outputs.version }}.exe` (首次运行会初始化配置文件)
           5. 按照提示操作即可
 
-          更多详情请访问 [AutoLibrary 网站](http://www.autolibrary.top) 和查看 [帮助手册](https://www.autolibrary.top/docs)
+          更多详情请访问 [AutoLibrary 网站](http://www.autolibrary.top) 和查看 [帮助手册](https://www.autolibrary.top/manuals)
 
           ---
           **完整更新日志见下方自动生成的 Release Notes**
