@@ -21,7 +21,7 @@ from PySide6.QtGui import (
 )
 
 
-class TreeItemType(Enum):
+class ALUserTreeItemType(Enum):
 
     GROUP = 0
     USER = 1
@@ -111,15 +111,15 @@ class ALUserTreeWidget(QTreeWidget):
         if source_item is None:
             event.ignore()
             return
-        if source_item.type() == TreeItemType.GROUP.value:
+        if source_item.type() == ALUserTreeItemType.GROUP.value:
             if target_item is not None:
                 event.ignore()
                 return
-        elif source_item.type() == TreeItemType.USER.value:
+        elif source_item.type() == ALUserTreeItemType.USER.value:
             if target_item is None:
                 event.ignore()
                 return
-            if target_item.type() != TreeItemType.GROUP.value:
+            if target_item.type() != ALUserTreeItemType.GROUP.value:
                 event.ignore()
                 return
             if target_item.checkState(1) == Qt.CheckState.Unchecked:

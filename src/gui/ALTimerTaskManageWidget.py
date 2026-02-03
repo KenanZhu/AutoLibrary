@@ -24,21 +24,14 @@ from PySide6.QtGui import (
     QCloseEvent
 )
 
-from gui.Ui_ALTimerTaskWidget import Ui_ALTimerTaskWidget
-from gui.ALAddTimerTaskDialog import ALAddTimerTaskWidget, TimerTaskStatus
+from gui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
+from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
 
 from utils.ConfigReader import ConfigReader
 from utils.ConfigWriter import ConfigWriter
 
 
-class SortPolicy(Enum):
-
-    BY_NAME = "按名称"
-    BY_ADD_TIME = "按添加时间"
-    BY_EXECUTE_TIME = "按执行时间"
-
-
-class TimerTaskItemWidget(QWidget):
+class ALTimerTaskItemWidget(QWidget):
 
     def __init__(
         self,
@@ -79,22 +72,22 @@ class TimerTaskItemWidget(QWidget):
         self.ItemWidgetLayout.addStretch()
 
         match self.__timer_task["status"]:
-            case TimerTaskStatus.PENDING:
+            case ALTimerTaskStatus.PENDING:
                 TaskStatusText = "等待中"
                 TaskStatusColor = "#FF9800"
-            case TimerTaskStatus.READY:
+            case ALTimerTaskStatus.READY:
                 TaskStatusText = "已就绪"
                 TaskStatusColor = "#316BFF"
-            case TimerTaskStatus.RUNNING:
+            case ALTimerTaskStatus.RUNNING:
                 TaskStatusText = "执行中"
                 TaskStatusColor = "#2294FF"
-            case TimerTaskStatus.EXECUTED:
+            case ALTimerTaskStatus.EXECUTED:
                 TaskStatusText = "已执行"
                 TaskStatusColor = "#4CAF50"
-            case TimerTaskStatus.ERROR:
+            case ALTimerTaskStatus.ERROR:
                 TaskStatusText = "执行失败"
                 TaskStatusColor = "#DC0000"
-            case TimerTaskStatus.OUTDATED:
+            case ALTimerTaskStatus.OUTDATED:
                 TaskStatusText = "已过期"
                 TaskStatusColor = "#DC0000"
         TaskStatusLabel = QLabel(TaskStatusText)
@@ -128,13 +121,19 @@ class TimerTaskItemWidget(QWidget):
         self.DeleteButton = QPushButton("删除")
         self.DeleteButton.setFixedSize(80, 25)
         self.ItemWidgetLayout.addWidget(self.DeleteButton)
-        if self.__timer_task["status"] == TimerTaskStatus.READY\
-        or self.__timer_task["status"] == TimerTaskStatus.RUNNING:
+        if self.__timer_task["status"] == ALTimerTaskStatus.READY\
+        or self.__timer_task["status"] == ALTimerTaskStatus.RUNNING:
             self.DeleteButton.setEnabled(False)
         self.setFixedHeight(55)
 
 
-class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
+class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
+
+    class SortPolicy(Enum):
+
+        BY_NAME = "按名称"
+        BY_ADD_TIME = "按添加时间"
+        BY_EXECUTE_TIME = "按执行时间"
 
     timerTasksChanged = Signal()
     timerTaskIsReady = Signal(dict)
@@ -150,7 +149,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
 
         self.__timer_tasks = []
         self.__check_timer = None
-        self.__sort_policy = SortPolicy.BY_EXECUTE_TIME
+        self.__sort_policy = self.SortPolicy.BY_EXECUTE_TIME
         self.__sort_order = Qt.SortOrder.AscendingOrder
         self.__timer_tasks_config_path = timer_tasks_config_path
 
@@ -216,7 +215,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
                 for task in timer_tasks["timer_tasks"]:
                     task["add_time"] = datetime.strptime(task["add_time"], "%Y-%m-%d %H:%M:%S")
                     task["execute_time"] = datetime.strptime(task["execute_time"], "%Y-%m-%d %H:%M:%S")
-                    task["status"] = TimerTaskStatus(task["status"])
+                    task["status"] = ALTimerTaskStatus(task["status"])
                 return timer_tasks["timer_tasks"]
             raise Exception("定时任务配置文件格式错误")
         except Exception as e:
@@ -297,17 +296,17 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
     ):
 
-        if policy == SortPolicy.BY_NAME:
+        if policy == self.SortPolicy.BY_NAME:
             self.__timer_tasks.sort(
                 key = lambda x: x["name"],
                 reverse = order is Qt.SortOrder.DescendingOrder
             )
-        elif policy == SortPolicy.BY_ADD_TIME:
+        elif policy == self.SortPolicy.BY_ADD_TIME:
             self.__timer_tasks.sort(
                 key = lambda x: x["add_time"],
                 reverse = order is Qt.SortOrder.DescendingOrder
             )
-        elif policy == SortPolicy.BY_EXECUTE_TIME:
+        elif policy == self.SortPolicy.BY_EXECUTE_TIME:
             self.__timer_tasks.sort(
                 key = lambda x: x["execute_time"],
                 reverse = order is Qt.SortOrder.DescendingOrder
@@ -324,15 +323,15 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         invalid = 0
         total = len(self.__timer_tasks)
         for timer_task in self.__timer_tasks:
-            if timer_task["status"] == TimerTaskStatus.PENDING:
+            if timer_task["status"] == ALTimerTaskStatus.PENDING:
                 pending += 1
-            elif timer_task["status"] == TimerTaskStatus.READY\
-            or timer_task["status"] == TimerTaskStatus.RUNNING:
+            elif timer_task["status"] == ALTimerTaskStatus.READY\
+            or timer_task["status"] == ALTimerTaskStatus.RUNNING:
                 in_queue += 1
-            elif timer_task["status"] == TimerTaskStatus.EXECUTED:
+            elif timer_task["status"] == ALTimerTaskStatus.EXECUTED:
                 executed += 1
-            elif timer_task["status"] == TimerTaskStatus.ERROR\
-            or timer_task["status"] == TimerTaskStatus.OUTDATED:
+            elif timer_task["status"] == ALTimerTaskStatus.ERROR\
+            or timer_task["status"] == ALTimerTaskStatus.OUTDATED:
                 invalid += 1
         self.TotalTaskLabel.setText(f"总任务：{total}")
         self.PendingTaskLabel.setText(f"待执行：{pending}")
@@ -350,7 +349,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         for timer_task in self.__timer_tasks:
             item = QListWidgetItem()
             item.setData(Qt.UserRole, timer_task)
-            widget = TimerTaskItemWidget(self, timer_task)
+            widget = ALTimerTaskItemWidget(self, timer_task)
             widget.DeleteButton.clicked.connect(
                 lambda _, uuid = timer_task["task_uuid"]: self.deleteTask(uuid)
             )
@@ -363,7 +362,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         self
     ):
 
-        dialog = ALAddTimerTaskWidget(self)
+        dialog = ALTimerTaskAddDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             timer_task = dialog.getTimerTask()
             self.__timer_tasks.append(timer_task)
@@ -398,8 +397,8 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
             return
         in_queue_tasks = [
             x for x in self.__timer_tasks
-            if x["status"] == TimerTaskStatus.READY
-            or x["status"] == TimerTaskStatus.RUNNING
+            if x["status"] == ALTimerTaskStatus.READY
+            or x["status"] == ALTimerTaskStatus.RUNNING
         ]
         in_queue_count = len(in_queue_tasks)
         if in_queue_count > 0:
@@ -422,13 +421,13 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
         for timer_task in self.__timer_tasks:
             if timer_task["execute_time"] > now:
                 continue
-            if timer_task["status"] is not TimerTaskStatus.PENDING:
+            if timer_task["status"] is not ALTimerTaskStatus.PENDING:
                 continue
             if timer_task["execute_time"] <= now + timedelta(seconds = -5):
-                timer_task["status"] = TimerTaskStatus.OUTDATED
+                timer_task["status"] = ALTimerTaskStatus.OUTDATED
                 need_update = True
             else:
-                timer_task["status"] = TimerTaskStatus.READY
+                timer_task["status"] = ALTimerTaskStatus.READY
                 self.timerTaskIsReady.emit(timer_task)
                 need_update = True
         if need_update:
@@ -441,9 +440,9 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
     ):
 
         mapping = {
-            0: SortPolicy.BY_NAME,
-            1: SortPolicy.BY_ADD_TIME,
-            2: SortPolicy.BY_EXECUTE_TIME
+            0: self.SortPolicy.BY_NAME,
+            1: self.SortPolicy.BY_ADD_TIME,
+            2: self.SortPolicy.BY_EXECUTE_TIME
         }
         self.__sort_policy = mapping[policy]
         self.updateTimerTaskList()
@@ -479,7 +478,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
 
         for task in self.__timer_tasks:
             if task["task_uuid"] == timer_task["task_uuid"]:
-                task["status"] = TimerTaskStatus.RUNNING
+                task["status"] = ALTimerTaskStatus.RUNNING
         self.timerTasksChanged.emit()
 
 
@@ -491,7 +490,7 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
 
         for task in self.__timer_tasks:
             if task["task_uuid"] == timer_task["task_uuid"]:
-                task["status"] = TimerTaskStatus.EXECUTED
+                task["status"] = ALTimerTaskStatus.EXECUTED
         self.timerTasksChanged.emit()
 
     @Slot(dict)
@@ -502,5 +501,5 @@ class ALTimerTaskWidget(QWidget, Ui_ALTimerTaskWidget):
 
         for task in self.__timer_tasks:
             if task["task_uuid"] == timer_task["task_uuid"]:
-                task["status"] = TimerTaskStatus.ERROR
+                task["status"] = ALTimerTaskStatus.ERROR
         self.timerTasksChanged.emit()

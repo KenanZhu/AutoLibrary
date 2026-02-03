@@ -20,10 +20,10 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QGridLayout, QDateTimeEdit
 )
 
-from gui.Ui_ALAddTimerTaskDialog import Ui_ALAddTimerTaskDialog
+from gui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
 
 
-class TimerTaskStatus(Enum):
+class ALTimerTaskStatus(Enum):
 
     PENDING = "等待中"
     READY = "已就绪"
@@ -33,7 +33,7 @@ class TimerTaskStatus(Enum):
     OUTDATED = "已过期"
 
 
-class ALAddTimerTaskWidget(QDialog, Ui_ALAddTimerTaskDialog):
+class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
 
     def __init__(
         self,
@@ -128,7 +128,7 @@ class ALAddTimerTaskWidget(QDialog, Ui_ALAddTimerTaskDialog):
             "execute_time": execute_time,
             "silent": silent,
             "add_time": added_time,
-            "status": TimerTaskStatus.PENDING,
+            "status": ALTimerTaskStatus.PENDING,
             "executed": False
         }
 

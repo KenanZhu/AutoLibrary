@@ -25,11 +25,11 @@ from base.MsgBase import MsgBase
 
 from gui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.ALConfigWidget import ALConfigWidget
-from gui.ALTimerTaskWidget import ALTimerTaskWidget
+from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
 from gui.ALAboutDialog import ALAboutDialog
 from gui.ALMainWorkers import TimerTaskWorker, AutoLibWorker
 
-from gui import AutoLibraryResource
+from gui import ALResource
 
 
 class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
@@ -77,7 +77,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
 
         # initialize timer task widget, but not show it
-        self.__alTimerTaskWidget = ALTimerTaskWidget(self, self.__config_paths["timer_task"])
+        self.__alTimerTaskWidget = ALTimerTaskManageWidget(self, self.__config_paths["timer_task"])
         self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
         self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
         self.timerTaskIsError.connect(self.__alTimerTaskWidget.onTimerTaskIsError)

@@ -6,16 +6,13 @@
 __pycache__/
 build/
 dist/
-model/*.onnx
-driver/*.exe
+model/*.*
+!model/*.md
+driver/*.*
+!driver/*.md
 src/gui/configs/*.json
 src/gui/translators/qtbase_zh_CN.qm
-src/gui/AutoLibraryResources.py
-src/gui/AutoLibraryResource.py
-src/gui/Ui_ALMainWindow.py
-src/gui/Ui_ALConfigWidget.py
-src/gui/Ui_ALTimerTaskWidget.py
-src/gui/Ui_ALAddTimerTaskDialog.py
-src/gui/Ui_ALAboutDialog.py
+src/gui/ALResource.py
+src/gui/Ui_*.py
 
 Main.spec

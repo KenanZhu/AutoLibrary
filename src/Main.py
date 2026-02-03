@@ -13,7 +13,7 @@ from PySide6.QtCore import QTranslator
 from PySide6.QtWidgets import QApplication
 
 from gui.ALMainWindow import ALMainWindow
-from gui import AutoLibraryResource
+from gui import ALResource
 
 
 def main():

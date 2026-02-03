@@ -14,7 +14,7 @@ from PySide6.QtCore import (
     Qt, Signal, Slot, QTime, QDate, QDir, QFileInfo
 )
 from PySide6.QtWidgets import (
-    QWidget, QLineEdit, QMessageBox, QFileDialog,
+    QDialog, QWidget, QLineEdit, QMessageBox, QFileDialog,
     QTreeWidgetItem, QMenu, QInputDialog
 )
 from PySide6.QtGui import (
@@ -22,10 +22,9 @@ from PySide6.QtGui import (
 )
 
 from gui.Ui_ALConfigWidget import Ui_ALConfigWidget
-from gui.ALSeatMapWidget import ALSeatMapWidget
-from gui.ALSeatMapTable import seats_maps
-from gui.ALUserTreeWidget import TreeItemType
-from gui.ALUserTreeWidget import ALUserTreeWidget
+from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
+from gui.ALSeatMapTable import ALSeatMapTable
+from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType
 
 from utils.ConfigReader import ConfigReader
 from utils.ConfigWriter import ConfigWriter
@@ -47,7 +46,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         super().__init__(parent)
         self.__config_paths = config_paths
         self.__config_data = {"run": {}, "user": {}}
-        self.__seat_map_widget = None
 
         self.setupUi(self)
         self.modifyUi()
@@ -625,12 +623,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         try:
             if "groups" in user_config_data:
                 for group_config in user_config_data["groups"]:
-                    group_item = QTreeWidgetItem(self.UserTreeWidget, TreeItemType.GROUP.value)
+                    group_item = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
                     group_item.setText(0, group_config["name"])
                     group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
                     group_item.setCheckState(1, Qt.Checked if group_config.get("enabled", True) else Qt.Unchecked)
                     for user_config in group_config["users"]:
-                        user_item = QTreeWidgetItem(group_item, TreeItemType.USER.value)
+                        user_item = QTreeWidgetItem(group_item, ALUserTreeItemType.USER.value)
                         user_item.setText(0, user_config["username"])
                         user_item.setText(1, "" if user_config.get("enabled", True) else "跳过")
                         user_item.setData(0, Qt.UserRole, user_config)
@@ -647,7 +645,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ) -> QTreeWidgetItem:
 
         self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
-        group_item = QTreeWidgetItem(self.UserTreeWidget, TreeItemType.GROUP.value)
+        group_item = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
         if not group_name:
             group_name = f"新分组-{self.UserTreeWidget.topLevelItemCount()}"
         group_item.setText(0, group_name)
@@ -667,7 +665,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             current_item = self.UserTreeWidget.currentItem()
             if current_item is None:
                 group_item = self.addGroup()
-        if group_item.type() == TreeItemType.USER.value:
+        if group_item.type() == ALUserTreeItemType.USER.value:
             group_item = group_item.parent()
         if group_item.checkState(1) == Qt.CheckState.Unchecked:
             return None
@@ -701,7 +699,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             }
         }
         self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
-        user_item = QTreeWidgetItem(group_item, TreeItemType.USER.value)
+        user_item = QTreeWidgetItem(group_item, ALUserTreeItemType.USER.value)
         user_item.setText(0, new_user["username"])
         user_item.setText(1, "")
         user_item.setData(0, Qt.UserRole, new_user)
@@ -720,7 +718,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         if user_item is None:
             return
-        if user_item.type() != TreeItemType.USER.value:
+        if user_item.type() != ALUserTreeItemType.USER.value:
             return
         parent_item = user_item.parent()
         index = parent_item.indexOfChild(user_item)
@@ -736,7 +734,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         if group_item is None:
             return
-        if group_item.type() != TreeItemType.GROUP.value:
+        if group_item.type() != ALUserTreeItemType.GROUP.value:
             return
         index = self.UserTreeWidget.indexOfTopLevelItem(group_item)
         self.UserTreeWidget.takeTopLevelItem(index)
@@ -761,7 +759,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if not ok or not new_name:
             return
         item.setText(0, new_name)
-        if item.type() == TreeItemType.GROUP.value:
+        if item.type() == ALUserTreeItemType.GROUP.value:
             item.setText(0, new_name)
         else:
             user = item.data(0, Qt.UserRole)
@@ -793,20 +791,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.RoomComboBox.setCurrentIndex(0)
 
     @Slot()
-    def onSeatMapWidgetClosed(
-        self,
-        selected_seats: list[str]
-    ):
-
-        self.__seat_map_widget.seatMapWidgetClosed.disconnect(self.onSeatMapWidgetClosed)
-        self.__seat_map_widget.deleteLater()
-        self.__seat_map_widget = None
-        if len(selected_seats) == 0:
-            self.SeatIDEdit.clear() # no selected seat, we clear the edit
-            return
-        self.SeatIDEdit.setText(",".join(selected_seats))
-
-    @Slot()
     def onSelectSeatsButtonClicked(
         self
     ):
@@ -815,18 +799,19 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         room = self.RoomComboBox.currentText()
         floor_idx = self.__floor_rmap[floor]
         room_idx = self.__room_rmap[room]
-        if self.__seat_map_widget is None:
-            self.__seat_map_widget = ALSeatMapWidget(
-                self,
-                floor,
-                room,
-                seats_maps[floor_idx][room_idx]
-            )
-            self.__seat_map_widget.seatMapWidgetClosed.connect(self.onSeatMapWidgetClosed)
-        self.__seat_map_widget.show()
-        self.__seat_map_widget.raise_()
-        self.__seat_map_widget.activateWindow()
-        self.__seat_map_widget.selectSeats(self.SeatIDEdit.text().split(","))
+        dialog = ALSeatMapSelectDialog(
+            self,
+            floor,
+            room,
+            ALSeatMapTable[floor_idx][room_idx]
+        )
+        dialog.selectSeats(self.SeatIDEdit.text().split(","))
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            selected_seats = dialog.getSelectedSeats()
+            if len(selected_seats) == 0:
+                self.SeatIDEdit.clear()
+                return
+            self.SeatIDEdit.setText(",".join(dialog.getSelectedSeats()))
 
     @Slot()
     def onUserTreeWidgetCurrentItemChanged(
@@ -838,7 +823,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         # cant effectively update the data of each user, due to the
         # possiblity of frequency edit. we just let the QListWidget
         # help us.
-        if previous and previous.type() == TreeItemType.USER.value:
+        if previous and previous.type() == ALUserTreeItemType.USER.value:
             user = self.collectUserFromUserInfoWidget()
             if user:
                 self.UsernameEdit.textEdited.disconnect()
@@ -849,7 +834,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if current is None:
             self.initilizeUserInfoWidget()
             return
-        if current.type() == TreeItemType.USER.value:
+        if current.type() == ALUserTreeItemType.USER.value:
             user = current.data(0, Qt.UserRole)
             if user:
                 self.setUserToWidget(user)
@@ -868,7 +853,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             return
         if column != 1:
             return
-        if item.type() == TreeItemType.GROUP.value:
+        if item.type() == ALUserTreeItemType.GROUP.value:
             is_checked = item.checkState(1) == Qt.CheckState.Checked
             for i in range(item.childCount()):
                 child = item.child(i)
@@ -933,7 +918,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         menu = QMenu(self.UserTreeWidget)
         if current_item is None:
             self.showTreeMenu(menu)
-        elif current_item.type() == TreeItemType.GROUP.value:
+        elif current_item.type() == ALUserTreeItemType.GROUP.value:
             self.showGroupMenu(menu, current_item)
         else:
             self.showUserMenu(menu, current_item)
@@ -1115,7 +1100,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         current_item = self.UserTreeWidget.currentItem()
-        if current_item and current_item.type() == TreeItemType.USER.value:
+        if current_item and current_item.type() == ALUserTreeItemType.USER.value:
             self.UserTreeWidget.setCurrentItem(None)
         if self.saveConfigs(
             self.__config_paths["run"],

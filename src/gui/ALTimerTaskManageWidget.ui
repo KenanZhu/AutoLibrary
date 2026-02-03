@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ALTimerTaskWidget</class>
- <widget class="QWidget" name="ALTimerTaskWidget">
+ <class>ALTimerTaskManageWidget</class>
+ <widget class="QWidget" name="ALTimerTaskManageWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>定时任务 - AutoLibrary</string>
+   <string>定时任务管理 - AutoLibrary</string>
   </property>
   <layout class="QVBoxLayout" name="ALTimerTaskWidgetLayout">
    <property name="spacing">
