@@ -1,8 +1,9 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PRJECT_DIR="$SCRIPT_DIR/.."
 
-cd "$SCRIPT_DIR/src/gui/resources"
+cd "$PRJECT_DIR/src/gui/resources"
 
 echo "[AutoLibrary compile] 检查翻译文件..."
 if [ -d "translators" ]; then

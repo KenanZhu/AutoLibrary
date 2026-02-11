@@ -1,8 +1,9 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PRJECT_DIR="$SCRIPT_DIR/.."
 
-cd "$SCRIPT_DIR/src/gui/resources/ui"
+cd "$PRJECT_DIR/src/gui/resources/ui"
 
 file_count=$(ls *.ui 2>/dev/null | wc -l)
 
