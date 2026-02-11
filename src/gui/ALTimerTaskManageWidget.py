@@ -24,7 +24,7 @@ from PySide6.QtGui import (
     QCloseEvent
 )
 
-from gui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
+from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
 
 from utils.ConfigReader import ConfigReader
@@ -146,7 +146,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ):
 
         super().__init__(parent)
-
         self.__timer_tasks = []
         self.__check_timer = None
         self.__sort_policy = self.SortPolicy.BY_EXECUTE_TIME
@@ -157,7 +156,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.connectSignals()
         self.setupTimer()
         if not self.initializeTimerTasks():
-            return
+            raise Exception("定时任务配置文件初始化失败 !")
 
 
     def connectSignals(

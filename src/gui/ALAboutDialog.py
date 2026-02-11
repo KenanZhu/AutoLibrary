@@ -10,7 +10,7 @@ See the LICENSE file for details.
 import platform
 
 from PySide6.QtGui import (
-    QIcon
+    QIcon, QFont
 )
 from PySide6.QtWidgets import (
     QDialog, QApplication
@@ -22,9 +22,9 @@ from PySide6.QtCore import (
 from gui.ALVersionInfo import (
     AL_VERSION, AL_COMMIT_SHA, AL_COMMIT_DATE, AL_BUILD_DATE
 )
-from gui.Ui_ALAboutDialog import Ui_ALAboutDialog
+from gui.resources.ui.Ui_ALAboutDialog import Ui_ALAboutDialog
 
-from gui import ALResource
+from gui.resources import ALResource
 
 
 class ALAboutDialog(QDialog, Ui_ALAboutDialog):
@@ -46,8 +46,11 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
 
         self.LogoIconLabel.setPixmap(QIcon(":/res/icon/icons/AutoLibrary_32x32.ico").pixmap(48, 48))
         info_text = self.generateAboutText()
-        self.AboutInfoEdit.setHtml(info_text)
-        self.AboutInfoEdit.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.AboutInfoBrowser.setHtml(info_text)
+        browser_font = self.AboutInfoBrowser.font()
+        browser_font.setFamily("Courier New")
+        self.AboutInfoBrowser.setFont(browser_font)
+        self.AboutInfoBrowser.setTextInteractionFlags(Qt.TextBrowserInteraction)
 
 
     def connectSignals(
@@ -137,7 +140,7 @@ GitHub: <a href="https://www.github.com/KenanZhu" style="text-decoration: none;"
         self
     ):
 
-        about_text = self.AboutInfoEdit.toPlainText()
+        about_text = self.AboutInfoBrowser.toPlainText()
         clipboard = QApplication.clipboard()
         clipboard.setText(about_text)
         original_text = self.CopyButton.text()

@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QGridLayout, QDateTimeEdit
 )
 
-from gui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
+from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
 
 
 class ALTimerTaskStatus(Enum):

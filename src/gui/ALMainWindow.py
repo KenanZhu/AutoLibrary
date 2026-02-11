@@ -23,13 +23,13 @@ from PySide6.QtGui import (
 
 from base.MsgBase import MsgBase
 
-from gui.Ui_ALMainWindow import Ui_ALMainWindow
+from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.ALConfigWidget import ALConfigWidget
 from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
 from gui.ALAboutDialog import ALAboutDialog
 from gui.ALMainWorkers import TimerTaskWorker, AutoLibWorker
 
-from gui import ALResource
+from gui.resources import ALResource
 
 
 class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):

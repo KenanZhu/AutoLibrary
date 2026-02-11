@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-cd /d "%~dp0.."
+cd src/gui/resources
 
 echo [AutoLibrary compile] 检查翻译文件...
 if exist translators (
@@ -18,12 +18,11 @@ if exist translators (
 
             pyside6-lrelease "%%f"
             if !errorlevel! equ 0 (
-                echo [AutoLibrary compile] 翻译文件 "%%f" ✓ 编译成功，输出文件: "!qm_filename!"
+                echo [AutoLibrary compile] 翻译文件 "%%f" 编译成功，输出文件: "!qm_filename!"
             ) else (
-                echo [AutoLibrary compile] 翻译文件 "%%f" ✗ 编译失败
+                echo [AutoLibrary compile] 翻译文件 "%%f" 编译失败
             )
         )
-        echo.
     ) else (
         echo [AutoLibrary compile] 未找到任何 .ts 翻译文件
     )
@@ -52,11 +51,10 @@ for %%f in (*.qrc) do (
 
     pyside6-rcc "%%f" -o "!output_file!"
     if !errorlevel! equ 0 (
-        echo [AutoLibrary compile] 文件 "%%f" ✓ 编译成功，输出文件: "!output_file!"
+        echo [AutoLibrary compile] 文件 "%%f" 编译成功，输出文件: "!output_file!"
     ) else (
-        echo [AutoLibrary compile] 文件 "%%f" ✗ 编译失败
+        echo [AutoLibrary compile] 文件 "%%f" 编译失败
     )
-    echo.
 )
 
 echo [AutoLibrary compile] 所有操作完成。

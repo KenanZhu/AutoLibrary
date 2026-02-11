@@ -2,7 +2,7 @@
 # AutoLibrary
 ---
 
-![AutoLibrary Logo](./src/gui/icons/AutoLibrary_128x128.ico)
+![AutoLibrary Logo](./src/gui/resources/icons/AutoLibrary_128x128.ico)
 
 [![GitHub stars](https://img.shields.io/github/stars/KenanZhu/AutoLibrary.svg?style=social&label=Star)](https://github.com/KenanZhu/AutoLibrary)
 ![License](https://img.shields.io/github/license/KenanZhu/AutoLibrary)
@@ -40,7 +40,7 @@
 
 1. 确保系统安装了 Python 3.13 版本 （推荐，过低或高版本会导致兼容问题）。
 2. 安装 pyside6 selenium ddddocr 库，命令为 `pip install pyside6 selenium ddddocr`。
-3. 在 `src/gui/batchs` 目录下运行 `compile_ui.bat` （linux 和 macOS 系统使用 `compile_ui.sh`） 文件来编译 Qt 的 UI 文件。
+3. 在 `batchs` 目录下运行 `compile_ui.bat` （linux 和 macOS 系统使用 `compile_ui.sh`） 文件来编译 Qt 的 UI 文件。
 4. 在上一步相同目录内运行 `compile_rc.bat` （linux 和 macOS 系统使用 `compile_rc.sh`） 文件来编译 Qt 的资源文件。
 5. 待上述步骤完成后，运行 `src/Main.py` 文件即可。
 

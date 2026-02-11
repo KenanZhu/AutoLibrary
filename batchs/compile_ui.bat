@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-cd /d "%~dp0.."
+cd src/gui/resources/ui
 
 set count=0
 for %%f in (*.ui) do set /a count+=1
@@ -23,11 +23,10 @@ for %%f in (*.ui) do (
 
     pyside6-uic "%%f" -o "!output_file!"
     if !errorlevel! equ 0 (
-        echo [AutoLibrary compile] 文件 "%%f" ✓ 编译成功，输出文件: "!output_file!"
+        echo [AutoLibrary compile] 文件 "%%f" 编译成功，输出文件: "!output_file!"
     ) else (
-        echo [AutoLibrary compile] 文件 "%%f" ✗ 编译失败
+        echo [AutoLibrary compile] 文件 "%%f" 编译失败
     )
-    echo.
 )
 
 echo [AutoLibrary compile] 所有操作完成。

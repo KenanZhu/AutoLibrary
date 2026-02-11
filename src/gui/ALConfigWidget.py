@@ -21,7 +21,7 @@ from PySide6.QtGui import (
      QCloseEvent, QAction
 )
 
-from gui.Ui_ALConfigWidget import Ui_ALConfigWidget
+from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
 from gui.ALSeatMapTable import ALSeatMapTable
 from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType

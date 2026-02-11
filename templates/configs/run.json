@@ -1,0 +1,18 @@
+{
+    "library": {
+        "host_url": "http://10.1.20.7",
+        "login_url": "/login"
+    },
+    "login": {
+        "auto_captcha": true,
+        "max_attempt": 3
+    },
+    "web_driver": {
+        "driver_type": "edge",
+        "driver_path": "",
+        "headless": false
+    },
+    "mode": {
+        "run_mode": 1
+    }
+}

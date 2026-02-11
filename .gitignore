@@ -6,13 +6,16 @@
 __pycache__/
 build/
 dist/
-model/*.*
-!model/*.md
-driver/*.*
-!driver/*.md
-src/gui/configs/*.json
-src/gui/translators/qtbase_zh_CN.qm
-src/gui/ALResource.py
-src/gui/Ui_*.py
+
+models/*.*
+drivers/*.*
+!models/*.md
+!drivers/*.md
+!templates/*.md
+!templates/configs/*.md
+
+src/gui/resources/ui/Ui_*.py
+src/gui/resources/translators/qtbase_zh_CN.qm
+src/gui/resources/ALResource.py
 
 Main.spec

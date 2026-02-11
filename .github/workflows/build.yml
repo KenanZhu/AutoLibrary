@@ -94,13 +94,13 @@ jobs:
           exit 1
         }
 
-        if (-not (Test-Path "model")) {
-          New-Item -ItemType Directory -Path "model" | Out-Null
-          Write-Host "✓ Created model directory"
+        if (-not (Test-Path "models")) {
+          New-Item -ItemType Directory -Path "models" | Out-Null
+          Write-Host "✓ Created models directory"
         }
 
         $onnxSource = Join-Path $ddddocrPath "common.onnx"
-        $onnxDest = "model/common.onnx"
+        $onnxDest = "models/common.onnx"
         if (Test-Path $onnxSource) {
           Copy-Item $onnxSource $onnxDest -Force
           Write-Host "✓ Copied ONNX model from: $onnxSource"
@@ -119,16 +119,16 @@ jobs:
         }
       shell: pwsh
 
-    - name: Compile Qt UI files
-      run: |
-        cd src/gui/batchs
-        ./compile_ui.bat
-      shell: cmd
-
     - name: Compile Qt Resource files
       run: |
-        cd src/gui/batchs
+        cd batchs
         ./compile_rc.bat
+      shell: cmd
+
+    - name: Compile Qt UI files
+      run: |
+        cd batchs
+        ./compile_ui.bat
       shell: cmd
 
     - name: Generate 'Main.spec'
@@ -148,8 +148,8 @@ jobs:
           "    pathex=[],"
           "    binaries=[],"
           "    datas=["
-          "        ('model\\common.onnx', 'ddddocr'),"
-          "        ('src\\gui\\icons\\AutoLibrary_32x32.ico', 'gui\\icons'),"
+          "        ('models\\common.onnx', 'ddddocr'),"
+          "        ('src\\gui\\resources\\icons\\AutoLibrary_32x32.ico', 'gui\\resources\\icons'),"
           "    ],"
           "    hiddenimports=[],"
           "    hookspath=[],"
@@ -180,7 +180,7 @@ jobs:
           "    target_arch=None,"
           "    codesign_identity=None,"
           "    entitlements_file=None,"
-          "    icon=['src\\gui\\icons\\AutoLibrary_32x32.ico'],"
+          "    icon=['src\\gui\\resources\\icons\\AutoLibrary_32x32.ico'],"
           ")"
         )
         $specLines | Out-File -FilePath "Main.spec" -Encoding UTF8

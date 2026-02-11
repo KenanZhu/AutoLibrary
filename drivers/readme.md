@@ -1,0 +1,1 @@
+This folder is used to store the browser drivers using by selenium.

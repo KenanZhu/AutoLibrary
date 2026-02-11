@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PARENT_DIR="$(dirname "$SCRIPT_DIR")"
-cd "$PARENT_DIR"
+
+cd "$SCRIPT_DIR/src/gui/resources"
 
 echo "[AutoLibrary compile] 检查翻译文件..."
 if [ -d "translators" ]; then
@@ -10,7 +10,6 @@ if [ -d "translators" ]; then
     ts_files=(*.ts)
     ts_count=${#ts_files[@]}
 
-    # 如果第一个元素是"*.ts"（表示没有匹配），则数量为0
     if [ "$ts_count" -eq 1 ] && [ "${ts_files[0]}" = "*.ts" ]; then
         ts_count=0
     fi
@@ -23,12 +22,11 @@ if [ -d "translators" ]; then
             echo "[AutoLibrary compile] 正在编译翻译文件: \"$file\" -> \"$qm_file\""
 
             if pyside6-lrelease "$file"; then
-                echo "[AutoLibrary compile] 翻译文件 \"$file\" ✓ 编译成功，输出文件: \"$qm_file\""
+                echo "[AutoLibrary compile] 翻译文件 \"$file\" 编译成功，输出文件: \"$qm_file\""
             else
-                echo "[AutoLibrary compile] 翻译文件 \"$file\" ✗ 编译失败"
+                echo "[AutoLibrary compile] 翻译文件 \"$file\" 编译失败"
             fi
         done
-        echo
     else
         echo "[AutoLibrary compile] 未找到任何 .ts 翻译文件"
     fi
@@ -36,7 +34,6 @@ if [ -d "translators" ]; then
 else
     echo "[AutoLibrary compile] 未找到 translators 目录"
 fi
-echo
 
 file_count=$(ls *.qrc 2>/dev/null | wc -l)
 
@@ -46,7 +43,6 @@ if [ $file_count -eq 0 ]; then
 fi
 
 echo "[AutoLibrary compile] 找到 $file_count 个 .qrc 文件，开始编译..."
-echo
 
 for file in *.qrc; do
     base_name=$(basename "$file" .qrc)
@@ -54,11 +50,10 @@ for file in *.qrc; do
     echo "[AutoLibrary compile] 正在编译: \"$file\" -> \"$output_file\""
 
     if pyside6-rcc "$file" -o "$output_file"; then
-        echo "[AutoLibrary compile] 文件 \"$file\" ✓ 编译成功，输出文件: \"$output_file\""
+        echo "[AutoLibrary compile] 文件 \"$file\" 编译成功，输出文件: \"$output_file\""
     else
-        echo "[AutoLibrary compile] 文件 \"$file\" ✗ 编译失败"
+        echo "[AutoLibrary compile] 文件 \"$file\" 编译失败"
     fi
-    echo
 done
 
 echo "[AutoLibrary compile] 所有操作完成。"

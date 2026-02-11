@@ -129,21 +129,24 @@
       </widget>
      </item>
      <item>
-      <widget class="QTextEdit" name="AboutInfoEdit">
-       <property name="font">
-        <font>
-         <family>Courier New</family>
-         <bold>false</bold>
-        </font>
+      <widget class="QTextBrowser" name="AboutInfoBrowser">
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Plain</enum>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
        </property>
        <property name="lineWrapMode">
         <enum>QTextEdit::LineWrapMode::NoWrap</enum>
        </property>
-       <property name="readOnly">
+       <property name="openExternalLinks">
         <bool>true</bool>
        </property>
-       <property name="textInteractionFlags">
-        <set>Qt::TextInteractionFlag::TextBrowserInteraction</set>
+       <property name="openLinks">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
