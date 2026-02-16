@@ -226,7 +226,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
                 self.timerTaskIsRunning.emit(timer_task)
                 self.__timer_task_timer.stop()
                 self.__is_running_timer_task = True
-                self.setControlButtons(True, True, False)
+                self.setControlButtons(None, True, False)
                 if not timer_task["silent"]:
                     self.TrayIcon.showMessage(
                         "定时任务 - AutoLibrary",
