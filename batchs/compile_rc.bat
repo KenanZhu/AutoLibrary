@@ -2,6 +2,7 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
+cd /d "%~dp0.."
 cd src/gui/resources
 
 echo [AutoLibrary compile] 检查翻译文件...
