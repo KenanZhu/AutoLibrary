@@ -58,13 +58,13 @@ class ConfigWriter:
             with open(self.__config_path, "w", encoding="utf-8") as f:
                 json.dump(self.__config_data, f, indent=4, sort_keys=False)
         except PermissionError as e:
-            raise Exception(f"Without enough permission to write config file: {self.__config_path}") from e
+            raise Exception(f"没有足够的权限写入配置文件: {self.__config_path}") from e
         except IOError as e:
-            raise Exception(f"IO error occurred while writing config file: {self.__config_path}") from e
+            raise Exception(f"写入配置文件时发生 IO 错误: {self.__config_path}") from e
         except TypeError as e:
-            raise Exception(f"Config data contains invalid type that can not be JSON serialized: {e}") from e
+            raise Exception(f"配置数据包含无法 JSON 序列化的类型: {e}") from e
         except Exception as e:
-            raise Exception(f"Unknown error occurred while writing config file: {e}") from e
+            raise Exception(f"写入配置文件时未知错误: {e}") from e
 
 
     def setConfigs(

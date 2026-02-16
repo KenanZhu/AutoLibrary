@@ -52,13 +52,13 @@ class ConfigReader:
             with open(self.__config_path, 'r', encoding='utf-8') as file:
                 self.__config_data = json.load(file)
         except FileNotFoundError as e:
-            raise Exception(f"Config file not found: {self.__config_path}") from e
+            raise Exception(f"配置文件不存在: {self.__config_path}") from e
         except PermissionError as e:
-            raise Exception(f"Without enough permission to read config file: {self.__config_path}") from e
+            raise Exception(f"没有足够的权限读取配置文件: {self.__config_path}") from e
         except json.JSONDecodeError as e:
-            raise Exception(f"JSON decode error in config file: {self.__config_path}") from e
+            raise Exception(f"JSON 解析错误: {self.__config_path}") from e
         except Exception as e:
-            raise Exception(f"Unknown error occurred while reading config file: {e}") from e
+            raise Exception(f"读取配置文件时未知错误: {e}") from e
 
 
     def getConfigs(
