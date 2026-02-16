@@ -135,9 +135,9 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         BY_ADD_TIME = "按添加时间"
         BY_EXECUTE_TIME = "按执行时间"
 
-    timerTasksChanged = Signal()
     timerTaskIsReady = Signal(dict)
-    timerTaskWidgetClosed = Signal()
+    timerTasksChanged = Signal()
+    timerTaskManageWidgetClosed = Signal()
 
     def __init__(
         self,
@@ -285,7 +285,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ):
 
         self.hide()
-        self.timerTaskWidgetClosed.emit()
+        self.timerTaskManageWidgetClosed.emit()
         event.ignore()
 
 

@@ -82,7 +82,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
         self.timerTaskIsError.connect(self.__alTimerTaskWidget.onTimerTaskIsError)
         self.__alTimerTaskWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
-        self.__alTimerTaskWidget.timerTaskWidgetClosed.connect(self.onTimerTaskWidgetClosed)
+        self.__alTimerTaskWidget.timerTaskManageWidgetClosed.connect(self.onTimerTaskWidgetClosed)
         self.__alTimerTaskWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
 
