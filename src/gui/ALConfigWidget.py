@@ -194,7 +194,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         which: str
     ) -> bool:
 
-        msg = ""
+        msg = "" # no use for now
         is_success = True
         if which == "run":
             run_config_path = self.__config_paths[which]
@@ -222,12 +222,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.__config_data[which] = self.loadUserConfig(user_config_path)
                 if self.__config_data[which] is None:
                     is_success = False
-        if msg:
-            QMessageBox.information(
-                self,
-                "提示 - AutoLibrary",
-                f"配置文件初始化完成: \n{msg}"
-            )
         return is_success
 
 

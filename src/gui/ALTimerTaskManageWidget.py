@@ -190,11 +190,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             return True
         timer_tasks = []
         if self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(timer_tasks)):
-            QMessageBox.information(
-                self,
-                "信息 - AutoLibrary",
-                f"定时任务配置文件初始化完成: \n{self.__timer_tasks_config_path}"
-            )
             self.__timer_tasks = timer_tasks
             self.updateTimerTaskList()
             return True
@@ -217,13 +212,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                     task["status"] = ALTimerTaskStatus(task["status"])
                 return timer_tasks["timer_tasks"]
             raise Exception("定时任务配置文件格式错误")
-        except Exception as e:
-            QMessageBox.warning(
-                self,
-                "警告 - AutoLibrary",
-                f"加载定时任务配置发生错误 ! : {e}\n"\
-                f"文件路径: {timer_tasks_config_path}"
-            )
+        except Exception:
             return None
 
 
