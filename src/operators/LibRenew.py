@@ -138,9 +138,7 @@ class LibRenew(LibOperator):
                 abs_diff = abs(actual_diff)
                 if abs_diff < best_time_diff or (
                     abs_diff == best_time_diff and (
-                        # 优先选择更早的时间
                         (prefer_earlier and actual_diff <= 0) or
-                        # 优先选择更晚的时间
                         (not prefer_earlier and actual_diff >= 0)
                     )
                 ):
@@ -203,7 +201,7 @@ class LibRenew(LibOperator):
             self._showTrace(f"用户 {username} 续约失败 !")
 
             # After the renewal, the webpage will display a mask overlay,
-            #  so we need to refresh the page for subsequent operations.
+            # so we need to refresh the page for subsequent operations.
             self.__driver.refresh()
             return False
         if not self.__selectNearstTime(record, reserve_info):
