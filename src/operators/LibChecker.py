@@ -309,7 +309,7 @@ class LibChecker(LibOperator):
 
     def canRenew(
         self
-    ):
+    ) -> tuple[bool, dict]:
 
         # only check the current date
         date = time.strftime("%Y-%m-%d", time.localtime())
@@ -326,12 +326,13 @@ class LibChecker(LibOperator):
             )
             if abs(time_diff_seconds) < 120*60:
                 self._showTrace(f"{trace_msg}, 可以续约")
-                return record
+                return True, record
             else:
                 self._showTrace(f"{trace_msg}, 无法续约")
-                return None
+                return False, None # we do not need to return the record, because if current
+                # time is not available for renewal, the record is not required
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
-        return None
+        return False, None
 
 
     def postRenewCheck(
