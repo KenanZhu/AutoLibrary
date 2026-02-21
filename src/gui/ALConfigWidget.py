@@ -166,11 +166,11 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self
     ):
 
-        script_path = sys.executable
-        script_dir = QFileInfo(script_path).absoluteDir()
+        executable_path = sys.executable
+        executable_dir = QFileInfo(executable_path).absoluteDir()
         self.__default_config_paths = {
-            "user": QDir.toNativeSeparators(script_dir.absoluteFilePath("user.json")),
-            "run": QDir.toNativeSeparators(script_dir.absoluteFilePath("run.json"))
+            "user": QDir.toNativeSeparators(executable_dir.absoluteFilePath("user.json")),
+            "run": QDir.toNativeSeparators(executable_dir.absoluteFilePath("run.json"))
         }
 
 
@@ -185,7 +185,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.CurrentRunConfigEdit.setText(self.__config_paths["run"])
         elif which == "user":
             self.initilizeUserInfoWidget()
-            self.fillUserTree(config_data)
+            self.setUsersToTreeWidget(config_data)
             self.CurrentUserConfigEdit.setText(self.__config_paths["user"])
 
 
@@ -362,7 +362,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.PreferLateRenewTimeCheckBox.setChecked(False)
 
 
-    def collectUserFromUserInfoWidget(
+    def collectUserFromWidget(
         self
     ) -> dict:
 
@@ -395,7 +395,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         return user
 
 
-    def collectUserConfigFromUserTreeWidget(
+    def collectUsersFromTreeWidget(
         self
     ) -> dict:
 
@@ -449,6 +449,32 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "用户配置文件读取发生错误 !\n"\
                 f"用户: {user['username']} 配置文件可能已损坏"
             )
+
+
+    def setUsersToTreeWidget(
+        self,
+        users: dict
+    ):
+
+        self.UserTreeWidget.clear()
+        self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
+        try:
+            if "groups" in users:
+                for group_config in users["groups"]:
+                    group_item = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
+                    group_item.setText(0, group_config["name"])
+                    group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
+                    group_item.setCheckState(1, Qt.Checked if group_config.get("enabled", True) else Qt.Unchecked)
+                    for user_config in group_config["users"]:
+                        user_item = QTreeWidgetItem(group_item, ALUserTreeItemType.USER.value)
+                        user_item.setText(0, user_config["username"])
+                        user_item.setText(1, "" if user_config.get("enabled", True) else "跳过")
+                        user_item.setData(0, Qt.UserRole, user_config)
+                        user_item.setCheckState(1, Qt.Checked if user_config.get("enabled", True) else Qt.Unchecked)
+                        user_item.setDisabled(not group_config.get("enabled", True))
+                    group_item.setExpanded(True)
+        finally:
+            self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
 
 
     def loadRunConfig(
@@ -562,7 +588,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ) -> bool:
 
         if user_config_path:
-            self.__config_data["user"] = self.collectUserConfigFromUserTreeWidget()
+            self.__config_data["user"] = self.collectUsersFromTreeWidget()
             if not self.saveUserConfig(
                 user_config_path,
                 self.__config_data["user"]
@@ -601,36 +627,10 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 return True
             if user_config is not None:
                 self.__config_data["user"].update(user_config)
-                self.fillUserTree(self.__config_data["user"])
+                self.setUsersToTreeWidget(self.__config_data["user"])
                 return True
         except:
             return False
-
-
-    def fillUserTree(
-        self,
-        user_config_data: dict
-    ):
-
-        self.UserTreeWidget.clear()
-        self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
-        try:
-            if "groups" in user_config_data:
-                for group_config in user_config_data["groups"]:
-                    group_item = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
-                    group_item.setText(0, group_config["name"])
-                    group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
-                    group_item.setCheckState(1, Qt.Checked if group_config.get("enabled", True) else Qt.Unchecked)
-                    for user_config in group_config["users"]:
-                        user_item = QTreeWidgetItem(group_item, ALUserTreeItemType.USER.value)
-                        user_item.setText(0, user_config["username"])
-                        user_item.setText(1, "" if user_config.get("enabled", True) else "跳过")
-                        user_item.setData(0, Qt.UserRole, user_config)
-                        user_item.setCheckState(1, Qt.Checked if user_config.get("enabled", True) else Qt.Unchecked)
-                        user_item.setDisabled(not group_config.get("enabled", True))
-                    group_item.setExpanded(True)
-        finally:
-            self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
 
 
     def addGroup(
@@ -648,6 +648,19 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UserTreeWidget.setCurrentItem(group_item)
         self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
         return group_item
+
+
+    def delGroup(
+        self,
+        group_item: QTreeWidgetItem = None
+    ):
+
+        if group_item is None:
+            return
+        if group_item.type() != ALUserTreeItemType.GROUP.value:
+            return
+        index = self.UserTreeWidget.indexOfTopLevelItem(group_item)
+        self.UserTreeWidget.takeTopLevelItem(index)
 
 
     def addUser(
@@ -721,19 +734,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.UserTreeWidget.setCurrentItem(None)
 
 
-    def delGroup(
-        self,
-        group_item: QTreeWidgetItem = None
-    ):
-
-        if group_item is None:
-            return
-        if group_item.type() != ALUserTreeItemType.GROUP.value:
-            return
-        index = self.UserTreeWidget.indexOfTopLevelItem(group_item)
-        self.UserTreeWidget.takeTopLevelItem(index)
-
-
     def renameItem(
         self,
         item: QTreeWidgetItem,
@@ -761,7 +761,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             item.setText(0, new_name)
             item.setData(0, Qt.UserRole, user)
             self.setUserToWidget(user)
-
 
     @Slot()
     def onShowPasswordCheckBoxChecked(
@@ -818,7 +817,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         # possiblity of frequency edit. we just let the QListWidget
         # help us.
         if previous and previous.type() == ALUserTreeItemType.USER.value:
-            user = self.collectUserFromUserInfoWidget()
+            user = self.collectUserFromWidget()
             if user:
                 self.UsernameEdit.textEdited.disconnect()
                 user["enabled"] = previous.checkState(1) == Qt.Checked

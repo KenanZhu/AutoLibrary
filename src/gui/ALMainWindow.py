@@ -34,6 +34,7 @@ from gui.resources import ALResource
 
 class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
+    # signal : timer task
     timerTaskIsRunning = Signal(dict)
     timerTaskIsExecuted = Signal(dict)
     timerTaskIsError = Signal(dict)
@@ -45,12 +46,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         MsgBase.__init__(self, queue.Queue(), queue.Queue())
         QMainWindow.__init__(self)
         self.__timer_task_queue = queue.Queue()
-        script_path = sys.executable
-        script_dir = QFileInfo(script_path).absoluteDir()
+        executable_path = sys.executable
+        exectuable_dir = QFileInfo(executable_path).absoluteDir()
         self.__config_paths = {
-            "run":   QDir.toNativeSeparators(script_dir.absoluteFilePath("run.json")),
-            "user": QDir.toNativeSeparators(script_dir.absoluteFilePath("user.json")),
-            "timer_task": QDir.toNativeSeparators(script_dir.absoluteFilePath("timer_task.json")),
+            "run":   QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("run.json")),
+            "user": QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("user.json")),
+            "timer_task": QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("timer_task.json")),
         }
         self.__alTimerTaskWidget = None
         self.__alConfigWidget = None
@@ -82,7 +83,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
         self.timerTaskIsError.connect(self.__alTimerTaskWidget.onTimerTaskIsError)
         self.__alTimerTaskWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
-        self.__alTimerTaskWidget.timerTaskManageWidgetClosed.connect(self.onTimerTaskWidgetClosed)
+        self.__alTimerTaskWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskWidgetClosed)
         self.__alTimerTaskWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
 

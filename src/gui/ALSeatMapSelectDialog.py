@@ -22,7 +22,7 @@ from gui.ALSeatMapView import ALSeatMapView
 
 class ALSeatMapSelectDialog(QDialog):
 
-    seatMapSelectDialogClosed = Signal(list)
+    seatMapSelectDialogIsClosed = Signal(list)
 
     def __init__(
         self,
@@ -127,7 +127,7 @@ class ALSeatMapSelectDialog(QDialog):
             self.reject()
         else:
             self.accept()
-        self.seatMapSelectDialogClosed.emit(self.getSelectedSeats())
+        self.seatMapSelectDialogIsClosed.emit(self.getSelectedSeats())
         super().closeEvent(event)
 
 
