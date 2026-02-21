@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>定时任务管理 - AutoLibrary</string>
   </property>
-  <layout class="QVBoxLayout" name="ALTimerTaskWidgetLayout">
+  <layout class="QVBoxLayout" name="ALTimerTaskManageWidgetLayout">
    <property name="spacing">
     <number>5</number>
    </property>

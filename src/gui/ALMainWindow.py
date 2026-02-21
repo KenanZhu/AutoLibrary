@@ -53,7 +53,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             "user": QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("user.json")),
             "timer_task": QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("timer_task.json")),
         }
-        self.__alTimerTaskWidget = None
+        self.__alTimerTaskManageWidget = None
         self.__alConfigWidget = None
         self.__auto_lib_thread = None
         self.__current_timer_task_thread = None
@@ -79,23 +79,23 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         # initialize timer task widget, but not show it
         try:
-            self.__alTimerTaskWidget = ALTimerTaskManageWidget(self, self.__config_paths["timer_task"])
+            self.__alTimerTaskManageWidget = ALTimerTaskManageWidget(self, self.__config_paths["timer_task"])
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "错误 - AutoLibrary",
                 f"初始化定时任务功能失败: \n{e}"
             )
-            self.__alTimerTaskWidget = None
-            self.TimerTaskWidgetButton.setEnabled(False)
-            self.TimerTaskWidgetButton.setToolTip("定时任务功能初始化失败, 请检查配置文件。")
+            self.__alTimerTaskManageWidget = None
+            self.TimerTaskManageWidgetButton.setEnabled(False)
+            self.TimerTaskManageWidgetButton.setToolTip("定时任务功能初始化失败, 请检查配置文件。")
             return
-        self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
-        self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
-        self.timerTaskIsError.connect(self.__alTimerTaskWidget.onTimerTaskIsError)
-        self.__alTimerTaskWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
-        self.__alTimerTaskWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskWidgetClosed)
-        self.__alTimerTaskWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
+        self.timerTaskIsRunning.connect(self.__alTimerTaskManageWidget.onTimerTaskIsRunning)
+        self.timerTaskIsExecuted.connect(self.__alTimerTaskManageWidget.onTimerTaskIsExecuted)
+        self.timerTaskIsError.connect(self.__alTimerTaskManageWidget.onTimerTaskIsError)
+        self.__alTimerTaskManageWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
+        self.__alTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
+        self.__alTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
 
     def onAboutActionTriggered(
@@ -128,7 +128,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         self.TrayMenu = QMenu()
         self.TrayMenu.addAction("显示主窗口", self.showNormal)
-        self.TrayMenu.addAction("显示定时窗口", self.onTimerTaskWidgetButtonClicked)
+        self.TrayMenu.addAction("显示定时窗口", self.onTimerTaskManageWidgetButtonClicked)
         self.TrayMenu.addAction("最小化到托盘", self.hideToTray)
         self.TrayMenu.addSeparator()
         self.TrayMenu.addAction("退出", self.close)
@@ -166,7 +166,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.ConfigButton.clicked.connect(self.onConfigButtonClicked)
-        self.TimerTaskWidgetButton.clicked.connect(self.onTimerTaskWidgetButtonClicked)
+        self.TimerTaskManageWidgetButton.clicked.connect(self.onTimerTaskManageWidgetButtonClicked)
         self.StartButton.clicked.connect(self.onStartButtonClicked)
         self.StopButton.clicked.connect(self.onStopButtonClicked)
         self.SendButton.clicked.connect(self.onSendButtonClicked)
@@ -185,9 +185,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__is_running_timer_task:
             self.__current_timer_task_thread.wait(2000)
             self.__current_timer_task_thread.deleteLater()
-        if self.__alTimerTaskWidget:
-            self.__alTimerTaskWidget.close()
-            self.__alTimerTaskWidget.deleteLater()
+        if self.__alTimerTaskManageWidget:
+            self.__alTimerTaskManageWidget.close()
+            self.__alTimerTaskManageWidget.deleteLater()
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
             # the config widget is already deleted in the 'self.onConfigWidgetClosed'
@@ -253,7 +253,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
                     self._output_queue,
                     self.__config_paths
                 )
-                self.__current_timer_task_thread.TimerTaskWorkerIsFinished.connect(self.onTimerTaskFinished)
+                self.__current_timer_task_thread.timerTaskWorkerIsFinished.connect(self.onTimerTaskFinished)
                 self.__current_timer_task_thread.start()
         except queue.Empty:
             self.__is_running_timer_task = False
@@ -288,11 +288,11 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             pass
 
     @Slot()
-    def onTimerTaskWidgetClosed(
+    def onTimerTaskManageWidgetClosed(
         self
     ):
 
-        self.TimerTaskWidgetButton.setEnabled(True)
+        self.TimerTaskManageWidgetButton.setEnabled(True)
 
     @Slot(dict)
     def onConfigWidgetClosed(
@@ -323,7 +323,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.__current_timer_task_thread.wait(1000)
-        self.__current_timer_task_thread.TimerTaskWorkerIsFinished.disconnect(self.onTimerTaskFinished)
+        self.__current_timer_task_thread.timerTaskWorkerIsFinished.disconnect(self.onTimerTaskFinished)
         self.__current_timer_task_thread.deleteLater()
         self.__current_timer_task_thread = None
         self.setControlButtons(None, False, True)
@@ -345,14 +345,14 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.timerTaskIsError.emit(timer_task)
 
     @Slot()
-    def onTimerTaskWidgetButtonClicked(
+    def onTimerTaskManageWidgetButtonClicked(
         self
     ):
 
-        self.__alTimerTaskWidget.show()
-        self.__alTimerTaskWidget.raise_()
-        self.__alTimerTaskWidget.activateWindow()
-        self.TimerTaskWidgetButton.setEnabled(False)
+        self.__alTimerTaskManageWidget.show()
+        self.__alTimerTaskManageWidget.raise_()
+        self.__alTimerTaskManageWidget.activateWindow()
+        self.TimerTaskManageWidgetButton.setEnabled(False)
 
     @Slot()
     def onConfigButtonClicked(
@@ -382,8 +382,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
                 self._output_queue,
                 self.__config_paths
             )
-            self.__auto_lib_thread.AutoLibWorkerIsFinished.connect(self.onStopButtonClicked)
-            self.__auto_lib_thread.AutoLibWorkerFinishedWithError.connect(self.onStopButtonClicked)
+            self.__auto_lib_thread.autoLibWorkerIsFinished.connect(self.onStopButtonClicked)
+            self.__auto_lib_thread.autoLibWorkerFinishedWithError.connect(self.onStopButtonClicked)
         self.__auto_lib_thread.start()
 
     @Slot()
@@ -395,8 +395,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self._showTrace("正在停止操作......")
             self.__auto_lib_thread.wait(2000)
             self._showTrace("操作已停止")
-            self.__auto_lib_thread.AutoLibWorkerIsFinished.disconnect(self.onStopButtonClicked)
-            self.__auto_lib_thread.AutoLibWorkerFinishedWithError.disconnect(self.onStopButtonClicked)
+            self.__auto_lib_thread.autoLibWorkerIsFinished.disconnect(self.onStopButtonClicked)
+            self.__auto_lib_thread.autoLibWorkerFinishedWithError.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
             self.__auto_lib_thread = None
         self.setControlButtons(None, False, True)

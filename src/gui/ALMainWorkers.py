@@ -22,8 +22,8 @@ from utils.ConfigReader import ConfigReader
 
 class AutoLibWorker(MsgBase, QThread):
 
-    AutoLibWorkerIsFinished = Signal()
-    AutoLibWorkerFinishedWithError = Signal()
+    autoLibWorkerIsFinished = Signal()
+    autoLibWorkerFinishedWithError = Signal()
 
     def __init__(
         self,
@@ -116,17 +116,17 @@ class AutoLibWorker(MsgBase, QThread):
                     )
             except Exception as e:
                 self._showTrace(f"AutoLibrary 运行时发生异常 : {e}")
-                self.AutoLibWorkerFinishedWithError.emit()
+                self.autoLibWorkerFinishedWithError.emit()
                 return
         if auto_lib:
             auto_lib.close()
         self._showTrace("AutoLibrary 运行结束")
-        self.AutoLibWorkerIsFinished.emit()
+        self.autoLibWorkerIsFinished.emit()
 
 
 class TimerTaskWorker(AutoLibWorker):
 
-    TimerTaskWorkerIsFinished = Signal(bool, dict)
+    timerTaskWorkerIsFinished = Signal(bool, dict)
 
     def __init__(
         self,
@@ -137,10 +137,10 @@ class TimerTaskWorker(AutoLibWorker):
     ):
 
         super().__init__(input_queue, output_queue, config_paths)
-
         self.__timer_task = timer_task
-        self.AutoLibWorkerIsFinished.connect(self.onTimerTaskIsFinished)
-        self.AutoLibWorkerFinishedWithError.connect(self.onTimerTaskIsError)
+
+        self.autoLibWorkerIsFinished.connect(self.onTimerTaskIsFinished)
+        self.autoLibWorkerFinishedWithError.connect(self.onTimerTaskFinishedWithError)
 
     def run(
         self
@@ -150,12 +150,12 @@ class TimerTaskWorker(AutoLibWorker):
         super().run()
 
     @Slot()
-    def onTimerTaskIsError(
+    def onTimerTaskFinishedWithError(
         self
     ):
 
         self._showTrace(f"定时任务 {self.__timer_task['name']} 运行时发生异常")
-        self.TimerTaskWorkerIsFinished.emit(True, self.__timer_task)
+        self.timerTaskWorkerIsFinished.emit(True, self.__timer_task)
 
     @Slot()
     def onTimerTaskIsFinished(
@@ -163,4 +163,4 @@ class TimerTaskWorker(AutoLibWorker):
     ):
 
         self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
-        self.TimerTaskWorkerIsFinished.emit(False, self.__timer_task)
+        self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
