@@ -125,18 +125,6 @@ jobs:
         prerelease: false
         generate_release_notes: true
         body: |
-          ### 下载获取
-          - **Windows x86_64**: `AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64.zip`
-
-          ### 如何使用
-          1. 下载 `AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64.zip` 文件
-          2. 解压到任意目录
-          3. 下载对应浏览器的驱动文件
-          4. 运行 `AutoLibrary-${{ needs.build.outputs.version }}.exe` (首次运行会初始化配置文件)
-          5. 按照提示操作即可
-
-          更多详情请访问 [AutoLibrary 网站](http://www.autolibrary.top) 和查看 [帮助手册](https://www.autolibrary.top/manuals)
-
           ---
           **完整更新日志见下方自动生成的 Release Notes**
       env:
