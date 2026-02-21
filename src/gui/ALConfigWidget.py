@@ -269,27 +269,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ) -> dict:
 
         return {
-            "groups": []
-        }
-
-
-    def defaultGroup(
-        self
-    ) -> dict:
-
-        return {
-            "name": "默认分组",
-            "enabled": True,
-            "users": []
-        }
-
-
-    def defaultUsers(
-        self
-    ) -> dict:
-
-        return {
-            "users": []
+            "groups": [
+            ]
         }
 
 
