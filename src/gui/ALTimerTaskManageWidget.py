@@ -8,13 +8,14 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import os
+import sys
 import copy
 
 from enum import Enum
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTimer
+    Qt, Signal, Slot, QTimer, QFileInfo, QDir
 )
 from PySide6.QtWidgets import (
     QDialog, QWidget, QListWidgetItem, QMessageBox,
@@ -179,15 +180,27 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.__check_timer.start(500)
 
 
+    def initlizeDefaultConfigPaths(
+        self
+    ):
+
+        executable_path = sys.executable
+        executable_dir = QFileInfo(executable_path).absoluteDir()
+        self.__default_timer_tasks_config_path = QDir.toNativeSeparators(executable_dir.absoluteFilePath("timer_task.json"))
+
+
     def initializeTimerTasks(
         self
     ) -> bool:
 
-        timer_tasks = self.loadTimerTasks(self.__timer_tasks_config_path)
-        if timer_tasks is not None:
-            self.__timer_tasks = timer_tasks
-            self.timerTasksChanged.emit()
-            return True
+        if not self.__timer_tasks_config_path:
+            self.__timer_tasks_config_path = self.__default_timer_tasks_config_path
+        if os.path.exists(self.__timer_tasks_config_path):
+            timer_tasks = self.loadTimerTasks(self.__timer_tasks_config_path)
+            if timer_tasks is not None:
+                self.__timer_tasks = timer_tasks
+                self.timerTasksChanged.emit()
+                return True
         timer_tasks = []
         if self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(timer_tasks)):
             self.__timer_tasks = timer_tasks
@@ -212,7 +225,12 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                     task["status"] = ALTimerTaskStatus(task["status"])
                 return timer_tasks["timer_tasks"]
             raise Exception("定时任务配置文件格式错误")
-        except Exception:
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"加载定时任务配置发生错误 ! : \n{e}"
+            )
             return None
 
 
@@ -238,8 +256,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"保存定时任务配置发生错误 ! : {e}\n"\
-                f"文件路径: {timer_tasks_config_path}"
+                f"保存定时任务配置发生错误 ! : \n{e}"
             )
             return False
 

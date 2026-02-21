@@ -15,7 +15,7 @@ from PySide6.QtCore import (
     Qt, Signal, Slot, QDir, QFileInfo, QTimer, QUrl,
 )
 from PySide6.QtWidgets import (
-    QMainWindow, QMenu, QSystemTrayIcon
+    QMainWindow, QMenu, QSystemTrayIcon, QMessageBox
 )
 from PySide6.QtGui import (
     QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
@@ -78,7 +78,18 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
 
         # initialize timer task widget, but not show it
-        self.__alTimerTaskWidget = ALTimerTaskManageWidget(self, self.__config_paths["timer_task"])
+        try:
+            self.__alTimerTaskWidget = ALTimerTaskManageWidget(self, self.__config_paths["timer_task"])
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "错误 - AutoLibrary",
+                f"初始化定时任务功能失败: \n{e}"
+            )
+            self.__alTimerTaskWidget = None
+            self.TimerTaskWidgetButton.setEnabled(False)
+            self.TimerTaskWidgetButton.setToolTip("定时任务功能初始化失败, 请检查配置文件。")
+            return
         self.timerTaskIsRunning.connect(self.__alTimerTaskWidget.onTimerTaskIsRunning)
         self.timerTaskIsExecuted.connect(self.__alTimerTaskWidget.onTimerTaskIsExecuted)
         self.timerTaskIsError.connect(self.__alTimerTaskWidget.onTimerTaskIsError)

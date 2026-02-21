@@ -301,21 +301,36 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         run_config: dict
     ):
 
-        self.HostUrlEdit.setText(run_config["library"]["host_url"])
-        self.LoginUrlEdit.setText(run_config["library"]["login_url"])
-        self.AutoCaptchaCheckBox.setChecked(run_config["login"]["auto_captcha"])
-        self.LoginAttemptSpinBox.setValue(run_config["login"]["max_attempt"])
-        self.BrowserTypeComboBox.setCurrentText(run_config["web_driver"]["driver_type"])
-        if run_config["web_driver"]["driver_path"]:
-            driver_path = os.path.abspath(run_config["web_driver"]["driver_path"])
-        else:
-            driver_path = ""
-        self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(driver_path))
-        self.HeadlessCheckBox.setChecked(run_config["web_driver"]["headless"])
-        run_mode = run_config["mode"]["run_mode"]
-        self.AutoReserveCheckBox.setChecked(run_mode&0x01)
-        self.AutoCheckinCheckBox.setChecked(run_mode&0x02)
-        self.AutoRenewalCheckBox.setChecked(run_mode&0x04)
+        try:
+            self.HostUrlEdit.setText(run_config["library"]["host_url"])
+            self.LoginUrlEdit.setText(run_config["library"]["login_url"])
+            self.AutoCaptchaCheckBox.setChecked(run_config["login"]["auto_captcha"])
+            self.LoginAttemptSpinBox.setValue(run_config["login"]["max_attempt"])
+            self.BrowserTypeComboBox.setCurrentText(run_config["web_driver"]["driver_type"])
+            if run_config["web_driver"]["driver_path"]:
+                driver_path = os.path.abspath(run_config["web_driver"]["driver_path"])
+            else:
+                driver_path = ""
+            self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(driver_path))
+            self.HeadlessCheckBox.setChecked(run_config["web_driver"]["headless"])
+            run_mode = run_config["mode"]["run_mode"]
+            self.AutoReserveCheckBox.setChecked(run_mode&0x01)
+            self.AutoCheckinCheckBox.setChecked(run_mode&0x02)
+            self.AutoRenewalCheckBox.setChecked(run_mode&0x04)
+        except KeyError as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"运行配置文件: {self.__config_paths['run']}\n"
+                f"读取时键 '{e}' 发生错误，文件可能被意外修改或已经损坏\n"
+            )
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"运行配置文件: {self.__config_paths['run']}\n"
+                f"读取时键 '{e}' 发生未知错误，文件可能被意外修改或已经损坏\n"
+            )
 
 
     def initilizeUserInfoWidget(
@@ -423,12 +438,19 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.ExpectRenewDurationSpinBox.setValue(user["reserve_info"]["renew_time"]["expect_duration"])
             self.MaxRenewTimeDiffSpinBox.setValue(user["reserve_info"]["renew_time"]["max_diff"])
             self.PreferLateRenewTimeCheckBox.setChecked(not user["reserve_info"]["renew_time"]["prefer_early"])
-        except:
+        except KeyError as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                "用户配置文件读取发生错误 !\n"\
-                f"用户: {user['username']} 配置文件可能已损坏"
+                f"用户配置文件: {self.__config_paths['user']}\n"\
+                f"读取时键 '{e}' 发生错误，文件可能被意外修改或已经损坏\n"
+            )
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"用户配置文件: {self.__config_paths['user']}\n"\
+                f"读取时发生未知错误 '{e}'，文件可能被意外修改或已经损坏\n"
             )
 
 
@@ -454,6 +476,20 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                         user_item.setCheckState(1, Qt.Checked if user_config.get("enabled", True) else Qt.Unchecked)
                         user_item.setDisabled(not group_config.get("enabled", True))
                     group_item.setExpanded(True)
+        except KeyError as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"用户配置文件: {self.__config_paths['user']}\n"\
+                f"读取时键 '{e}' 发生错误，文件可能被意外修改或已经损坏\n"
+            )
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                f"用户配置文件: {self.__config_paths['user']}\n"\
+                f"读取时发生未知错误 '{e}'，文件可能被意外修改或已经损坏\n"
+            )
         finally:
             self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
 
@@ -476,8 +512,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"运行配置文件读取发生错误 ! : {e}\n"\
-                f"文件路径: {run_config_path}"
+                f"运行配置文件读取发生错误 ! : \n{e}"
             )
             return None
 
@@ -499,8 +534,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"配置文件写入发生错误 ! : {e}\n"\
-                f"文件路径: {run_config_path}"
+                f"配置文件写入发生错误 ! : \n{e}"
             )
             return False
 
@@ -533,8 +567,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件读取发生错误 ! : {e}\n"\
-                f"文件路径: {user_config_path}"
+                f"用户配置文件读取发生错误 ! : \n{e}"
             )
             return None
 
@@ -556,8 +589,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件写入发生错误 ! : {e}\n"\
-                f"文件路径: \n{user_config_path}"
+                f"用户配置文件写入发生错误 ! : \n{e}"
             )
             return False
 
