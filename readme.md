@@ -5,10 +5,10 @@
 ![AutoLibrary Logo](./src/gui/resources/icons/AutoLibrary_128x128.ico)
 
 [![GitHub stars](https://img.shields.io/github/stars/KenanZhu/AutoLibrary.svg?style=social&label=Star)](https://github.com/KenanZhu/AutoLibrary)
-![License](https://img.shields.io/github/license/KenanZhu/AutoLibrary)
-[![Build](https://img.shields.io/github/actions/workflow/status/KenanZhu/AutoLibrary/release.yml)](https://github.com/KenanZhu/AutoLibrary/actions/workflows/release.yml)
-[![Release](https://img.shields.io/github/v/release/KenanZhu/AutoLibrary)](https://github.com/KenanZhu/AutoLibrary/releases/latest)
-![Downloads](https://img.shields.io/github/downloads/KenanZhu/AutoLibrary/total)
+![License](https://img.shields.io/github/license/KenanZhu/AutoLibrary?label=license)
+[![Build](https://img.shields.io/github/actions/workflow/status/KenanZhu/AutoLibrary/release.yml?label=release&logo=github-actions&logoColor=white)](https://github.com/KenanZhu/AutoLibrary/actions/workflows/release.yml)
+[![Release](https://img.shields.io/github/v/release/KenanZhu/AutoLibrary?label=latest&logo=github&logoColor=white)](https://github.com/KenanZhu/AutoLibrary/releases/latest)
+![Downloads](https://img.shields.io/github/downloads/KenanZhu/AutoLibrary/total?label=downloads)
 
 了解更多请访问 [_AutoLibrary 网站_](http://www.autolibrary.top)
 
