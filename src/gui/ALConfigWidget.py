@@ -21,13 +21,13 @@ from PySide6.QtGui import (
      QCloseEvent, QAction
 )
 
+from utils.ConfigReader import ConfigReader
+from utils.ConfigWriter import ConfigWriter
+
 from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
 from gui.ALSeatMapTable import ALSeatMapTable
 from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType
-
-from utils.ConfigReader import ConfigReader
-from utils.ConfigWriter import ConfigWriter
 
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):

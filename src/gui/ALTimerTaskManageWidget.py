@@ -25,11 +25,11 @@ from PySide6.QtGui import (
     QCloseEvent
 )
 
-from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
-from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
-
 from utils.ConfigReader import ConfigReader
 from utils.ConfigWriter import ConfigWriter
+
+from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
+from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
 
 
 class ALTimerTaskItemWidget(QWidget):

@@ -23,7 +23,6 @@ from gui.ALVersionInfo import (
     AL_VERSION, AL_COMMIT_SHA, AL_COMMIT_DATE, AL_BUILD_DATE
 )
 from gui.resources.ui.Ui_ALAboutDialog import Ui_ALAboutDialog
-
 from gui.resources import ALResource
 
 

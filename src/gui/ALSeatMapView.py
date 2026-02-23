@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import (
     QPainter, QWheelEvent
 )
+
 from gui.ALSeatFrame import ALSeatFrame
 
 
