@@ -164,10 +164,7 @@ jobs:
           "exe = EXE("
           "    pyz,"
           "    a.scripts,"
-          "    a.binaries,"
-          "    a.datas,"
-          "    [],"
-          "    name='$exeName',"
+          "    name=AutoLibrary,"
           "    debug=False,"
           "    bootloader_ignore_signals=False,"
           "    strip=False,"
@@ -182,10 +179,20 @@ jobs:
           "    entitlements_file=None,"
           "    icon=['src\\gui\\resources\\icons\\AutoLibrary_32x32.ico'],"
           ")"
+          ""
+          "coll = COLLECT("
+          "    exe,"
+          "    a.binaries,"
+          "    a.datas,"
+          "    strip=False,"
+          "    upx=True,"
+          "    upx_exclude=[],"
+          "    name='$exeName'"
+          ")"
         )
         $specLines | Out-File -FilePath "Main.spec" -Encoding UTF8
 
-        Write-Host "✓ Main.spec generated successfully"
+        Write-Host "✓ Main.spec (non-single file) generated successfully"
         Write-Host "`nGenerated Main.spec ============"
         Get-Content "Main.spec" | Write-Host
         Write-Host "==================================`n"
@@ -200,17 +207,17 @@ jobs:
       run: |
         $tagName = "${{ steps.get_version.outputs.TAG_NAME }}"
         $version = "${{ steps.get_version.outputs.VERSION }}"
-        $exeName = "AutoLibrary-$version.exe"
+        $distDir = "dist/AutoLibrary-$version"
         $zipName = "AutoLibrary.$tagName-windows-x86_64.zip"
 
         echo "ZIP_PATH=$zipName" >> $env:GITHUB_OUTPUT
 
-        Write-Host "Looking for executable: dist/$exeName"
-        if (Test-Path "dist/$exeName") {
-          Compress-Archive -Path "dist/$exeName" -DestinationPath $zipName
-          Write-Host "✓ Created release archive: $zipName"
+        Write-Host "Looking for distribution directory: $distDir"
+        if (Test-Path $distDir) {
+          Compress-Archive -Path "$distDir/*" -DestinationPath $zipName
+          Write-Host "✓ Created release archive (directory mode): $zipName"
         } else {
-          Write-Error "✗ Executable not found: dist/$exeName"
+          Write-Error "✗ Distribution directory not found: $distDir"
           Write-Host "Files in dist directory:"
           Get-ChildItem "dist" | ForEach-Object { Write-Host "  - $($_.Name)" }
           exit 1
