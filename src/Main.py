@@ -24,7 +24,7 @@ def initializeConfigManager():
     app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
     config_dir = os.path.join(app_dir, "config")
     if not QDir(config_dir).exists():
-        QDir().mkdir(config_dir)
+        QDir().mkpath(config_dir)
     instance(config_dir)
 
 def main():

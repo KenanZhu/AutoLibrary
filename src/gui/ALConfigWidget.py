@@ -185,7 +185,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             run_config_path = self.__config_paths[which]
             if not os.path.exists(run_config_path):
                 self.__config_data[which] = self.defaultRunConfig()
-                self.__config_paths[which] = self.__default_config_paths[which]
                 if self.saveRunConfig(self.__config_paths[which], self.__config_data[which]):
                     msg += f"运行配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
                 else:
@@ -198,7 +197,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             user_config_path = self.__config_paths[which]
             if not os.path.exists(user_config_path):
                 self.__config_data[which] = self.defaultUserConfig()
-                self.__config_paths[which] = self.__default_config_paths[which]
                 if self.saveUserConfig(self.__config_paths[which], self.__config_data[which]):
                     msg += f"用户配置文件已初始化, 文件路径: \n{self.__config_paths[which]}\n"
                 else:
