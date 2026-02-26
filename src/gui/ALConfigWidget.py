@@ -21,8 +21,10 @@ from PySide6.QtGui import (
      QCloseEvent, QAction
 )
 
-from utils.ConfigReader import ConfigReader
-from utils.ConfigWriter import ConfigWriter
+from utils.JSONReader import JSONReader
+from utils.JSONWriter import JSONWriter
+from utils.ConfigManager import ConfigType, instance
+from utils.ConfigManager import getValidateAutomationConfigPaths
 
 from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
@@ -32,27 +34,22 @@ from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
-    configWidgetIsClosed = Signal(dict)
+    configWidgetIsClosed = Signal()
 
     def __init__(
         self,
         parent = None,
-        config_paths = {
-            "run": "",
-            "user": ""
-        }
     ):
 
         super().__init__(parent)
-        self.__config_paths = config_paths
+        self.__cfg_mgr = instance()
+        self.__config_paths = getValidateAutomationConfigPaths()
         self.__config_data = {"run": {}, "user": {}}
 
         self.setupUi(self)
         self.modifyUi()
         self.connectSignals()
-        self.initlizeFloorRoomMap()
-        self.initlizeDefaultConfigPaths()
-        if not self.initlizeConfigs():
+        if not self.initializeConfigs():
             self.close()
 
 
@@ -68,8 +65,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UserListLayout.insertWidget(0, self.UserTreeWidget)
         self.UserTreeWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.UserTreeWidget.customContextMenuRequested.connect(self.onUserTreeWidgetContextMenu)
-        self.initlizeFloorRoomMap()
-        self.initilizeUserInfoWidget()
+        self.initializeFloorRoomMap()
+        self.initializeUserInfoWidget()
 
 
     def connectSignals(
@@ -124,11 +121,11 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         event: QCloseEvent
     ):
 
-        self.configWidgetIsClosed.emit(self.__config_paths)
+        self.configWidgetIsClosed.emit()
         super().closeEvent(event)
 
 
-    def initlizeFloorRoomMap(
+    def initializeFloorRoomMap(
         self
     ):
 
@@ -162,19 +159,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         }
 
 
-    def initlizeDefaultConfigPaths(
-        self
-    ):
-
-        executable_path = sys.executable
-        executable_dir = QFileInfo(executable_path).absoluteDir()
-        self.__default_config_paths = {
-            "user": QDir.toNativeSeparators(executable_dir.absoluteFilePath("user.json")),
-            "run": QDir.toNativeSeparators(executable_dir.absoluteFilePath("run.json"))
-        }
-
-
-    def initlizeConfigToWidget(
+    def initializeConfigToWidget(
         self,
         which: str,
         config_data: dict
@@ -184,12 +169,12 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.setRunConfigToWidget(config_data)
             self.CurrentRunConfigEdit.setText(self.__config_paths["run"])
         elif which == "user":
-            self.initilizeUserInfoWidget()
+            self.initializeUserInfoWidget()
             self.setUsersToTreeWidget(config_data)
             self.CurrentUserConfigEdit.setText(self.__config_paths["user"])
 
 
-    def initlizeConfig(
+    def initializeConfig(
         self,
         which: str
     ) -> bool:
@@ -225,18 +210,16 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         return is_success
 
 
-    def initlizeConfigs(
+    def initializeConfigs(
         self
     ) -> bool:
 
         is_success = True
         for which in ["run", "user"]:
-            if not self.__config_paths[which]:
-                self.__config_paths[which] = self.__default_config_paths[which]
-            if not self.initlizeConfig(which):
+            if not self.initializeConfig(which):
                 is_success = False
                 break
-            self.initlizeConfigToWidget(which, self.__config_data[which])
+            self.initializeConfigToWidget(which, self.__config_data[which])
         return is_success
 
 
@@ -321,19 +304,21 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"运行配置文件: {self.__config_paths['run']}\n"
-                f"读取时键 '{e}' 发生错误，文件可能被意外修改或已经损坏\n"
+                f"运行配置文件读取键 '{e}' 时发生错误 ! :\n"
+                f"文件路径: {self.__config_paths['run']}\n"
+                "文件可能被意外修改或已经损坏\n"
             )
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"运行配置文件: {self.__config_paths['run']}\n"
-                f"读取时键 '{e}' 发生未知错误，文件可能被意外修改或已经损坏\n"
+                f"运行配置文件读取键 '{e}' 时发生未知错误 ! :\n"
+                f"文件路径: {self.__config_paths['run']}\n"
+                "文件可能被意外修改或已经损坏\n"
             )
 
 
-    def initilizeUserInfoWidget(
+    def initializeUserInfoWidget(
         self
     ):
 
@@ -442,15 +427,17 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件: {self.__config_paths['user']}\n"\
-                f"读取时键 '{e}' 发生错误，文件可能被意外修改或已经损坏\n"
+                f"用户配置文件读取键 '{e}' 时发生错误 ! :\n"
+                f"文件路径: {self.__config_paths['user']}\n"
+                "文件可能被意外修改或已经损坏\n"
             )
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件: {self.__config_paths['user']}\n"\
-                f"读取时发生未知错误 '{e}'，文件可能被意外修改或已经损坏\n"
+                f"用户配置文件读取键 '{e}' 时发生未知错误 ! :\n"
+                f"文件路径: {self.__config_paths['user']}\n"
+                "文件可能被意外修改或已经损坏\n"
             )
 
 
@@ -480,15 +467,17 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件: {self.__config_paths['user']}\n"\
-                f"读取时键 '{e}' 发生错误，文件可能被意外修改或已经损坏\n"
+                f"用户配置文件读取键 '{e}' 时发生错误 ! :\n"
+                f"文件路径: {self.__config_paths['user']}\n"
+                "文件可能被意外修改或已经损坏\n"
             )
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件: {self.__config_paths['user']}\n"\
-                f"读取时发生未知错误 '{e}'，文件可能被意外修改或已经损坏\n"
+                f"用户配置文件读取键 '{e}' 时发生未知错误 ! :\n"
+                f"文件路径: {self.__config_paths['user']}\n"
+                "文件可能被意外修改或已经损坏\n"
             )
         finally:
             self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
@@ -502,17 +491,18 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         try:
             if not run_config_path or not os.path.exists(run_config_path):
                 raise Exception("文件路径不存在")
-            run_config = ConfigReader(run_config_path).getConfigs()
+            run_config = JSONReader(run_config_path).data()
             if run_config and "library" in run_config\
                 and "web_driver" in run_config\
                 and "login" in run_config:
                 return run_config
-            return None
+            else:
+                return None
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"运行配置文件读取发生错误 ! : \n{e}"
+                f"运行配置文件读取发生错误 ! :\n{e}"
             )
             return None
 
@@ -528,7 +518,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 raise Exception("文件路径为空")
             if not run_config_data or not isinstance(run_config_data, dict):
                 raise Exception("运行配置数据为空或类型错误")
-            ConfigWriter(run_config_path, run_config_data)
+            JSONWriter(run_config_path, run_config_data)
             return True
         except Exception as e:
             QMessageBox.warning(
@@ -547,11 +537,11 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         try:
             if not user_config_path or not os.path.exists(user_config_path):
                 raise Exception("文件路径不存在")
-            user_config = ConfigReader(user_config_path).getConfigs()
+            user_config = JSONReader(user_config_path).data()
             if user_config and "groups" in user_config:
                 return user_config
             # compatibility with old version config format
-            if user_config and "users" in user_config:
+            elif user_config and "users" in user_config:
                 user_config = {
                     "groups": [
                         {
@@ -562,12 +552,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                     ]
                 }
                 return user_config
-            return None
+            else:
+                return None
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件读取发生错误 ! : \n{e}"
+                f"用户配置文件读取发生错误 ! :\n{e}"
             )
             return None
 
@@ -583,13 +574,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 raise Exception("文件路径为空")
             if not user_config_data or not isinstance(user_config_data, dict):
                 raise Exception("用户配置数据为空或类型错误")
-            ConfigWriter(user_config_path, user_config_data)
+            JSONWriter(user_config_path, user_config_data)
             return True
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"用户配置文件写入发生错误 ! : \n{e}"
+                f"用户配置文件写入发生错误 ! :\n{e}"
             )
             return False
 
@@ -838,7 +829,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 previous.setText(1, "" if user.get("enabled", True) else "跳过")
                 previous.setData(0, Qt.UserRole, user)
         if current is None:
-            self.initilizeUserInfoWidget()
+            self.initializeUserInfoWidget()
             return
         if current.type() == ALUserTreeItemType.USER.value:
             user = current.data(0, Qt.UserRole)
@@ -846,7 +837,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setUserToWidget(user)
                 self.UsernameEdit.textEdited.connect(lambda text: current.setText(0, text))
         else:
-            self.initilizeUserInfoWidget()
+            self.initializeUserInfoWidget()
 
     @Slot()
     def onUserTreeWidgetItemChanged(
@@ -973,9 +964,27 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         )[0]
         if run_config_path:
             run_config_path = QDir.toNativeSeparators(run_config_path)
-            if self.loadConfig(run_config_path):
+            data = self.loadRunConfig(run_config_path)
+            if data is not None:
+                self.__config_data["run"].update(data)
+                self.setRunConfigToWidget(data)
                 self.__config_paths["run"] = run_config_path
                 self.CurrentRunConfigEdit.setText(run_config_path)
+                paths = self.__cfg_mgr.get(ConfigType.GLOBAL, "automation.run_path.paths", [])
+                if run_config_path not in paths:
+                    paths.append(run_config_path)
+                    index = len(paths) - 1
+                else:
+                    index = paths.index(run_config_path)
+                self.__cfg_mgr.set(ConfigType.GLOBAL, "automation.run_path", {"current": index, "paths": paths})
+            else:
+                QMessageBox.warning(
+                    self,
+                    "警告 - AutoLibrary",
+                    "运行配置文件读取发生错误 ! :\n"\
+                    "无法从选择的运行配置文件中加载数据 ! :\n"\
+                    "可能选择了错误的配置文件类型"
+                )
 
     @Slot()
     def onBrowseCurrentUserConfigButtonClicked(
@@ -990,9 +999,27 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         )[0]
         if user_config_path:
             user_config_path = QDir.toNativeSeparators(user_config_path)
-            if self.loadConfig(user_config_path):
+            data = self.loadUserConfig(user_config_path)
+            if data is not None:
+                self.__config_data["user"].update(data)
+                self.setUsersToTreeWidget(data)
                 self.__config_paths["user"] = user_config_path
                 self.CurrentUserConfigEdit.setText(user_config_path)
+                paths = self.__cfg_mgr.get(ConfigType.GLOBAL, "automation.user_path.paths", [])
+                if user_config_path not in paths:
+                    paths.append(user_config_path)
+                    index = len(paths) - 1
+                else:
+                    index = paths.index(user_config_path)
+                self.__cfg_mgr.set(ConfigType.GLOBAL, "automation.user_path", {"current": index, "paths": paths})
+            else:
+                QMessageBox.warning(
+                    self,
+                    "警告 - AutoLibrary",
+                    "用户配置文件读取发生错误 ! :\n"\
+                    "无法从选择的用户配置文件中加载数据 ! :\n"\
+                    "可能选择了错误的配置文件类型"
+                )
 
     @Slot()
     def onBrowseExportRunConfigButtonClicked(
@@ -1079,9 +1106,9 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if run_exists or user_exists:
             exist_files = []
             if run_exists:
-                exist_files.append(run_config_path)
+                exist_files.append(f"运行配置文件: \n{run_config_path}")
             if user_exists:
-                exist_files.append(user_config_path)
+                exist_files.append(f"用户配置文件: \n{user_config_path}")
             reply = QMessageBox.information(
                 self,
                 "提示 - AutoLibrary",
@@ -1097,8 +1124,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             "run": run_config_path,
             "user": user_config_path
         }
-        self.initlizeConfigToWidget("run", self.__config_data["run"])
-        self.initlizeConfigToWidget("user", self.__config_data["user"])
+        self.initializeConfigToWidget("run", self.__config_data["run"])
+        self.initializeConfigToWidget("user", self.__config_data["user"])
 
     @Slot()
     def onConfirmButtonClicked(
@@ -1115,7 +1142,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.information(
                 self,
                 "提示 - AutoLibrary",
-                "配置文件保存成功 !\n"
+                "配置文件保存成功 ! :\n"
                 f"运行配置文件路径: \n{self.__config_paths['run']}\n"\
                 f"用户配置文件路径: \n{self.__config_paths['user']}"
             )
@@ -1123,7 +1150,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                "配置文件保存失败, 请检查文件路径权限"
+                "配置文件保存失败 !\n"
             )
         self.close()
 

@@ -25,8 +25,7 @@ from PySide6.QtGui import (
     QCloseEvent
 )
 
-from utils.ConfigReader import ConfigReader
-from utils.ConfigWriter import ConfigWriter
+from utils.ConfigManager import ConfigType, instance
 
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
@@ -142,16 +141,15 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
 
     def __init__(
         self,
-        parent = None,
-        timer_tasks_config_path: str = ""
+        parent = None
     ):
 
         super().__init__(parent)
+        self.__cfg_mgr = instance()
         self.__timer_tasks = []
         self.__check_timer = None
         self.__sort_policy = self.SortPolicy.BY_EXECUTE_TIME
         self.__sort_order = Qt.SortOrder.AscendingOrder
-        self.__timer_tasks_config_path = timer_tasks_config_path
 
         self.setupUi(self)
         self.connectSignals()
@@ -180,44 +178,28 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.__check_timer.start(500)
 
 
-    def initlizeDefaultConfigPaths(
-        self
-    ):
-
-        executable_path = sys.executable
-        executable_dir = QFileInfo(executable_path).absoluteDir()
-        self.__default_timer_tasks_config_path = QDir.toNativeSeparators(executable_dir.absoluteFilePath("timer_task.json"))
-
-
     def initializeTimerTasks(
         self
     ) -> bool:
 
-        if not self.__timer_tasks_config_path:
-            self.__timer_tasks_config_path = self.__default_timer_tasks_config_path
-        if os.path.exists(self.__timer_tasks_config_path):
-            timer_tasks = self.loadTimerTasks(self.__timer_tasks_config_path)
-            if timer_tasks is not None:
-                self.__timer_tasks = timer_tasks
-                self.timerTasksChanged.emit()
-                return True
-        timer_tasks = []
-        if self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(timer_tasks)):
+        timer_tasks = self.getTimerTasks()
+        if timer_tasks is not None:
             self.__timer_tasks = timer_tasks
-            self.updateTimerTaskList()
+            self.timerTasksChanged.emit()
+            return True
+        timer_tasks = []
+        if self.setTimerTasks(copy.deepcopy(timer_tasks)):
+            self.__timer_tasks = timer_tasks
             return True
         return False
 
 
-    def loadTimerTasks(
-        self,
-        timer_tasks_config_path: str
+    def getTimerTasks(
+        self
     ) -> list:
 
         try:
-            if not timer_tasks_config_path or not os.path.exists(timer_tasks_config_path):
-                raise Exception("定时任务配置文件不存在")
-            timer_tasks = ConfigReader(timer_tasks_config_path).getConfigs()
+            timer_tasks = self.__cfg_mgr.get(ConfigType.TIMERTASK)
             if timer_tasks and "timer_tasks" in timer_tasks:
                 for task in timer_tasks["timer_tasks"]:
                     task["add_time"] = datetime.strptime(task["add_time"], "%Y-%m-%d %H:%M:%S")
@@ -234,23 +216,17 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             return None
 
 
-    def saveTimerTasks(
+    def setTimerTasks(
         self,
-        timer_tasks_config_path: str,
         timer_tasks: list
     ) -> bool:
 
         try:
-            if not timer_tasks_config_path:
-                raise Exception("配置文件路径为空")
             for task in timer_tasks:
                 task["add_time"] = task["add_time"].strftime("%Y-%m-%d %H:%M:%S")
                 task["execute_time"] = task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
                 task["status"] = task["status"].value
-            ConfigWriter(
-                timer_tasks_config_path,
-                { "timer_tasks": timer_tasks }
-            )
+            self.__cfg_mgr.set(ConfigType.TIMERTASK, "", { "timer_tasks": timer_tasks })
             return True
         except Exception as e:
             QMessageBox.warning(
@@ -470,7 +446,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self
     ):
 
-        self.saveTimerTasks(self.__timer_tasks_config_path, copy.deepcopy(self.__timer_tasks))
+        self.setTimerTasks(copy.deepcopy(self.__timer_tasks))
         self.updateTimerTaskList()
         self.updateStat()
 

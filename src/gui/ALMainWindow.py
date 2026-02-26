@@ -7,12 +7,11 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import sys
-import time
+import os
 import queue
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QDir, QFileInfo, QTimer, QUrl,
+    Qt, Signal, Slot, QTimer, QDir, QUrl,
 )
 from PySide6.QtWidgets import (
     QMainWindow, QMenu, QSystemTrayIcon, QMessageBox
@@ -22,6 +21,9 @@ from PySide6.QtGui import (
 )
 
 from base.MsgBase import MsgBase
+
+from utils.ConfigManager import ConfigType, instance
+from utils.ConfigManager import getValidateAutomationConfigPaths
 
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.resources import ALResource
@@ -44,14 +46,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         MsgBase.__init__(self, queue.Queue(), queue.Queue())
         QMainWindow.__init__(self)
+        self.__cfg_mgr = instance()
         self.__timer_task_queue = queue.Queue()
-        executable_path = sys.executable
-        exectuable_dir = QFileInfo(executable_path).absoluteDir()
-        self.__config_paths = {
-            "run":   QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("run.json")),
-            "user": QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("user.json")),
-            "timer_task": QDir.toNativeSeparators(exectuable_dir.absoluteFilePath("timer_task.json")),
-        }
+        self.__config_paths = getValidateAutomationConfigPaths()
         self.__alTimerTaskManageWidget = None
         self.__alConfigWidget = None
         self.__auto_lib_thread = None
@@ -78,7 +75,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         # initialize timer task widget, but not show it
         try:
-            self.__alTimerTaskManageWidget = ALTimerTaskManageWidget(self, self.__config_paths["timer_task"])
+            self.__alTimerTaskManageWidget = ALTimerTaskManageWidget(self)
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -295,8 +292,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
     @Slot(dict)
     def onConfigWidgetClosed(
-        self,
-        config_paths: dict
+        self
     ):
 
         if self.__alConfigWidget:
@@ -304,7 +300,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget.deleteLater()
             self.__alConfigWidget = None
         self.setControlButtons(True, None, None)
-        self.__config_paths = config_paths
 
     @Slot(dict)
     def onTimerTaskIsReady(
@@ -359,10 +354,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         if self.__alConfigWidget is None:
-            self.__alConfigWidget = ALConfigWidget(
-                self,
-                self.__config_paths
-            )
+            self.__alConfigWidget = ALConfigWidget(self)
             self.__alConfigWidget.configWidgetIsClosed.connect(self.onConfigWidgetClosed)
         self.__alConfigWidget.show()
         self.__alConfigWidget.raise_()
