@@ -164,7 +164,7 @@ jobs:
           "exe = EXE("
           "    pyz,"
           "    a.scripts,"
-          "    name=AutoLibrary,"
+          "    name='AutoLibrary',"
           "    debug=False,"
           "    bootloader_ignore_signals=False,"
           "    strip=False,"
