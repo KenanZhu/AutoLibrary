@@ -113,9 +113,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
-            self.showTraceSignal.emit(
-                "系统不支持系统托盘功能, 无法创建系统托盘图标。"
-            )
+            self._showTrace("操作系统不支持系统托盘功能, 无法创建系统托盘图标")
             return
         self.TrayIcon = QSystemTrayIcon(self.icon, self)
         self.TrayIcon.setToolTip("AutoLibrary")
@@ -128,7 +126,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayMenu.addAction("退出", self.close)
         self.TrayIcon.setContextMenu(self.TrayMenu)
 
-        self.TrayIcon.setContextMenu(self.TrayMenu)
         self.TrayIcon.activated.connect(self.onTrayIconActivated)
         self.TrayIcon.show()
 
