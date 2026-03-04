@@ -325,7 +325,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayIcon.showMessage(
             "定时任务 - AutoLibrary",
             f"\n定时任务 '{timer_task['name']}' 执行{'失败' if is_error else '完成'}",
-            QSystemTrayIcon.MessageIcon.Information,
+            QSystemTrayIcon.MessageIcon.Warning if is_error else QSystemTrayIcon.MessageIcon.Information,
             1000
         )
         self._showTrace(
