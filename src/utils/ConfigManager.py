@@ -175,9 +175,12 @@ class ConfigManager:
         return self.__config_dir
 
 
+# ConfigManager singleton instance.
 _config_manager_instance = None
 
-# Utility function to get config data (thread-safe and validated) from ConfigManager instance.
+# Utility functions.
+#
+# Utility function to get validated automation config paths.
 def getValidateAutomationConfigPaths(
 ) -> dict:
     """
@@ -204,8 +207,16 @@ def getValidateAutomationConfigPaths(
     _config_manager_instance.set(ConfigType.GLOBAL, "automation", auto_config)
     return config_paths
 
+# Utility function to get base config directory.
 def getBaseConfigDir(
 ) -> str:
+    """
+        Get base config directory, on Windows, it is usually at :
+            'C:\\Users\\<username>\\AppData\\Local\\AutoLibrary\\config'.
+
+        Returns:
+            str: Base config directory.
+    """
 
     return _config_manager_instance.configDir()
 
