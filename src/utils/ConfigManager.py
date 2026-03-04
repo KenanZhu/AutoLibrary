@@ -168,7 +168,7 @@ class ConfigManager:
         JSONWriter(config_path, self.__config_data[config_type.value])
 
 
-    def appDir(
+    def configDir(
         self
     ) -> str:
 
@@ -193,7 +193,7 @@ def getValidateAutomationConfigPaths(
             paths = auto_config.get(f"{cfg_type}_path", {}).get("paths", [])
             index = auto_config.get(f"{cfg_type}_path", {}).get("current", 0)
             if paths == []:
-                paths.append(os.path.join(_config_manager_instance.appDir(), f"{cfg_type}.json"))
+                paths.append(os.path.join(_config_manager_instance.configDir(), f"{cfg_type}.json"))
             if index < 0:
                 index = 0
             if index >= len(paths):
@@ -207,7 +207,7 @@ def getValidateAutomationConfigPaths(
 def getBaseConfigDir(
 ) -> str:
 
-    return _config_manager_instance.appDir()
+    return _config_manager_instance.configDir()
 
 # Singleton instance of ConfigManager.
 _instance_lock = threading.Lock()
@@ -227,7 +227,7 @@ def instance(
         else:
             if config_dir == "":
                 return _config_manager_instance
-            if _config_manager_instance.appDir() != config_dir:
+            if getBaseConfigDir() != config_dir:
                 raise ValueError(
                     "ConfigManager 的实例已初始化，不能使用不同的配置目录。")
     return _config_manager_instance
