@@ -15,7 +15,7 @@ from enum import Enum
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTimer, QFileInfo, QDir
+    Qt, Signal, Slot, QTimer
 )
 from PySide6.QtWidgets import (
     QDialog, QWidget, QListWidgetItem, QMessageBox,
@@ -25,7 +25,7 @@ from PySide6.QtGui import (
     QCloseEvent
 )
 
-from utils.ConfigManager import ConfigType, instance
+import utils.ConfigManager as ConfigManager
 
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
@@ -145,7 +145,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ):
 
         super().__init__(parent)
-        self.__cfg_mgr = instance()
+        self.__cfg_mgr = ConfigManager.instance()
         self.__timer_tasks = []
         self.__check_timer = None
         self.__sort_policy = self.SortPolicy.BY_EXECUTE_TIME
@@ -199,7 +199,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ) -> list:
 
         try:
-            timer_tasks = self.__cfg_mgr.get(ConfigType.TIMERTASK)
+            timer_tasks = self.__cfg_mgr.get(ConfigManager.ConfigType.TIMERTASK)
             if timer_tasks and "timer_tasks" in timer_tasks:
                 for task in timer_tasks["timer_tasks"]:
                     task["add_time"] = datetime.strptime(task["add_time"], "%Y-%m-%d %H:%M:%S")
@@ -226,7 +226,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 task["add_time"] = task["add_time"].strftime("%Y-%m-%d %H:%M:%S")
                 task["execute_time"] = task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
                 task["status"] = task["status"].value
-            self.__cfg_mgr.set(ConfigType.TIMERTASK, "", { "timer_tasks": timer_tasks })
+            self.__cfg_mgr.set(ConfigManager.ConfigType.TIMERTASK, "", { "timer_tasks": timer_tasks })
             return True
         except Exception as e:
             QMessageBox.warning(

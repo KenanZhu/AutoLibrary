@@ -21,10 +21,10 @@ from PySide6.QtGui import (
      QCloseEvent, QAction
 )
 
+import utils.ConfigManager as ConfigManager
+
 from utils.JSONReader import JSONReader
 from utils.JSONWriter import JSONWriter
-from utils.ConfigManager import ConfigType, instance
-from utils.ConfigManager import getValidateAutomationConfigPaths
 
 from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
@@ -42,8 +42,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         super().__init__(parent)
-        self.__cfg_mgr = instance()
-        self.__config_paths = getValidateAutomationConfigPaths()
+        self.__cfg_mgr = ConfigManager.instance()
+        self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
         self.__config_data = {"run": {}, "user": {}}
 
         self.setupUi(self)
@@ -968,13 +968,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setRunConfigToWidget(data)
                 self.__config_paths["run"] = run_config_path
                 self.CurrentRunConfigEdit.setText(run_config_path)
-                paths = self.__cfg_mgr.get(ConfigType.GLOBAL, "automation.run_path.paths", [])
+                paths = self.__cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation.run_path.paths", [])
                 if run_config_path not in paths:
                     paths.append(run_config_path)
                     index = len(paths) - 1
                 else:
                     index = paths.index(run_config_path)
-                self.__cfg_mgr.set(ConfigType.GLOBAL, "automation.run_path", {"current": index, "paths": paths})
+                self.__cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation.run_path", {"current": index, "paths": paths})
             else:
                 QMessageBox.warning(
                     self,
@@ -1003,13 +1003,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setUsersToTreeWidget(data)
                 self.__config_paths["user"] = user_config_path
                 self.CurrentUserConfigEdit.setText(user_config_path)
-                paths = self.__cfg_mgr.get(ConfigType.GLOBAL, "automation.user_path.paths", [])
+                paths = self.__cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation.user_path.paths", [])
                 if user_config_path not in paths:
                     paths.append(user_config_path)
                     index = len(paths) - 1
                 else:
                     index = paths.index(user_config_path)
-                self.__cfg_mgr.set(ConfigType.GLOBAL, "automation.user_path", {"current": index, "paths": paths})
+                self.__cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation.user_path", {"current": index, "paths": paths})
             else:
                 QMessageBox.warning(
                     self,

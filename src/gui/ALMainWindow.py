@@ -7,11 +7,10 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import os
 import queue
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTimer, QDir, QUrl,
+    Qt, Signal, Slot, QTimer, QUrl,
 )
 from PySide6.QtWidgets import (
     QMainWindow, QMenu, QSystemTrayIcon, QMessageBox
@@ -20,10 +19,9 @@ from PySide6.QtGui import (
     QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
 )
 
-from base.MsgBase import MsgBase
+import utils.ConfigManager as ConfigManager
 
-from utils.ConfigManager import ConfigType, instance
-from utils.ConfigManager import getValidateAutomationConfigPaths
+from base.MsgBase import MsgBase
 
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.resources import ALResource
@@ -46,9 +44,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         MsgBase.__init__(self, queue.Queue(), queue.Queue())
         QMainWindow.__init__(self)
-        self.__cfg_mgr = instance()
+        self.__cfg_mgr = ConfigManager.instance()
         self.__timer_task_queue = queue.Queue()
-        self.__config_paths = getValidateAutomationConfigPaths()
+        self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
         self.__alTimerTaskManageWidget = None
         self.__alConfigWidget = None
         self.__auto_lib_thread = None
