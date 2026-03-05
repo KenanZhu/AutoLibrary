@@ -169,6 +169,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         event: QCloseEvent
     ):
 
+        if self.isVisible():
+            self.showNormal()
+            event.ignore()
+            return
         if self.__msg_queue_timer and self.__msg_queue_timer.isActive():
             self.__msg_queue_timer.stop()
         if self.__timer_task_timer and self.__timer_task_timer.isActive():
@@ -182,7 +186,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
             # the config widget is already deleted in the 'self.onConfigWidgetClosed'
-        super().closeEvent(event)
+        QMainWindow.closeEvent(self, event)
 
 
     def appendToTextEdit(
