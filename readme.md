@@ -10,7 +10,7 @@
 [![Release](https://img.shields.io/github/v/release/KenanZhu/AutoLibrary?label=latest&logo=github&logoColor=white)](https://github.com/KenanZhu/AutoLibrary/releases/latest)
 ![Downloads](https://img.shields.io/github/downloads/KenanZhu/AutoLibrary/total?label=downloads)
 
-了解更多请访问 [_AutoLibrary 网站_](http://www.autolibrary.top)
+了解更多请访问 [_AutoLibrary 网站_](http://www.autolibrary.kenanzhu.com)
 
 ---
 
@@ -22,18 +22,18 @@
 4. 批量操作 - 支持同时预约多个用户，可以指定当前需要跳过的用户，并将用户分成多个组
 5. 定时任务 - 使用内置定时任务管理，添加定时任务，指定时间后按当前预约信息自动运行
 
-*1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://www.autolibrary.top/manuals)*
+*1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals)*
 
 ### 如何使用
 
 1. 下载最新版本的 [AutoLibrary 压缩包](https://github.com/KenanZhu/AutoLibrary/releases/latest)。
 2. 解压下载的文件到任意目录。
-3. 下载对应浏览器类型和版本（具体操作请参考适用软件版本的 [帮助手册](https://www.autolibrary.top/manuals)）的驱动文件，并在配置界面的运行配置选项卡对应位置选择你下载好的浏览器驱动。
+3. 下载对应浏览器类型和版本（具体操作请参考适用软件版本的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals)）的驱动文件，并在配置界面的运行配置选项卡对应位置选择你下载好的浏览器驱动。
 4. 运行 `AutoLibrary-[主版本号].[次版本号].[修订版本号].Z.exe` 文件 （如 `AutoLibrary-1.0.0.exe`）。
 5. 点击 [配置] 按钮，在配置界面填写好预约信息和运行配置后，点击 [确认] 按钮。
 6. 点击 [启动脚本] 按钮，即可开始自动预约、续约、签到等操作。
 
-*注意 1*: 关于浏览器驱动的下载和其它相关问题，请参考我们的 [帮助手册](https://www.autolibrary.top/manuals) 中对应软件版本的内容。
+*注意 1*: 关于浏览器驱动的下载和其它相关问题，请参考我们的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals) 中对应软件版本的内容。
 
 #### 平台支持 & 编译步骤
 
