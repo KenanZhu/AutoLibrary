@@ -241,7 +241,7 @@ class AutoLib(MsgBase):
                 self._showTrace(f"用户 {username} 无法预约，已跳过")
                 result = 2
         # checkin
-        if run_mode["auto_checkin"] and result == 2:
+        if run_mode["auto_checkin"] and result != 1:
             if self.__lib_checker.canCheckin():
                 if self.__lib_checkin.checkin(username):
                     result = 0
@@ -251,7 +251,7 @@ class AutoLib(MsgBase):
                 self._showTrace(f"用户 {username} 无法签到，已跳过")
                 result = 2
         # renewal
-        if run_mode["auto_renewal"] and result == 2:
+        if run_mode["auto_renewal"] and result != 1:
             can_renew, record = self.__lib_checker.canRenew()
             if can_renew:
                 if self.__lib_renew.renew(username, record, reserve_info):
