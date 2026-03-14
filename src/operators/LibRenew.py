@@ -14,10 +14,10 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from base.LibOperator import LibOperator
+from base.LibTimeSelector import LibTimeSelector
 
 
-class LibRenew(LibOperator):
+class LibRenew(LibTimeSelector):
 
     def __init__(
         self,
@@ -37,22 +37,6 @@ class LibRenew(LibOperator):
 
         self.__driver.refresh()
         return True
-
-    @staticmethod
-    def __timeToMins(
-        time_str: str
-    ) -> int:
-
-        hour, minute = map(int, time_str.split(":"))
-        return hour*60 + minute
-
-    @staticmethod
-    def __minsToTime(
-        mins: int
-    ) -> str:
-
-        hour, minute = divmod(mins, 60)
-        return f"{hour:02d}:{minute:02d}"
 
 
     def __waitRenewDialog(
@@ -94,85 +78,92 @@ class LibRenew(LibOperator):
         return True
 
 
-    def __selectNearstTime(
+    def __selectNearestTime(
         self,
         record: dict,
         reserve_info: dict
     ) -> bool:
 
         """
-            TODO : this function is too long and too ugly
-
-            we need to refactor it to make it more readable.
-            but may be it is not a good idea to refactor it. :) who knows...
+            Select the nearest available renewal time.
         """
-
         end_time = record["time"]["end"]
         renew_info = reserve_info["renew_time"]
         max_diff = renew_info["max_diff"]
         prefer_earlier = renew_info["prefer_early"]
-        target_renew_mins = self.__timeToMins(end_time) + renew_info["expect_duration"]*60
-        renew_ok_btn = self.__driver.find_element(
-            By.CSS_SELECTOR, "#extendDiv .btnOK"
-        )
-        try:
-            renew_time_opts = self.__driver.find_elements(
-                By.CSS_SELECTOR, "#extendDiv .renewal_List li"
-            )
-            free_times = []
-            best_time_diff = max_diff
-            best_actual_diff = None
-            best_time_opt = None
+        target_renew_mins = self._timeToMins(end_time) + renew_info["expect_duration"]*60
 
-            if not renew_time_opts:
-                self._showTrace("当前未查询到可用续约时间 !")
-                return False
-            for time_opt in renew_time_opts:
-                time_attr = time_opt.get_attribute("id")
-                if time_attr and time_attr.isdigit():
-                    time_val = int(time_attr)
-                    free_times.append(time_opt.text.strip())
-                else:
-                    continue
-                actual_diff = time_val - target_renew_mins
-                abs_diff = abs(actual_diff)
-                if abs_diff < best_time_diff or (
-                    abs_diff == best_time_diff and (
-                        (prefer_earlier and actual_diff <= 0) or
-                        (not prefer_earlier and actual_diff >= 0)
-                    )
-                ):
-                    best_time_diff = abs_diff
-                    best_actual_diff = actual_diff
-                    best_time_opt = time_opt
-
-            if best_time_opt is not None:
-                best_time_opt.click()
-                abs_time_diff = abs(best_actual_diff)
-                if best_actual_diff < 0:
-                    time_relation = f"早了 {abs_time_diff} 分钟"
-                elif best_actual_diff > 0:
-                    time_relation = f"晚了 {abs_time_diff} 分钟"
-                else:
-                    time_relation = f"正好等于续约时间"
-                self._showTrace(
-                    f"选择距离期望续约时间最近的 {best_time_opt.text}, "\
-                    f"与期望续约时间相比 {time_relation}"
-                )
-                # update the actual renew end time
-                record["time"]["end"] = best_time_opt.text.strip()
-                renew_ok_btn.click()
-                return True
-            self._showTrace(
-                "无法选择最近的可用续约时间 !" \
-                f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !"
-            )
-            self._showTrace(
-                f"当前可供续约的时间有: {free_times}"
-            )
+        # Validate and adjust target renew time to library closing time
+        if not self.__validateAndAdjustRenewTime(end_time, target_renew_mins):
             return False
+        renew_ok_btn = self.__driver.find_element(By.CSS_SELECTOR, "#extendDiv .btnOK")
+        renew_time_opts = self.__driver.find_elements(By.CSS_SELECTOR, "#extendDiv .renewal_List li")
+        if not renew_time_opts:
+            self._showTrace("当前未查询到可用续约时间 !")
+            return False
+
+        # Find best renewal time option
+        best_opt, best_text, actual_diff, free_times = self._findBestTimeOption(
+            renew_time_opts, target_renew_mins, max_diff, prefer_earlier, is_reserve=False
+        )
+        if best_opt is not None:
+            return self.__confirmRenewal(best_opt, best_text, actual_diff, record, renew_ok_btn)
+        self._showTrace(
+            "无法选择最近的可用续约时间 ! "
+            f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !"
+        )
+        self._showTrace(f"当前可供续约的时间有: {free_times}")
+        return False
+
+
+    def __validateAndAdjustRenewTime(
+        self,
+        end_time: str,
+        target_renew_mins: int
+    ) -> bool:
+
+        """
+            Validate and adjust renewal time to library closing time if needed.
+        """
+        LIBRARY_CLOSE_TIME = 1410  # 23:30 in minutes
+        if target_renew_mins > LIBRARY_CLOSE_TIME:
+            actual_renew_duration = LIBRARY_CLOSE_TIME - self._timeToMins(end_time)
+            if actual_renew_duration <= 0:
+                self._showTrace(f"当前结束时间 {end_time} 已接近闭馆时间，无法续约 !")
+                return False
+            self._showTrace(
+                f"续约时间已调整至闭馆时间 {self._minsToTime(LIBRARY_CLOSE_TIME)}，"
+                f"实际续约时长为 {actual_renew_duration//60} 小时 {actual_renew_duration%60} 分钟"
+            )
+            return True
+        return True
+
+
+    def __confirmRenewal(
+        self,
+        best_opt,
+        best_text: str,
+        actual_diff: int,
+        record: dict,
+        ok_btn
+    ) -> bool:
+
+        """
+            Confirm the selected renewal time.
+        """
+        try:
+            best_opt.click()
+            abs_diff = abs(actual_diff)
+            time_relation = self._formatTimeRelation(abs_diff, actual_diff, "续约时间")
+            self._showTrace(
+                f"选择距离期望续约时间最近的 {best_text}, "
+                f"与期望续约时间相比 {time_relation}"
+            )
+            record["time"]["end"] = best_text.strip()
+            ok_btn.click()
+            return True
         except:
-            self._showTrace("查询可用续约时间时发生未知错误 !")
+            self._showTrace("确认续约时发生错误 !")
             return False
 
 
@@ -204,7 +195,7 @@ class LibRenew(LibOperator):
             # so we need to refresh the page for subsequent operations.
             self.__driver.refresh()
             return False
-        if not self.__selectNearstTime(record, reserve_info):
+        if not self.__selectNearestTime(record, reserve_info):
             self._showTrace(f"用户 {username} 续约失败 !")
             self.__driver.refresh()
             return False

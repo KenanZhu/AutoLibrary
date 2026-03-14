@@ -10,16 +10,15 @@ See the LICENSE file for details.
 import time
 import queue
 
-from datetime import datetime
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from base.LibOperator import LibOperator
+from base.LibTimeSelector import LibTimeSelector
 
 
-class LibReserve(LibOperator):
+class LibReserve(LibTimeSelector):
 
     def __init__(
         self,
@@ -99,22 +98,6 @@ class LibReserve(LibOperator):
         except:
             self._showTrace(f"预约结果加载失败 !")
             return False
-
-    @staticmethod
-    def __timeToMins(
-        time_str: str
-    ) -> int:
-
-        hour, minute = map(int, time_str.split(":"))
-        return hour*60 + minute
-
-    @staticmethod
-    def __minsToTime(
-        mins: int
-    ) -> str:
-
-        hour, minute = divmod(mins, 60)
-        return f"{hour:02d}:{minute:02d}"
 
 
     def __containRequiredInfo(
@@ -207,10 +190,10 @@ class LibReserve(LibOperator):
         if reserve_info.get("end_time") is None:
             reserve_info["end_time"] = {}
         if "time" not in reserve_info["end_time"]:
-            end_mins = self.__timeToMins(reserve_info["begin_time"]["time"])
+            end_mins = self._timeToMins(reserve_info["begin_time"]["time"])
             end_mins = end_mins + int(reserve_info["expect_duration"]*60)
             reserve_info["end_time"] = {
-                "time": self.__minsToTime(end_mins),
+                "time": self._minsToTime(end_mins),
                 "max_diff": 30,
                 "prefer_early": False
             }
@@ -232,8 +215,8 @@ class LibReserve(LibOperator):
     ):
 
         begin_time, end_time = reserve_info["begin_time"], reserve_info["end_time"]
-        begin_mins = self.__timeToMins(begin_time["time"])
-        end_mins = self.__timeToMins(end_time["time"])
+        begin_mins = self._timeToMins(begin_time["time"])
+        end_mins = self._timeToMins(end_time["time"])
         # if end time is earlier than begin_time, exchange them
         if end_mins < begin_mins:
             self._showTrace(
@@ -242,15 +225,15 @@ class LibReserve(LibOperator):
             reserve_info["end_time"] = begin_time
             reserve_info["begin_time"] = end_time
             begin_time, end_time = reserve_info["begin_time"], reserve_info["end_time"]
-            begin_mins = self.__timeToMins(begin_time["time"])
-            end_mins = self.__timeToMins(end_time["time"])
+            begin_mins = self._timeToMins(begin_time["time"])
+            end_mins = self._timeToMins(end_time["time"])
         # ensure the end time is not later than 23:30
-        if end_mins > self.__timeToMins("23:30"):
+        if end_mins > self._timeToMins("23:30"):
             self._showTrace(
                 f"结束时间 {end_time['time']} 晚于 23:30, 自动设置为 23:30"
             )
             reserve_info["end_time"]["time"] = "23:30"
-            end_mins = self.__timeToMins("23:30")
+            end_mins = self._timeToMins("23:30")
         # ensure the duration is not longer than 8 hours
         if reserve_info["satisfy_duration"]:
             if reserve_info["expect_duration"] > 8:
@@ -267,7 +250,7 @@ class LibReserve(LibOperator):
                     f"{float((end_mins - begin_mins)/60)} 小时 "
                     f"超出最大时长 8 小时, 自动设置为 8 小时"
                 )
-                reserve_info["end_time"]["time"] = self.__minsToTime(begin_mins + 8*60)
+                reserve_info["end_time"]["time"] = self._minsToTime(begin_mins + 8*60)
         return True
 
 
@@ -496,6 +479,10 @@ class LibReserve(LibOperator):
         prefer_earlier: bool = True
     ) -> int:
 
+        """
+            Select the nearest available time option.
+        """
+        # Wait for time options to load
         try:
             WebDriverWait(self.__driver, 2).until(
                 EC.presence_of_all_elements_located(
@@ -505,67 +492,34 @@ class LibReserve(LibOperator):
         except:
             self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
             return -1
-        try:
-            all_time_opts = self.__driver.find_elements(
-                By.CSS_SELECTOR,
-                f"#{time_id} ul li a"
-            )
-            free_times = []
-            best_time_diff = max_time_diff
-            best_actual_diff = None
-            best_time_opt = None
 
-            if not all_time_opts:
-                self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
-                return -1
-            for time_opt in all_time_opts:
-                time_attr = time_opt.get_attribute("time")
-                if time_attr == "now":
-                    now = datetime.now()
-                    time_val = int(now.hour*60 + now.minute)
-                elif time_attr and time_attr.isdigit():
-                    time_val = int(time_attr)
-                else:
-                    continue
-                free_times.append(self.__minsToTime(time_val))
-                actual_diff = time_val - target_time
-                abs_diff = abs(actual_diff)
-                if abs_diff < best_time_diff or (
-                    abs_diff == best_time_diff and (
-                        # prefer earlier time
-                        (prefer_earlier and actual_diff <= 0) or
-                        # prefer later time
-                        (not prefer_earlier and actual_diff >= 0)
-                    )
-                ):
-                    best_time_diff = abs_diff
-                    best_actual_diff = actual_diff
-                    best_time_opt = time_opt
-
-            if best_time_opt is not None:
-                best_time_opt.click()
-                abs_time_diff = abs(best_actual_diff)
-                if best_actual_diff < 0:
-                    time_relation = f"早了 {abs_time_diff} 分钟"
-                elif best_actual_diff > 0:
-                    time_relation = f"晚了 {abs_time_diff} 分钟"
-                else:
-                    time_relation = f"正好等于 {time_type}"
-                target_time += best_actual_diff
-                self._showTrace(
-                    f"选择距离期望 {time_type} 最近的 {best_time_opt.text}, "\
-                    f"与期望 {time_type} 相比 {time_relation}"
-                )
-                return target_time
+        # Find best time option
+        all_time_opts = self.__driver.find_elements(
+            By.CSS_SELECTOR,
+            f"#{time_id} ul li a"
+        )
+        if not all_time_opts:
+            self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
+            return -1
+        best_opt, best_text, actual_diff, free_times = self._findBestTimeOption(
+            all_time_opts, target_time, max_time_diff, prefer_earlier, is_reserve=True
+        )
+        if best_opt is not None:
+            best_opt.click()
+            abs_diff = abs(actual_diff)
+            time_relation = self._formatTimeRelation(abs_diff, actual_diff, time_type)
+            target_time += actual_diff
             self._showTrace(
-                f"无法选择最近的 {time_type} {self.__minsToTime(target_time)}, "\
-                f"所有可选时间与目标时间相差都超过 {max_time_diff} 分钟"
+                f"选择距离期望 {time_type} 最近的 {best_text}, "
+                f"与期望 {time_type} 相比 {time_relation}"
             )
-            self._showTrace(f"当前可供预约的 {time_type} 有: {free_times}")
-            return -1
-        except:
-            self._showTrace(f"{time_type} {self.__minsToTime(target_time)} 选择失败 !")
-            return -1
+            return target_time
+        self._showTrace(
+            f"无法选择最近的 {time_type} {self._minsToTime(target_time)}, "
+            f"所有可选时间与目标时间相差都超过 {max_time_diff} 分钟"
+        )
+        self._showTrace(f"当前可供预约的 {time_type} 有: {free_times}")
+        return -1
 
 
     def __selectSeatTime(
@@ -576,40 +530,35 @@ class LibReserve(LibOperator):
         satisfy_duration: bool = True
     ) -> bool:
 
+        """Select seat begin and end time."""
         expect_begin_time = actual_begin_time = begin_time["time"]
         expect_end_time = actual_end_time = end_time["time"]
-        expect_begin_mins = self.__timeToMins(expect_begin_time)
+        expect_begin_mins = self._timeToMins(expect_begin_time)
         actual_begin_mins = expect_begin_mins
-        expect_end_mins = self.__timeToMins(expect_end_time)
+        expect_end_mins = self._timeToMins(expect_end_time)
 
-        # select the begin time
+        # Select begin time
         if self.__selectNearestTime(
-            time_id="startTime", # dont change into begin, this is the element in the page
+            time_id="startTime",
             time_type="开始时间",
             target_time=expect_begin_mins,
             max_time_diff=begin_time["max_diff"],
             prefer_earlier=begin_time["prefer_early"]
         ) == -1:
             return False
-        else:
-            actual_begin_time = self.__minsToTime(expect_begin_mins)
-            actual_begin_mins = self.__timeToMins(actual_begin_time)
-        # if 'satisfy_duration' is True.
-        # select the end time based on the begin time
-        # (because it may be changed under the 'max time diff' strategy) and expect duration.
+        actual_begin_time = self._minsToTime(expect_begin_mins)
+        actual_begin_mins = self._timeToMins(actual_begin_time)
+
+        # If 'satisfy_duration' is True, select end time based on actual begin time
         if satisfy_duration:
-            expect_end_mins = int(actual_begin_mins + expct_duration*60)
-            if expect_end_mins > self.__timeToMins("23:30"):
-                expect_end_mins = self.__timeToMins("23:30")
-                self._showTrace(
-                    f"预约持续时间 {expct_duration} 小时, 超过最大预约时间 23:30, 自动调整为 23:30"
-                )
-            expect_end_time = self.__minsToTime(expect_end_mins)
+            expect_end_mins = self.validateAndAdjustEndTime(actual_begin_mins, expct_duration)
+            expect_end_time = self._minsToTime(expect_end_mins)
             self._showTrace(
-                f"需要满足期望预约持续时间: {expct_duration} 小时, "\
-                f"根据开始时间 {actual_begin_time} 计算结束时间: {self.__minsToTime(expect_end_mins)}"
+                f"需要满足期望预约持续时间: {expct_duration} 小时, "
+                f"根据开始时间 {actual_begin_time} 计算结束时间: {expect_end_time}"
             )
-        # select the end time
+
+        # Select end time
         if self.__selectNearestTime(
             time_id="endTime",
             time_type="结束时间",
@@ -618,13 +567,31 @@ class LibReserve(LibOperator):
             prefer_earlier=end_time["prefer_early"]
         ) == -1:
             return False
-        else:
-            actual_end_time = self.__minsToTime(expect_end_mins)
+        actual_end_time = self._minsToTime(expect_end_mins)
         self._showTrace(
             f"期望预约时间段: {expect_begin_time} - {expect_end_time}, "
             f"实际预约时间段: {actual_begin_time} - {actual_end_time}"
         )
         return True
+
+
+    def validateAndAdjustEndTime(
+        self,
+        begin_mins: int,
+        duration: int
+    ) -> int:
+
+        """
+            Validate and adjust reserve end time to library closing time if needed.
+        """
+        LIBRARY_CLOSE_TIME = self._timeToMins("23:30")
+        expect_end_mins = begin_mins + duration * 60
+        if expect_end_mins > LIBRARY_CLOSE_TIME:
+            expect_end_mins = LIBRARY_CLOSE_TIME
+            self._showTrace(
+                f"预约持续时间 {duration} 小时, 超过最大预约时间 23:30, 自动调整为 23:30"
+            )
+        return expect_end_mins
 
 
     def reserve(
