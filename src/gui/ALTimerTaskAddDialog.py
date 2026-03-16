@@ -12,15 +12,11 @@ import uuid
 from enum import Enum
 from datetime import datetime, timedelta
 
-from PySide6.QtCore import (
-    Slot, QDateTime
-)
-from PySide6.QtWidgets import (
-    QLabel, QDialog, QWidget, QSpinBox,
-    QHBoxLayout, QGridLayout, QDateTimeEdit
-)
+from PySide6.QtCore import Slot, QDateTime
+from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QGridLayout, QDateTimeEdit
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
+import utils.TimerUtils as TimerUtils
 
 
 class ALTimerTaskStatus(Enum):
@@ -43,8 +39,8 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         super().__init__(parent)
 
         self.setupUi(self)
-        self.connectSignals()
         self.modifyUi()
+        self.connectSignals()
 
 
     def modifyUi(
@@ -97,6 +93,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.CancelButton.clicked.connect(self.reject)
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
+        self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
 
 
     def getTimerTask(
@@ -121,7 +118,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 minutes = self.RelativeMinuteSpinBox.value(),
                 seconds = self.RelativeSecondSpinBox.value()
             )
-        return {
+        task_data = {
             "name": name,
             "task_uuid": uuid.uuid4().hex.upper() + f"-{added_time.strftime("%Y%m%d%H%M%S")}",
             "time_type": self.TimerTypeComboBox.currentText(),
@@ -129,9 +126,40 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "silent": silent,
             "add_time": added_time,
             "status": ALTimerTaskStatus.PENDING,
-            "executed": False
+            "executed": False,
+            "repeat": self.RepeatCheckBox.isChecked(),
+            "repeat_records": []
         }
+        if task_data["repeat"]:
+            repeat_days = []
+            if self.MonCheckBox.isChecked():
+                repeat_days.append(0)
+            if self.TueCheckBox.isChecked():
+                repeat_days.append(1)
+            if self.WedCheckBox.isChecked():
+                repeat_days.append(2)
+            if self.ThuCheckBox.isChecked():
+                repeat_days.append(3)
+            if self.FriCheckBox.isChecked():
+                repeat_days.append(4)
+            if self.SatCheckBox.isChecked():
+                repeat_days.append(5)
+            if self.SunCheckBox.isChecked():
+                repeat_days.append(6)
+            if not repeat_days:
+                repeat_days = [0, 1, 2, 3, 4, 5, 6]
+            task_data["repeat_days"] = repeat_days
+            task_data["repeat_hour"] = execute_time.hour
+            task_data["repeat_minute"] = execute_time.minute
+            task_data["repeat_second"] = execute_time.second
+            task_data["execute_time"] = TimerUtils.calculateNextRepeatTime(
+                task_data["repeat_days"],
+                task_data["repeat_hour"],
+                task_data["repeat_minute"],
+                task_data["repeat_second"]
+            )
 
+        return task_data
 
     @Slot(int)
     def onTimerTypeComboBoxIndexChanged(
@@ -141,3 +169,17 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
 
         self.SpecificTimerWidget.setVisible(index == 0)
         self.RelativeTimerWidget.setVisible(index == 1)
+
+    @Slot(bool)
+    def onRepeatCheckBoxToggled(
+        self,
+        checked: bool
+    ):
+
+        self.MonCheckBox.setEnabled(checked)
+        self.TueCheckBox.setEnabled(checked)
+        self.WedCheckBox.setEnabled(checked)
+        self.ThuCheckBox.setEnabled(checked)
+        self.FriCheckBox.setEnabled(checked)
+        self.SatCheckBox.setEnabled(checked)
+        self.SunCheckBox.setEnabled(checked)
