@@ -4,6 +4,10 @@ name: Build Test
 # It is triggered when a pull request is opened, synchronized, or reopened against the main branch.
 
 on:
+  push:
+    branches:
+      - main
+
   pull_request:
     branches:
       - main
