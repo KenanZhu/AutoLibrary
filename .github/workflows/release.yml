@@ -80,8 +80,8 @@ jobs:
 
         # Validate branch name starts with 'release/v'
         if ! echo "$BRANCH_NAME" | grep -qE '^release/v'; then
-          echo "X Error: Branch '$BRANCH_NAME' does not start with 'release/v'"
-          echo "X This workflow should only be triggered by release branches"
+          echo "✗ Error: Branch '$BRANCH_NAME' does not start with 'release/v'"
+          echo "✗ This workflow should only be triggered by release branches"
           exit 1
         fi
 
@@ -98,8 +98,8 @@ jobs:
           TAG_NAME=$(echo "$BRANCH_NAME" | sed -E 's|^release/(v[0-9]+\.[0-9]+\.[0-9]+-.*)$|\1|')
           IS_RC=true
         else
-          echo "X Error: Branch '$BRANCH_NAME' does not match expected format"
-          echo "X Expected format: release/vX.Y.Z or release/vX.Y.Z-rcX"
+          echo "✗ Error: Branch '$BRANCH_NAME' does not match expected format"
+          echo "✗ Expected format: release/vX.Y.Z or release/vX.Y.Z-rcX"
           exit 1
         fi
         VERSION="${TAG_NAME#v}"
