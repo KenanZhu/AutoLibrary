@@ -1,26 +1,18 @@
-name: Build
+name: Build Test
 
-# This workflow compiles the application for Windows platform using PyInstaller, and
-# archives the built artifacts as 'AutoLibrary.<tag_name>-windows-x86_64.zip'.
-#
-# It is triggered when called by the release workflow.
+# This workflow builds the application for testing purposes.
+# It is triggered when a pull request is opened, synchronized, or reopened against the main branch.
 
 on:
-  workflow_call:
-    inputs:
-      tag_name:
-        description: 'Tag name'
-        required: false
-        type: string
-      version:
-        description: 'Version number'
-        required: false
-        type: string
-      is_test:
-        description: 'Whether this is a test build (not a release)'
-        required: false
-        type: string
-        default: 'true'
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+  # Allow manual trigger for testing
+  workflow_dispatch:
 
 #
 # Build Windows
@@ -29,56 +21,24 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
-    outputs:
-      tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
-      version: ${{ steps.get_version.outputs.VERSION }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
       with:
         ref: ${{ github.ref }}
 
-    # here we download the build version of ALVersionInfo.py from artifacts
-    # and replace the committed version
-    - name: Download build version of ALVersionInfo.py
-      uses: actions/download-artifact@v6
-      with:
-        name: updated-version-info-for-build
-        path: src/gui/
-
     - name: Get version info
       id: get_version
       run: |
-        $isTest = "${{ inputs.is_test }}"
-        if ($isTest -eq "true") {
-          $version = "test"
-          $tagName = "test"
-          Write-Host "✓ Mode: Test Build"
-        } else {
-          $version = "${{ inputs.version }}"
-          $tagName = "${{ inputs.tag_name }}"
+        $version = "pr-test"
+        $tagName = "pr-test"
 
-          if ([string]::IsNullOrEmpty($version)) {
-            $version = "test"
-            $tagName = "test"
-            Write-Host "✓ Mode: Independent Build (No inputs provided)"
-          }
-        }
-
+        Write-Host "✓ Mode: Pull Request Test Build"
         Write-Host "✓ Tag: $tagName"
         Write-Host "✓ Version: $version"
 
         "VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         "TAG_NAME=$tagName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-      shell: pwsh
-
-    - name: Verify 'ALVersionInfo.py' was updated
-      run: |
-        $versionInfoFile = "src/gui/ALVersionInfo.py"
-        Write-Host "Verifying $versionInfoFile content:"
-        Write-Host "=================================="
-        Get-Content $versionInfoFile | Write-Host
-        Write-Host "=================================="
       shell: pwsh
 
     - name: Set up Python
@@ -242,16 +202,16 @@ jobs:
         name: AutoLibrary.${{ steps.get_version.outputs.TAG_NAME }}-windows-x86_64
         path: |
           ${{ steps.zip_release.outputs.ZIP_NAME }}
-        retention-days: ${{ github.event_name != 'workflow_call' && 7 || 90 }}
+        retention-days: 7
 
     - name: Upload build summary
-      if: ${{ github.event_name != 'workflow_call' }}
       run: |
-        Write-Host "## Build Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+        Write-Host "## Build Test Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
         Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "✓ Build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        Write-Host "✓ Pull request build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "- Version: ${{ steps.get_version.outputs.VERSION }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        Write-Host "- Pull Request #${{ github.event.pull_request.number }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        Write-Host "- Branch: ${{ github.event.pull_request.head.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "- Event: ${{ github.event_name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Ref: ${{ github.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
       shell: pwsh

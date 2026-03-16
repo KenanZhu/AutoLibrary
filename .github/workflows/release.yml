@@ -1,36 +1,48 @@
 name: Release
 
 # This workflow automates the complete release process for AutoLibrary application
-# It is triggered when a new version tag (vX.Y.Z) is pushed to the repository
+# It is triggered when a new release branch is created (release/vX.Y.Z or release/vX.Y.Z-rc*)
 #
 # Workflow Steps:
 # START >
 
-# 1. Update Version:
+# 1. Extract Version:
+#       Extracts version number from branch name:
+#       - release/v1.0.0 -> v1.0.0 (stable release)
+#       - release/v1.0.0-rc1 -> v1.0.0 (release candidate)
+
+# 2. Update Version:
 #       Updates version information in 'ALVersionInfo.py' with build metadata and archives
 #       the updated version file as an artifact.
 #
 #       for more information, please refer to the comment in the workflow 'update-version.yml'
 
-# 2. Commit Release:
-#       Commits version changes and moves the release tag to this new release commit.
+# 3. Commit Release:
+#       Commits version changes to release branch and creates the release tag.
 
-# 3. Build:
+# 4. Build:
 #       Compiles the application for Windows platform using PyInstaller, and
 #       archives the built artifacts as 'AutoLibrary.<tag_name>-windows-x86_64.zip'.
 
-# 4. Release:
+# 5. Release:
 #       Creates GitHub release with generated artifacts and release notes
 
 # < END
 #
+# 6. Merge back:
+#       Merges release branch back to main branch, and clean/delete the release branch
+#
 # The workflow ensures version consistency between source code, built artifacts, and GitHub releases
 # while maintaining proper commit history and tag management.
+#
+# IMPORTANT: This workflow only triggers on branch CREATION, not on pushes to release branches.
+# If you need to fix issues on a release branch, delete the tag, merge fixes to main,
+# and create a new release branch.
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+  create:
+    branches:
+      - 'release/**'
 
 jobs:
   #
@@ -44,6 +56,62 @@ jobs:
     - name: Start release
       run: |
         echo "✓ Starting release"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Ref: ${{ github.ref }}"
+
+  #
+  # Extract version :
+  #   this job extracts version from branch name
+  #
+
+  extract-version:
+    needs:
+      - start
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.extract.outputs.tag_name }}
+      version: ${{ steps.extract.outputs.version }}
+      is_rc: ${{ steps.extract.outputs.is_rc }}
+    steps:
+    - name: Extract version from branch name
+      id: extract
+      run: |
+        BRANCH_NAME="${{ github.ref_name }}"
+
+        # Validate branch name starts with 'release/v'
+        if ! echo "$BRANCH_NAME" | grep -qE '^release/v'; then
+          echo "X Error: Branch '$BRANCH_NAME' does not start with 'release/v'"
+          echo "X This workflow should only be triggered by release branches"
+          exit 1
+        fi
+
+        # Extract version from branch name:
+        # - release/v1.0.0 -> v1.0.0 (stable)
+        # - release/v1.0.0-rc1 -> v1.0.0 (release candidate)
+        # - release/v1.0.0-alpha.1 -> v1.0.0-alpha.1 (pre-release)
+        if echo "$BRANCH_NAME" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          # Stable release: release/v1.0.0 -> v1.0.0
+          TAG_NAME=$(echo "$BRANCH_NAME" | sed -E 's|^release/(v[0-9]+\.[0-9]+\.[0-9]+)$|\1|')
+          IS_RC=false
+        elif echo "$BRANCH_NAME" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+-'; then
+          # Pre-release: release/v1.0.0-rc1 -> v1.0.0-rc1
+          TAG_NAME=$(echo "$BRANCH_NAME" | sed -E 's|^release/(v[0-9]+\.[0-9]+\.[0-9]+-.*)$|\1|')
+          IS_RC=true
+        else
+          echo "X Error: Branch '$BRANCH_NAME' does not match expected format"
+          echo "X Expected format: release/vX.Y.Z or release/vX.Y.Z-rcX"
+          exit 1
+        fi
+        VERSION="${TAG_NAME#v}"
+
+        echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "IS_RC=$IS_RC" >> $GITHUB_OUTPUT
+
+        echo "✓ Branch: $BRANCH_NAME"
+        echo "✓ Tag: $TAG_NAME"
+        echo "✓ Version: $VERSION"
+        echo "✓ Is RC: $IS_RC"
 
   #
   # Update version :
@@ -52,31 +120,35 @@ jobs:
 
   update-version:
     needs:
-      - start
+      - extract-version
     uses: ./.github/workflows/update-version.yml
     permissions:
       contents: write
     with:
-      tag_name: ${{ github.ref_name }}
+      tag_name: ${{ needs.extract-version.outputs.tag_name }}
       ref: ${{ github.ref }}
 
   #
   # Commit release :
-  #   this job commits the updated version file and move the release
-  #   tag to this new commit
+  #   this job commits the updated version file to main and creates
+  #   the release tag (not moving an existing tag)
   #
 
   commit-release:
     needs:
+      - extract-version
       - update-version
     if: ${{ needs.update-version.outputs.has_changes == 'true' }}
     uses: ./.github/workflows/commit-release.yml
     permissions:
       contents: write
     with:
-      tag_name: ${{ needs.update-version.outputs.tag_name }}
-      version: ${{ needs.update-version.outputs.version }}
+      tag_name: ${{ needs.extract-version.outputs.tag_name }}
+      version: ${{ needs.extract-version.outputs.version }}
       file_path: src/gui/ALVersionInfo.py
+      create_tag: 'true'
+      is_rc: ${{ needs.extract-version.outputs.is_rc }}
+      ref: ${{ github.ref }}
 
   #
   # Build :
@@ -91,8 +163,9 @@ jobs:
     permissions:
       contents: write
     with:
-      version: ${{ needs.update-version.outputs.version }}
       tag_name: ${{ needs.update-version.outputs.tag_name }}
+      version: ${{ needs.update-version.outputs.version }}
+      is_test: 'false'
 
   #
   # Release :
@@ -102,27 +175,28 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+      - extract-version
     if: always() && needs.build.result == 'success'
     permissions:
       contents: write
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
-        name: AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64
+        name: AutoLibrary.${{ needs.extract-version.outputs.tag_name }}-windows-x86_64
         path: artifacts/
 
     - name: Create release
       id: create_release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ needs.build.outputs.tag_name }}
-        name: AutoLibrary ${{ needs.build.outputs.tag_name }}
+        tag_name: ${{ needs.extract-version.outputs.tag_name }}
+        name: AutoLibrary ${{ needs.extract-version.outputs.tag_name }}
         files: |
-          artifacts/AutoLibrary.${{ needs.build.outputs.tag_name }}-windows-x86_64.zip
+          artifacts/AutoLibrary.${{ needs.extract-version.outputs.tag_name }}-windows-x86_64.zip
         draft: false
-        prerelease: false
+        prerelease: ${{ needs.extract-version.outputs.is_rc == 'true' }}
         generate_release_notes: true
         body: |
           ---
@@ -142,3 +216,107 @@ jobs:
     - name: End release
       run: |
         echo "✓ Ending release"
+
+  #
+  # Merge Back :
+  #   this job merges the release branch to main after successful release
+  #
+
+  merge-back:
+    needs:
+      - release
+      - extract-version
+      - commit-release
+    if: ${{ needs.release.result == 'success' && needs.commit-release.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Merge release branch to main
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        # Use the release branch name from the original trigger
+        BRANCH_NAME="${{ needs.extract-version.outputs.tag_name }}"
+        # Extract branch name: v1.0.0 -> release/v1.0.0
+        if [[ ! "$BRANCH_NAME" =~ ^release/ ]]; then
+          BRANCH_NAME="release/${BRANCH_NAME}"
+        fi
+
+        MAIN_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+
+        if [ -z "$MAIN_BRANCH" ]; then
+          MAIN_BRANCH="main"
+        fi
+
+        echo "Merging ${BRANCH_NAME} to ${MAIN_BRANCH}..."
+        echo "Current commit info:"
+        git log --oneline -3
+
+        # Fetch all branches including the release branch
+        git fetch origin ${BRANCH_NAME}
+        git fetch origin ${MAIN_BRANCH}
+
+        # Checkout main branch
+        git checkout ${MAIN_BRANCH}
+
+        # Show branch status before merge
+        echo "=== Branch status before merge ==="
+        git log --oneline --graph --all -5
+        echo "=== Diff between ${MAIN_BRANCH} and origin/${BRANCH_NAME} ==="
+        git diff ${MAIN_BRANCH} origin/${BRANCH_NAME} --stat || echo "No differences found"
+
+        # Force create a merge commit even if there are no changes
+        # This ensures the release history is properly recorded
+        git merge origin/${BRANCH_NAME} \
+          --no-ff \
+          -m "chore(release): merge ${BRANCH_NAME} to ${MAIN_BRANCH} [auto release commit]"
+
+        # Show merge result
+        echo "=== Merge result ==="
+        git log --oneline --graph -3
+
+        # Push to main
+        git push origin ${MAIN_BRANCH}
+
+        echo "✓ Successfully merged ${BRANCH_NAME} to ${MAIN_BRANCH}"
+
+    - name: Delete release branch
+      run: |
+        BRANCH_NAME="${{ needs.extract-version.outputs.tag_name }}"
+        # Extract branch name: v1.0.0 -> release/v1.0.0
+        if [[ ! "$BRANCH_NAME" =~ ^release/ ]]; then
+          BRANCH_NAME="release/${BRANCH_NAME}"
+        fi
+
+        echo "Deleting release branch: ${BRANCH_NAME}"
+        git push origin --delete ${BRANCH_NAME}
+        echo "✓ Deleted branch ${BRANCH_NAME}"
+
+    - name: Release cleanup summary
+      run: |
+        BRANCH_NAME="${{ github.ref_name }}"
+        TAG_NAME="${{ needs.extract-version.outputs.tag_name }}"
+        MAIN_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+        if [ -z "$MAIN_BRANCH" ]; then
+          MAIN_BRANCH="main"
+        fi
+
+        echo "## Release Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✓ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Actions Performed:" >> $GITHUB_STEP_SUMMARY
+        echo "- Merged \`${BRANCH_NAME}\` to \`${MAIN_BRANCH}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Deleted release branch \`${BRANCH_NAME}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Release Details:" >> $GITHUB_STEP_SUMMARY
+        echo "- Tag: \`${TAG_NAME}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Version: \`${{ needs.extract-version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Release Type: $([ "${{ needs.extract-version.outputs.is_rc }}" = "true" ] && echo "Release Candidate" || echo "Stable Release")" >> $GITHUB_STEP_SUMMARY

@@ -1,7 +1,7 @@
 name: Commit Release
 
 # This workflow commits version changes in 'ALVersionInfo.py' (get from artifacts) and
-# moves the release tag to this new release commit.
+# creates/moves the release tag to this new release commit.
 #
 # It is triggered when called by the release workflow.
 
@@ -9,7 +9,7 @@ on:
   workflow_call:
     inputs:
       tag_name:
-        description: 'Tag name to move (e.g., v1.0.0)'
+        description: 'Tag name to create/move (e.g., v1.0.0 or v1.0.0-rc1)'
         required: true
         type: string
       version:
@@ -20,10 +20,33 @@ on:
         description: 'File path to commit'
         required: true
         type: string
+      create_tag:
+        description: 'Whether to create new tag (true) or move existing tag (false)'
+        required: false
+        type: string
+        default: 'false'
+      is_rc:
+        description: 'Whether this is a release candidate (pre-release)'
+        required: false
+        type: string
+        default: 'false'
+      ref:
+        description: 'Git ref to checkout (release branch)'
+        required: true
+        type: string
     outputs:
+      tag_name:
+        description: 'The tag name created/moved'
+        value: ${{ inputs.tag_name }}
+      version:
+        description: 'Version number for commit message'
+        value: ${{ inputs.version }}
       new_commit_sha:
-        description: 'The new commit SHA after moving the tag'
+        description: 'The new commit SHA after creating/moving the tag'
         value: ${{ jobs.commit-release.outputs.new_commit_sha }}
+      branch_name:
+        description: 'The branch name where the commit was made'
+        value: ${{ jobs.commit-release.outputs.branch_name }}
 
 jobs:
   commit-release:
@@ -32,18 +55,19 @@ jobs:
       contents: write
     outputs:
       new_commit_sha: ${{ steps.commit_info.outputs.commit_sha }}
+      branch_name: ${{ steps.push_release.outputs.branch_name }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
-        ref: main
+        ref: ${{ inputs.ref }}
         fetch-depth: 0
 
     # here we download the commit version of ALVersionInfo.py from artifacts
     # and replace the original file with it.
     - name: Download commit version of ALVersionInfo.py
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: updated-version-info-for-commit
         path: downloaded-file/
@@ -81,18 +105,38 @@ jobs:
         git commit -m "chore(release): v${VERSION} [auto release commit]"
         echo "✓ Changes committed"
 
-    - name: Push to main branch
+    - name: Push to release branch
+      id: push_release
       run: |
-        MAIN_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
-        if [ -z "$MAIN_BRANCH" ]; then
-          MAIN_BRANCH="main"
+        # Get the release branch name from the input ref
+        BRANCH_NAME=$(echo "${{ inputs.ref }}" | sed 's|refs/heads/||')
+
+        if [ -z "$BRANCH_NAME" ]; then
+          echo "✗ Error: Could not determine branch name from ref: ${{ inputs.ref }}"
+          exit 1
         fi
 
-        echo "Pushing to branch: ${MAIN_BRANCH}"
-        git push origin HEAD:${MAIN_BRANCH}
-        echo "✓ Changes pushed to ${MAIN_BRANCH}"
+        echo "Pushing to branch: ${BRANCH_NAME}"
+        git push origin HEAD:${BRANCH_NAME}
+        echo "✓ Changes pushed to ${BRANCH_NAME}"
+
+        # Output branch name for downstream jobs
+        echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+    - name: Create tag for release
+      if: ${{ inputs.create_tag == 'true' }}
+      run: |
+        TAG_NAME="${{ inputs.tag_name }}"
+        IS_RC="${{ inputs.is_rc }}"
+
+        echo "Creating new tag ${TAG_NAME} at this commit..."
+        echo "Release type: $([ "$IS_RC" = "true" ] && echo "Release Candidate (Pre-release)" || echo "Stable Release")"
+        git tag ${TAG_NAME}
+        git push origin ${TAG_NAME}
+        echo "✓ Tag ${TAG_NAME} created at commit $(git rev-parse --short HEAD)"
 
     - name: Move tag to new release commit
+      if: ${{ inputs.create_tag != 'true' }}
       run: |
         TAG_NAME="${{ inputs.tag_name }}"
 
