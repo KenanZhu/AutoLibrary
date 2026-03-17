@@ -16,7 +16,8 @@ from PySide6.QtWidgets import QApplication
 from gui.ALMainWindow import ALMainWindow
 from gui.resources import ALResource
 
-from utils.ConfigManager import instance
+from utils.ConfigManager import instance as configInstance
+from utils.LogManager import instance as logInstance
 
 
 def initializeConfigManager():
@@ -25,7 +26,15 @@ def initializeConfigManager():
     config_dir = os.path.join(app_dir, "config")
     if not QDir(config_dir).exists():
         QDir().mkpath(config_dir)
-    instance(config_dir)
+    configInstance(config_dir)
+
+def initializeLogManager():
+
+    app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+    log_dir = os.path.join(app_dir, "logs")
+    if not QDir(log_dir).exists():
+        QDir().mkpath(log_dir)
+    logInstance(log_dir)
 
 def main():
 
@@ -36,6 +45,7 @@ def main():
     app.setStyle('Fusion')
     app.setApplicationName("AutoLibrary")
     initializeConfigManager()
+    initializeLogManager()
     window = ALMainWindow()
     window.show()
     sys.exit(app.exec_())
