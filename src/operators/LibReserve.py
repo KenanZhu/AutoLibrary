@@ -107,6 +107,8 @@ class LibReserve(LibTimeSelector):
 
         try:
             # must contain the required infomation
+            # key 'place' is no need to check
+            # because 'place' is only has one possible value '1' or '图书馆'
             if reserve_info.get("floor") is None: # if existence ?
                 raise ValueError("未指定楼层")
             if reserve_info["floor"] not in self.__floor_map: # if in the mao ?
@@ -133,17 +135,19 @@ class LibReserve(LibTimeSelector):
         reserve_info: dict
     ) -> bool:
 
-        cur_date = time.strftime("%Y-%m-%d", time.localtime())
+        cur_date_str = time.strftime("%Y-%m-%d", time.localtime())
+        cur_timestamp = time.mktime(time.strptime(cur_date_str, "%Y-%m-%d"))
         if reserve_info.get("date") is None:
-            reserve_info["date"] = cur_date
-            self._showTrace(f"预约日期未指定, 自动设置为当前日期: {cur_date}")
+            reserve_info["date"] = cur_date_str
+            self._showTrace(f"预约日期未指定, 自动设置为当前日期: {cur_date_str}")
         else:
-            if reserve_info["date"] < cur_date:
+            res_timestamp = time.mktime(time.strptime(reserve_info["date"], "%Y-%m-%d"))
+            if res_timestamp < cur_timestamp:
                 self._showTrace(
                     f"预约日期错误 ! :"\
-                    f"{reserve_info['date']} 早于当前日期 {cur_date}, 自动设置为当前日期"
+                    f"{reserve_info['date']} 早于当前日期 {cur_date_str}, 自动设置为当前日期"
                 )
-                reserve_info["date"] = cur_date
+                reserve_info["date"] = cur_date_str
         return True
 
 
@@ -190,6 +194,9 @@ class LibReserve(LibTimeSelector):
         if reserve_info.get("end_time") is None:
             reserve_info["end_time"] = {}
         if "time" not in reserve_info["end_time"]:
+            # here we add the expect duration to the begin time first,
+            # the edge case that the end time is later than 23:30 will
+            # be handled in __finalCheck. so no need to concern about it.
             end_mins = self._timeStrToMins(reserve_info["begin_time"]["time"])
             end_mins = end_mins + int(reserve_info["expect_duration"]*60)
             reserve_info["end_time"] = {
@@ -217,23 +224,27 @@ class LibReserve(LibTimeSelector):
         begin_time, end_time = reserve_info["begin_time"], reserve_info["end_time"]
         begin_mins = self._timeStrToMins(begin_time["time"])
         end_mins = self._timeStrToMins(end_time["time"])
+
         # if end time is earlier than begin_time, exchange them
-        if end_mins < begin_mins:
+        # except that the user has set the satisfy_duration to True
+        if end_mins < begin_mins and reserve_info["satisfy_duration"] is False:
             self._showTrace(
                 f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, 尝试交换时间"
             )
-            reserve_info["end_time"] = begin_time
-            reserve_info["begin_time"] = end_time
-            begin_time, end_time = reserve_info["begin_time"], reserve_info["end_time"]
+            reserve_info["end_time"], reserve_info["begin_time"] = begin_time, end_time
+            begin_time, end_time = end_time, begin_time
             begin_mins = self._timeStrToMins(begin_time["time"])
             end_mins = self._timeStrToMins(end_time["time"])
+
         # ensure the end time is not later than 23:30
-        if end_mins > self._timeStrToMins("23:30"):
+        max_end_mins = self._timeStrToMins("23:30")
+        if end_mins > max_end_mins:
             self._showTrace(
                 f"结束时间 {end_time['time']} 晚于 23:30, 自动设置为 23:30"
             )
             reserve_info["end_time"]["time"] = "23:30"
-            end_mins = self._timeStrToMins("23:30")
+            end_mins = max_end_mins
+
         # ensure the duration is not longer than 8 hours
         if reserve_info["satisfy_duration"]:
             if reserve_info["expect_duration"] > 8:
@@ -274,8 +285,8 @@ class LibReserve(LibTimeSelector):
         self._showTrace(
             f"预约信息检查完成, 准备预约 "
             f"{reserve_info['date']} "
-            f"{reserve_info['begin_time']["time"]} - "
-            f"{reserve_info['end_time']["time"]} "
+            f"{reserve_info['begin_time']['time']} - "
+            f"{reserve_info['end_time']['time']} "
             f"图书馆 "
             f"{self.__floor_map[reserve_info['floor']]} "
             f"{self.__room_map[reserve_info['room']]} "
