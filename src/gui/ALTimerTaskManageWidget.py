@@ -357,7 +357,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             item.setData(Qt.UserRole, timer_task)
             widget = ALTimerTaskItemWidget(self, timer_task)
             widget.DeleteButton.clicked.connect(
-                lambda _, task = timer_task: self.deleteTask(timer_task)
+                lambda _, task = timer_task: self.deleteTask(task)
             )
             if timer_task.get("repeat", False) and hasattr(widget, "HistoryButton"):
                 widget.HistoryButton.clicked.connect(
