@@ -544,13 +544,14 @@ class LibReserve(LibTimeSelector):
         act_end_mins = exp_end_mins
 
         # Select begin time
-        if act_beg_mins := self.__selectNearestTime(
+        act_beg_mins = self.__selectNearestTime(
             time_id="startTime",
             time_type="开始时间",
             target_time=exp_beg_mins,
             max_time_diff=begin_time["max_diff"],
             prefer_earlier=begin_time["prefer_early"]
-        ) and act_beg_mins == -1:
+        )
+        if act_beg_mins == -1:
             return False
         act_beg_tm_str = self._minsToTimeStr(act_beg_mins)
 
@@ -564,13 +565,14 @@ class LibReserve(LibTimeSelector):
             )
 
         # Select end time
-        if act_end_mins := self.__selectNearestTime(
+        act_end_mins = self.__selectNearestTime(
             time_id="endTime",
             time_type="结束时间",
             target_time=exp_end_mins,
             max_time_diff=end_time["max_diff"],
             prefer_earlier=end_time["prefer_early"]
-        ) and act_end_mins == -1:
+        )
+        if act_end_mins == -1:
             return False
         act_end_tm_str = self._minsToTimeStr(act_end_mins)
         self._showTrace(
