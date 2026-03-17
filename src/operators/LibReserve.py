@@ -536,8 +536,11 @@ class LibReserve(LibTimeSelector):
         """
             Select seat begin and end time.
         """
-        exp_beg_tm_str = act_beg_tm_str = begin_time["time"]
-        exp_end_tm_str = act_end_tm_str = end_time["time"]
+        exp_beg_tm_str = begin_time["time"]
+        exp_end_tm_str = end_time["time"]
+        # Initialize actual time strings for logging
+        act_beg_tm_str = exp_beg_tm_str
+        act_end_tm_str = exp_end_tm_str
         exp_beg_mins = self._timeStrToMins(exp_beg_tm_str)
         act_beg_mins = exp_beg_mins
         exp_end_mins = self._timeStrToMins(exp_end_tm_str)
