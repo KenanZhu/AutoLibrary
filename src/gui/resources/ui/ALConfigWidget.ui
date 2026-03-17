@@ -195,6 +195,11 @@
                 <height>25</height>
                </size>
               </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+	color: #DC0000;
+}</string>
+              </property>
               <property name="text">
                <string>删除用户</string>
               </property>

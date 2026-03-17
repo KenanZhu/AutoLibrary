@@ -132,16 +132,17 @@ class ALTimerTaskItemWidget(QWidget):
         TaskModeLabel.setFixedSize(60, 25)
         self.ItemWidgetLayout.addWidget(TaskModeLabel)
 
-        self.DeleteButton = QPushButton("删除")
-        self.DeleteButton.setFixedSize(80, 25)
-        self.ItemWidgetLayout.addWidget(self.DeleteButton)
-        if self.__timer_task["status"] == ALTimerTaskStatus.READY\
-        or self.__timer_task["status"] == ALTimerTaskStatus.RUNNING:
-            self.DeleteButton.setEnabled(False)
         if self.__timer_task.get("repeat", False):
             self.HistoryButton = QPushButton("历史")
             self.HistoryButton.setFixedSize(80, 25)
             self.ItemWidgetLayout.addWidget(self.HistoryButton)
+        self.DeleteButton = QPushButton("删除")
+        self.DeleteButton.setFixedSize(80, 25)
+        self.DeleteButton.setStyleSheet("color: #DC0000;")
+        self.ItemWidgetLayout.addWidget(self.DeleteButton)
+        if self.__timer_task["status"] == ALTimerTaskStatus.READY\
+        or self.__timer_task["status"] == ALTimerTaskStatus.RUNNING:
+            self.DeleteButton.setEnabled(False)
         self.setFixedHeight(55)
 
 
