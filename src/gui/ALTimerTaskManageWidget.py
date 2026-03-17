@@ -66,20 +66,22 @@ class ALTimerTaskItemWidget(QWidget):
         ExecuteTimeStr = self.__timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
         if self.__timer_task.get("repeat", False):
             repeat_days = self.__timer_task.get("repeat_days", [])
+            repeat_hour = self.__timer_task.get("repeat_hour", 0)
+            repeat_minute = self.__timer_task.get("repeat_minute", 0)
+            repeat_second = self.__timer_task.get("repeat_second", 0)
             if len(repeat_days) == 7:
-                time_str = f"{self.__timer_task.get('repeat_hour', 0):02d}:{self.__timer_task.get('repeat_minute', 0):02d}:{self.__timer_task.get('repeat_second', 0):02d}"
+                time_str = f"{repeat_hour:02d}:{repeat_minute:02d}:{repeat_second:02d}"
                 ExecuteTimeLabel = QLabel(f"下次执行时间: {ExecuteTimeStr} (每日 {time_str})")
             else:
                 day_names = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
                 selected_days = [day_names[d] for d in repeat_days]
-                time_str = f"{self.__timer_task.get('repeat_hour', 0):02d}:{self.__timer_task.get('repeat_minute', 0):02d}:{self.__timer_task.get('repeat_second', 0):02d}"
+                time_str = f"{repeat_hour:02d}:{repeat_minute:02d}:{repeat_second:02d}"
                 ExecuteTimeLabel = QLabel(f"下次执行时间: {ExecuteTimeStr} (每{','.join(selected_days)} {time_str})")
         else:
             ExecuteTimeLabel = QLabel(f"执行时间: {ExecuteTimeStr}")
         ExecuteTimeLabel.setStyleSheet("color: #969696;")
         ExecuteTimeLabel.setFixedHeight(20)
         self.TaskInfoLayout.addWidget(ExecuteTimeLabel)
-
         self.ItemWidgetLayout.addLayout(self.TaskInfoLayout)
         self.ItemWidgetLayout.addStretch()
 
