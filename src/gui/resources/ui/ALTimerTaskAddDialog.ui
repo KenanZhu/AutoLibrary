@@ -259,7 +259,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QGridLayout" name="RepeatCheckBoxLayout">
+          <layout class="QGridLayout" name="RepeatCheckBoxLayout" rowstretch="10,10" columnstretch="0,0,0,0" rowminimumheight="25,25">
            <property name="spacing">
             <number>0</number>
            </property>
