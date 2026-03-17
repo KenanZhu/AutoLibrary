@@ -21,8 +21,6 @@ from PySide6.QtWidgets import (
     QDialog, QWidget, QListWidgetItem, QMessageBox,
     QHBoxLayout, QVBoxLayout, QLabel, QPushButton
 )
-
-import gui.ALTimerTaskHistoryDialog as ALTimerTaskHistoryDialog
 from PySide6.QtGui import (
     QCloseEvent
 )
@@ -32,6 +30,7 @@ import utils.TimerUtils as TimerUtils
 
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
+from gui.ALTimerTaskHistoryDialog import ALTimerTaskHistoryDialog
 
 
 class ALTimerTaskItemWidget(QWidget):
