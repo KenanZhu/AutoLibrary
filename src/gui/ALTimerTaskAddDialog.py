@@ -27,6 +27,7 @@ class ALTimerTaskStatus(Enum):
     EXECUTED = "已执行"
     ERROR = "执行失败"
     OUTDATED = "已过期"
+    UNKNOWN = "未知"
 
 
 class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):

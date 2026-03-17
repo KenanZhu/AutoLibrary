@@ -12,8 +12,11 @@ from datetime import datetime
 from PySide6.QtCore import Slot, Qt
 from PySide6.QtWidgets import (
     QDialog, QTableWidget, QTableWidgetItem,
-    QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QHeaderView
+    QVBoxLayout, QHBoxLayout, QGridLayout,
+    QPushButton, QLabel, QHeaderView
 )
+
+from gui.ALTimerTaskAddDialog import ALTimerTaskStatus
 
 
 class ALTimerTaskHistoryDialog(QDialog):
@@ -30,85 +33,105 @@ class ALTimerTaskHistoryDialog(QDialog):
         self.__history = task_data.get("history", [])
 
         self.modifyUi()
+        self.connectSignals()
+
 
     def modifyUi(
         self
     ):
 
         self.setWindowTitle("定时任务执行历史 - AutoLibrary")
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(300, 300)
+        self.setMaximumSize(500, 400)
 
         MainLayout = QVBoxLayout(self)
-
-        InfoLayout = QHBoxLayout()
+        InfoLayout = QGridLayout()
         TaskNameLabel = QLabel(f"任务: {self.__task_data.get('name', '未命名')}")
         TaskNameLabel.setStyleSheet("font-weight: bold; font-size: 14px;")
-        InfoLayout.addWidget(TaskNameLabel)
-        InfoLayout.addStretch()
+        InfoLayout.addWidget(TaskNameLabel, 0, 0)
+        TaskUUIDLabel = QLabel(f"UUID: {self.__task_data.get('task_uuid', '未命名')}")
+        TaskUUIDLabel.setStyleSheet("font-size: 10px;")
+        InfoLayout.addWidget(TaskUUIDLabel, 1, 0)
+        InfoLayout.setColumnStretch(0, 1)
 
         if self.__task_data.get("repeat", False):
-            repeat_label = QLabel("重复任务")
-            repeat_label.setStyleSheet("color: #2294FF; font-weight: bold;")
-            InfoLayout.addWidget(repeat_label)
+            RepeatLabel = QLabel("重复任务")
+            RepeatLabel.setStyleSheet("color: #2294FF; font-weight: bold; font-size: 12px;")
+            InfoLayout.addWidget(RepeatLabel, 0, 1)
         MainLayout.addLayout(InfoLayout)
         self.HistoryTableWidget = QTableWidget()
-        self.HistoryTableWidget.setColumnCount(4)
-        self.HistoryTableWidget.setHorizontalHeaderLabels(["执行时间", "结果", "耗时（秒/s）", "uuid"])
+        self.HistoryTableWidget.setColumnCount(3)
+        self.HistoryTableWidget.setHorizontalHeaderLabels(["执行时间", "结果", "耗时（秒/s）"])
         self.HistoryTableWidget.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.HistoryTableWidget.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.HistoryTableWidget.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        self.HistoryTableWidget.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.HistoryTableWidget.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.HistoryTableWidget.verticalHeader().setVisible(False)
         self.HistoryTableWidget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.HistoryTableWidget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self._loadHistory()
+        self.loadHistory()
         MainLayout.addWidget(self.HistoryTableWidget)
 
         ButtonLayout = QHBoxLayout()
         ButtonLayout.addStretch()
         self.CloseButton = QPushButton("关闭")
         self.CloseButton.setFixedSize(80, 25)
-        self.CloseButton.clicked.connect(self.accept)
+        self.CloseButton.setDefault(True)
         self.ClearHistoryButton = QPushButton("清空历史")
         self.ClearHistoryButton.setFixedSize(80, 25)
-        self.ClearHistoryButton.clicked.connect(self._clearHistory)
+        self.ClearHistoryButton.setStyleSheet("color: #DC0000;")
         ButtonLayout.addWidget(self.ClearHistoryButton)
         ButtonLayout.addWidget(self.CloseButton)
         MainLayout.addLayout(ButtonLayout)
 
 
-    def _loadHistory(
+    def connectSignals(
+        self
+    ):
+
+        self.CloseButton.clicked.connect(self.accept)
+        self.ClearHistoryButton.clicked.connect(self.onClearHistoryButtonClicked)
+
+
+    def loadHistory(
         self
     ):
 
         self.HistoryTableWidget.setRowCount(len(self.__history))
         for row, record in enumerate(self.__history):
-            self._addHistoryRow(row, record)
+            self.addHistoryRow(row, record)
 
 
-    def _addHistoryRow(
+    def addHistoryRow(
         self,
         row: int,
         record: dict
     ):
 
-        execute_time_str = record.get("execute_time", "")
-        result = record.get("result", "未知")
+        execute_time = record.get("execute_time", "")
+        result = record.get("result", ALTimerTaskStatus.UNKNOWN)
         duration = record.get("duration", 0)
-        uuid = record.get("uuid", "")
-        self.HistoryTableWidget.setItem(row, 0, QTableWidgetItem(execute_time_str))
-        self.HistoryTableWidget.setItem(row, 1, QTableWidgetItem(result))
-        duration_item = QTableWidgetItem(f"{duration:.2f}")
-        duration_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.HistoryTableWidget.setItem(row, 2, duration_item)
-        self.HistoryTableWidget.setItem(row, 3, QTableWidgetItem(uuid))
-        if result == "成功":
-            self.HistoryTableWidget.item(row, 1).setForeground(Qt.GlobalColor.green)
-        elif result == "失败":
-            self.HistoryTableWidget.item(row, 1).setForeground(Qt.GlobalColor.red)
+        ExecuteTimeItem = QTableWidgetItem(execute_time)
+        ExecuteTimeItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.HistoryTableWidget.setItem(row, 0, ExecuteTimeItem)
+        ResultItem = QTableWidgetItem(result.value)
+        ResultItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        match result:
+            case ALTimerTaskStatus.EXECUTED:
+                ResultItem.setForeground(Qt.GlobalColor.green)
+            case ALTimerTaskStatus.ERROR:
+                ResultItem.setForeground(Qt.GlobalColor.red)
+            case ALTimerTaskStatus.OUTDATED:
+                ResultItem.setForeground(Qt.GlobalColor.red)
+            case _:
+                ResultItem.setForeground(Qt.GlobalColor.black)
+        self.HistoryTableWidget.setItem(row, 1, ResultItem)
+        DurationItem = QTableWidgetItem(f"{duration:.2f}")
+        DurationItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.HistoryTableWidget.setItem(row, 2, DurationItem)
+        self.HistoryTableWidget.setRowHeight(row, 25)
 
     @Slot()
-    def _clearHistory(
+    def onClearHistoryButtonClicked(
         self
     ):
 
