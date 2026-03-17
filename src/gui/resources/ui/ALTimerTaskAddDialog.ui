@@ -254,7 +254,7 @@
             </size>
            </property>
            <property name="text">
-            <string>重复周期（全选为每日运行）：</string>
+            <string>重复周期（全选或全不选都为每日运行）：</string>
            </property>
           </widget>
          </item>
