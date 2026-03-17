@@ -40,9 +40,9 @@ name: Release
 # and create a new release branch.
 
 on:
-  create:
+  push:
     branches:
-      - 'release/**'
+      - 'release/v*'
 
 jobs:
   #

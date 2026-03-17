@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>500</width>
     <height>400</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>400</width>
+    <width>500</width>
     <height>400</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>600</width>
+    <width>800</width>
     <height>400</height>
    </size>
   </property>
@@ -305,6 +305,11 @@
          <width>80</width>
          <height>25</height>
         </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+	color: #DC0000;
+}</string>
        </property>
        <property name="text">
         <string>清除全部</string>
