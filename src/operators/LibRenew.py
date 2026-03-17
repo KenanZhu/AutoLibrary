@@ -91,7 +91,7 @@ class LibRenew(LibTimeSelector):
         renew_info = reserve_info["renew_time"]
         max_diff = renew_info["max_diff"]
         prefer_earlier = renew_info["prefer_early"]
-        target_renew_mins = self._timeToMins(end_time) + renew_info["expect_duration"]*60
+        target_renew_mins = self._timeStrToMins(end_time) + renew_info["expect_duration"]*60
 
         # Validate and adjust target renew time to library closing time
         if not self.__validateAndAdjustRenewTime(end_time, target_renew_mins):
@@ -127,12 +127,12 @@ class LibRenew(LibTimeSelector):
         """
         LIBRARY_CLOSE_TIME = 1410  # 23:30 in minutes
         if target_renew_mins > LIBRARY_CLOSE_TIME:
-            actual_renew_duration = LIBRARY_CLOSE_TIME - self._timeToMins(end_time)
+            actual_renew_duration = LIBRARY_CLOSE_TIME - self._timeStrToMins(end_time)
             if actual_renew_duration <= 0:
                 self._showTrace(f"当前结束时间 {end_time} 已接近闭馆时间，无法续约 !")
                 return False
             self._showTrace(
-                f"续约时间已调整至闭馆时间 {self._minsToTime(LIBRARY_CLOSE_TIME)}，"
+                f"续约时间已调整至闭馆时间 {self._minsToTimeStr(LIBRARY_CLOSE_TIME)}，"
                 f"实际续约时长为 {actual_renew_duration//60} 小时 {actual_renew_duration%60} 分钟"
             )
             return True
