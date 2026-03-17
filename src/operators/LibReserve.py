@@ -529,7 +529,7 @@ class LibReserve(LibTimeSelector):
         self,
         begin_time: dict,
         end_time: dict,
-        expct_duration: int = 4,
+        expect_duration: int = 4,
         satisfy_duration: bool = True
     ) -> bool:
 
@@ -560,10 +560,10 @@ class LibReserve(LibTimeSelector):
 
         # If 'satisfy_duration' is True, select end time based on actual begin time
         if satisfy_duration:
-            exp_end_mins = int(self.validateAndAdjustEndTime(act_beg_mins, expct_duration))
+            exp_end_mins = int(self.validateAndAdjustEndTime(act_beg_mins, expect_duration))
             exp_end_tm_str = self._minsToTimeStr(exp_end_mins)
             self._showTrace(
-                f"需要满足期望预约持续时间: {expct_duration} 小时, "
+                f"需要满足期望预约持续时间: {expect_duration} 小时, "
                 f"根据开始时间 {act_beg_tm_str} 计算结束时间: {exp_end_tm_str}"
             )
 
@@ -645,7 +645,7 @@ class LibReserve(LibTimeSelector):
         elif not self.__selectSeatTime(
             begin_time=reserve_info["begin_time"],
             end_time=reserve_info["end_time"],
-            expct_duration=reserve_info["expect_duration"],
+            expect_duration=reserve_info["expect_duration"],
             satisfy_duration=reserve_info["satisfy_duration"]
         ):
             pass
