@@ -128,7 +128,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "status": ALTimerTaskStatus.PENDING,
             "executed": False,
             "repeat": self.RepeatCheckBox.isChecked(),
-            "repeat_records": []
         }
         if task_data["repeat"]:
             repeat_days = []
