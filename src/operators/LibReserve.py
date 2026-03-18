@@ -72,13 +72,13 @@ class LibReserve(LibTimeSelector):
                 By.CSS_SELECTOR, ".layoutSeat dd"
             )
             if not content_elements:
-                 self._showTrace("未找到预约结果")
+                 self._showTrace("未找到预约结果", self.TraceLevel.WARNING)
                  raise
             title = title_elements[0].text if title_elements else ""
             contents = [element.text for element in content_elements if element.text.strip()]
             for message in contents:
                if "预约失败" in message or "已有1个有效预约" in message:
-                   self._showTrace(f"预约失败 - {"".join(contents)}")
+                   self._showTrace(f"预约失败 - {"".join(contents)}", self.TraceLevel.ERROR)
                    raise
             if "预定好了" in title or "预约成功" in title or "操作成功" in title:
                 if len(contents) >= 6:
@@ -96,7 +96,7 @@ class LibReserve(LibTimeSelector):
                     )
             return True
         except:
-            self._showTrace(f"预约结果加载失败 !")
+            self._showTrace(f"预约结果加载失败 !", self.TraceLevel.ERROR)
             return False
 
 
@@ -125,7 +125,8 @@ class LibReserve(LibTimeSelector):
         except ValueError as e:
             self._showTrace(
                 f"预约信息错误 ! : {e}, "\
-                f"由于缺少必要的预约信息, 无法开始预约流程, 请检查预约信息是否完整"
+                f"由于缺少必要的预约信息, 无法开始预约流程, 请检查预约信息是否完整",
+                self.TraceLevel.ERROR
             )
             return False
 
@@ -145,7 +146,8 @@ class LibReserve(LibTimeSelector):
             if res_timestamp < cur_timestamp:
                 self._showTrace(
                     f"预约日期错误 ! :"\
-                    f"{reserve_info['date']} 早于当前日期 {cur_date_str}, 自动设置为当前日期"
+                    f"{reserve_info['date']} 早于当前日期 {cur_date_str}, 自动设置为当前日期",
+                    self.TraceLevel.WARNING
                 )
                 reserve_info["date"] = cur_date_str
         return True
@@ -229,7 +231,8 @@ class LibReserve(LibTimeSelector):
         # except that the user has set the satisfy_duration to True
         if end_mins < begin_mins and reserve_info["satisfy_duration"] is False:
             self._showTrace(
-                f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, 尝试交换时间"
+                f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, 尝试交换时间",
+                self.TraceLevel.WARNING
             )
             reserve_info["end_time"], reserve_info["begin_time"] = begin_time, end_time
             begin_time, end_time = end_time, begin_time
@@ -240,7 +243,8 @@ class LibReserve(LibTimeSelector):
         max_end_mins = self._timeStrToMins("23:30")
         if end_mins > max_end_mins:
             self._showTrace(
-                f"结束时间 {end_time['time']} 晚于 23:30, 自动设置为 23:30"
+                f"结束时间 {end_time['time']} 晚于 23:30, 自动设置为 23:30",
+                self.TraceLevel.WARNING
             )
             reserve_info["end_time"]["time"] = "23:30"
             end_mins = max_end_mins
@@ -251,7 +255,8 @@ class LibReserve(LibTimeSelector):
                 self._showTrace(
                     f"该用户设置了优先满足时长要求, 但是预约期望持续时间 "
                     f"{reserve_info['expect_duration']} 小时 "
-                    f"超出最大时长 8 小时, 自动设置为 8 小时"
+                    f"超出最大时长 8 小时, 自动设置为 8 小时",
+                    self.TraceLevel.WARNING
                 )
                 reserve_info["expect_duration"] = 8
         else:
@@ -259,7 +264,8 @@ class LibReserve(LibTimeSelector):
                 self._showTrace(
                     f"该用户未设置优先满足时长要求, 但是检查到预约持续时间 "
                     f"{float((end_mins - begin_mins)/60)} 小时 "
-                    f"超出最大时长 8 小时, 自动设置为 8 小时"
+                    f"超出最大时长 8 小时, 自动设置为 8 小时",
+                    self.TraceLevel.WARNING
                 )
                 reserve_info["end_time"]["time"] = self._minsToTimeStr(begin_mins + 8*60)
         return True
@@ -429,7 +435,7 @@ class LibReserve(LibTimeSelector):
                 EC.element_to_be_clickable((By.ID, "findRoom"))
             ).click()
         except:
-            self._showTrace("加载房间/区域失败 !")
+            self._showTrace("加载房间/区域失败 !", self.TraceLevel.ERROR)
             return False
         # select room
         try:
@@ -439,7 +445,7 @@ class LibReserve(LibTimeSelector):
             self._showTrace(f"房间 {display_room} 选择成功 !")
             return True
         except:
-            self._showTrace(f"选择房间失败 ! : {display_room} 不可用")
+            self._showTrace(f"选择房间失败 ! : {display_room} 不可用", self.TraceLevel.ERROR)
             return False
 
 
@@ -457,7 +463,7 @@ class LibReserve(LibTimeSelector):
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, "li[id^='seat_']"))
             )
         except:
-            self._showTrace(f"座位加载失败 !")
+            self._showTrace(f"座位加载失败 !", self.TraceLevel.ERROR)
             return False
         try:
             all_seats = self.__driver.find_elements(
@@ -475,9 +481,9 @@ class LibReserve(LibTimeSelector):
                 seat_status = seat_link.get_attribute("title")
                 self._showTrace(f"座位 {seat_id} 选择成功 ! : 当前状态 - '{seat_status}'")
                 return True
-            self._showTrace(f"座位 {seat_id} 在该楼层区域中不存在, 请检查座位号是否正确")
+            self._showTrace(f"座位 {seat_id} 在该楼层区域中不存在, 请检查座位号是否正确", self.TraceLevel.WARNING)
         except:
-            self._showTrace(f"座位选择失败 !")
+            self._showTrace(f"座位选择失败 !", self.TraceLevel.ERROR)
             return False
 
 
@@ -504,7 +510,7 @@ class LibReserve(LibTimeSelector):
                 )
             )
         except:
-            self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
+            self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间", self.TraceLevel.ERROR)
             return -1
 
         # Find best time option
@@ -513,7 +519,7 @@ class LibReserve(LibTimeSelector):
             f"#{time_id} ul li a"
         )
         if not all_time_opts:
-            self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间")
+            self._showTrace(f"{time_type} 选择失败 ! : 当前未查询到可用时间", self.TraceLevel.ERROR)
             return -1
         best_opt, best_text, actual_diff, free_times = self._findBestTimeOption(
             all_time_opts, target_time, max_time_diff, prefer_earlier, is_reserve=True
@@ -530,7 +536,7 @@ class LibReserve(LibTimeSelector):
             return target_time
         self._showTrace(
             f"无法选择最近的 {time_type} {self._minsToTimeStr(target_time)}, "
-            f"所有可选时间与目标时间相差都超过 {max_time_diff} 分钟"
+            f"所有可选时间与目标时间相差都超过 {max_time_diff} 分钟", self.TraceLevel.WARNING
         )
         self._showTrace(f"当前可供预约的 {time_type} 有: {free_times}")
         return -1
@@ -610,7 +616,8 @@ class LibReserve(LibTimeSelector):
         if expect_end_mins > LIBRARY_CLOSE_TIME:
             expect_end_mins = LIBRARY_CLOSE_TIME
             self._showTrace(
-                f"预约持续时间 {duration} 小时, 超过最大预约时间 23:30, 自动调整为 23:30"
+                f"预约持续时间 {duration} 小时, 超过最大预约时间 23:30, 自动调整为 23:30",
+                self.TraceLevel.WARNING
             )
         return expect_end_mins
 
@@ -637,7 +644,7 @@ class LibReserve(LibTimeSelector):
                 EC.presence_of_element_located((By.ID, "seatLayout"))
             )
         except:
-            self._showTrace(f"加载预约选座页面失败 !")
+            self._showTrace(f"加载预约选座页面失败 !", self.TraceLevel.ERROR)
             return False
         # date, place, floor, room
         if not self.__selectDate(reserve_info["date"]):
@@ -670,11 +677,11 @@ class LibReserve(LibTimeSelector):
                     raise
                 reserve_success = True
             except:
-                self._showTrace(f"预约提交失败 !")
+                self._showTrace(f"预约提交失败 !", self.TraceLevel.ERROR)
         if not submit_reserve and have_hover_on_page:
             self.__driver.refresh()
         if reserve_success:
             self._showTrace(f"用户 {username} 预约成功 !")
         else:
-            self._showTrace(f"用户 {username} 预约失败 !")
+            self._showTrace(f"用户 {username} 预约失败 !", self.TraceLevel.ERROR)
         return reserve_success

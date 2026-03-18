@@ -32,6 +32,18 @@ class MsgBase:
             implement queue polling to retrieve and process messages.
     """
 
+    class TraceLevel:
+        """
+            Enum class for trace levels.
+
+            This class provides the trace levels for the logger.
+        """
+        DEBUG = logging.DEBUG
+        INFO = logging.INFO
+        WARNING = logging.WARNING
+        ERROR = logging.ERROR
+        CRITICAL = logging.CRITICAL
+
     def __init__(
         self,
         input_queue: queue.Queue,
@@ -63,6 +75,16 @@ class MsgBase:
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         self._output_queue.put(f"{timestamp}-[{self._class_name:<15}] : {msg}")
+        if self._logger:
+            self._logger.log(level, msg)
+
+
+    def _showLog(
+        self,
+        msg: str,
+        level: int = logging.INFO
+    ):
+
         if self._logger:
             self._logger.log(level, msg)
 

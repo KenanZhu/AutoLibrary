@@ -8,7 +8,6 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import os
-import sys
 
 from PySide6.QtCore import (
     Qt, Signal, Slot, QTime, QDate, QDir, QFileInfo

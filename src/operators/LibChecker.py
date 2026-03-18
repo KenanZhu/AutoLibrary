@@ -63,7 +63,7 @@ class LibChecker(LibOperator):
                 EC.presence_of_element_located((By.CLASS_NAME, "myReserveList"))
             )
         except:
-            self._showTrace("加载预约记录页面失败 !")
+            self._showTrace("加载预约记录页面失败 !", self.TraceLevel.ERROR)
             return False
         return True
 
@@ -174,7 +174,7 @@ class LibChecker(LibOperator):
             )
             return reservations
         except:
-            self._showTrace("加载预约记录失败 !")
+            self._showTrace("加载预约记录失败 !", self.TraceLevel.ERROR)
             return None
 
 
@@ -197,10 +197,10 @@ class LibChecker(LibOperator):
                 self.__driver.execute_script("arguments[0].click();", more_btn)
                 return True
             else:
-                self._showTrace("用户无法加载更多预约记录")
+                self._showTrace("用户无法加载更多预约记录", self.TraceLevel.WARNING)
                 return False
         except:
-            self._showTrace("加载更多预约记录失败 !")
+            self._showTrace("加载更多预约记录失败 !", self.TraceLevel.ERROR)
             return False
 
 
@@ -211,7 +211,7 @@ class LibChecker(LibOperator):
     ) -> dict:
 
         if wanted_date is None:
-            self._showTrace("日期未指定, 无法检查当前预约状态")
+            self._showTrace("日期未指定, 无法检查当前预约状态", self.TraceLevel.WARNING)
             return None
         self._showTrace(f"正在检查用户在 {wanted_date} 是否有预约状态为 {wanted_status} 的预约记录......")
 

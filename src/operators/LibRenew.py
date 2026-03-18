@@ -54,7 +54,7 @@ class LibRenew(LibTimeSelector):
                 EC.presence_of_element_located((By.CSS_SELECTOR, "#extendDiv div.resultMessage"))
             )
         except:
-            self._showTrace("续约时间选择界面加载失败 !")
+            self._showTrace("续约时间选择界面加载失败 !", self.TraceLevel.ERROR)
             return False
         head_message = head_message.text.strip()
         if "警告" in head_message:
@@ -73,7 +73,7 @@ class LibRenew(LibTimeSelector):
                 EC.presence_of_element_located((By.CSS_SELECTOR, "#extendDiv .btnOK"))
             )
         except:
-            self._showTrace("续约时间选择界面加载失败 !")
+            self._showTrace("续约时间选择界面加载失败 !", self.TraceLevel.ERROR)
             return False
         return True
 
@@ -99,7 +99,7 @@ class LibRenew(LibTimeSelector):
         renew_ok_btn = self.__driver.find_element(By.CSS_SELECTOR, "#extendDiv .btnOK")
         renew_time_opts = self.__driver.find_elements(By.CSS_SELECTOR, "#extendDiv .renewal_List li")
         if not renew_time_opts:
-            self._showTrace("当前未查询到可用续约时间 !")
+            self._showTrace("当前未查询到可用续约时间 !", self.TraceLevel.WARNING)
             return False
 
         # Find best renewal time option
@@ -110,7 +110,8 @@ class LibRenew(LibTimeSelector):
             return self.__confirmRenewal(best_opt, best_text, actual_diff, record, renew_ok_btn)
         self._showTrace(
             "无法选择最近的可用续约时间 ! "
-            f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !"
+            f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !",
+            self.TraceLevel.WARNING
         )
         self._showTrace(f"当前可供续约的时间有: {free_times}")
         return False
@@ -129,7 +130,7 @@ class LibRenew(LibTimeSelector):
         if target_renew_mins > LIBRARY_CLOSE_TIME:
             actual_renew_duration = LIBRARY_CLOSE_TIME - self._timeStrToMins(end_time)
             if actual_renew_duration <= 0:
-                self._showTrace(f"当前结束时间 {end_time} 已接近闭馆时间，无法续约 !")
+                self._showTrace(f"当前结束时间 {end_time} 已接近闭馆时间，无法续约 !", self.TraceLevel.ERROR)
                 return False
             self._showTrace(
                 f"续约时间已调整至闭馆时间 {self._minsToTimeStr(LIBRARY_CLOSE_TIME)}，"
@@ -163,7 +164,7 @@ class LibRenew(LibTimeSelector):
             ok_btn.click()
             return True
         except:
-            self._showTrace("确认续约时发生错误 !")
+            self._showTrace("确认续约时发生错误 !", self.TraceLevel.ERROR)
             return False
 
 
@@ -175,28 +176,28 @@ class LibRenew(LibTimeSelector):
     ) -> bool:
 
         if self.__driver is None:
-            self._showTrace("未提供有效 WebDriver 实例 !")
+            self._showTrace("未提供有效 WebDriver 实例 !", self.TraceLevel.WARNING)
             return False
         try:
             renew_btn = WebDriverWait(self.__driver, 2).until(
                 EC.element_to_be_clickable((By.ID, "btnExtend"))
             )
         except:
-            self._showTrace(f"用户 {username} 续约界面加载失败 !")
+            self._showTrace(f"用户 {username} 续约界面加载失败 !", self.TraceLevel.ERROR)
             return False
         if "disabled" in renew_btn.get_attribute("class"):
             self._showTrace(f"用户 {username} 续约按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试")
             return False
         renew_btn.click()
         if not self.__waitRenewDialog():
-            self._showTrace(f"用户 {username} 续约失败 !")
+            self._showTrace(f"用户 {username} 续约失败 !", self.TraceLevel.ERROR)
 
             # After the renewal, the webpage will display a mask overlay,
             # so we need to refresh the page for subsequent operations.
             self.__driver.refresh()
             return False
         if not self.__selectNearestTime(record, reserve_info):
-            self._showTrace(f"用户 {username} 续约失败 !")
+            self._showTrace(f"用户 {username} 续约失败 !", self.TraceLevel.ERROR)
             self.__driver.refresh()
             return False
         if self._waitResponseLoad():

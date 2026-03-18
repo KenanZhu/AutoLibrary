@@ -66,11 +66,14 @@ class AutoLib(MsgBase):
             case "firefox":
                 driver_options = webdriver.FirefoxOptions()
             case _:
-                self._showTrace(f"不支持的浏览器驱动类型: {self.__driver_type} !")
+                self._showTrace(
+                    f"不支持的浏览器驱动类型: {self.__driver_type} !",
+                    self.TraceLevel.WARNING
+                )
                 return False
 
         if not web_driver_config:
-            self._showTrace("未配置浏览器驱动参数 !")
+            self._showTrace("未配置浏览器驱动参数 !", self.TraceLevel.ERROR)
             return False
         if web_driver_config.get("headless"):
             driver_options.add_argument("--headless")
@@ -110,7 +113,7 @@ class AutoLib(MsgBase):
         # init browser driver
         self.__driver_path = web_driver_config.get("driver_path")
         if not self.__driver_path:
-            self._showTrace("未配置浏览器驱动路径 !")
+            self._showTrace("未配置浏览器驱动路径 !", self.TraceLevel.WARNING)
             return False
         self.__driver_path = os.path.abspath(self.__driver_path)
         try:
@@ -128,13 +131,13 @@ class AutoLib(MsgBase):
                     self.__driver = webdriver.Firefox(service=service, options=driver_options)
                 case _: # actually will not happen, beacuse we have checked it at the initlization
                     # of 'driver_options'
-                    raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type}")
+                    raise Exception(f"不支持的浏览器驱动类型: {self.__driver_type} !")
             self.__driver.implicitly_wait(1)
             self.__driver.execute_script(
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
         except Exception as e:
-            self._showTrace(f"浏览器驱动初始化失败: {e}")
+            self._showTrace(f"浏览器驱动初始化失败: {e}", self.TraceLevel.ERROR)
             return False
         self._showTrace(f"浏览器驱动已初始化, 类型: {self.__driver_type}, 路径: {self.__driver_path}")
         return True
@@ -145,7 +148,7 @@ class AutoLib(MsgBase):
     ):
 
         if not self.__driver:
-            self._showTrace(f"浏览器驱动未初始化, 请先初始化浏览器驱动 !")
+            self._showTrace(f"浏览器驱动未初始化, 请先初始化浏览器驱动 !", self.TraceLevel.WARNING)
             return
         self.__lib_checker = LibChecker(self._input_queue, self._output_queue, self.__driver)
         self.__lib_login = LibLogin(self._input_queue, self._output_queue, self.__driver)
@@ -178,7 +181,7 @@ class AutoLib(MsgBase):
             )
             return True
         except:
-            self._showTrace(f"登录页面加载失败 !")
+            self._showTrace(f"登录页面加载失败 !", self.TraceLevel.ERROR)
             return False
 
 
@@ -188,7 +191,7 @@ class AutoLib(MsgBase):
 
         lib_config = self.__run_config.get("library", None)
         if not lib_config:
-            self._showTrace("未配置图书馆参数 !")
+            self._showTrace("未配置图书馆参数 !", self.TraceLevel.ERROR)
             return False
         url = lib_config.get("host_url") + lib_config.get("login_url")
         self.__driver.set_page_load_timeout(5)
@@ -196,7 +199,9 @@ class AutoLib(MsgBase):
             self.__driver.get(url)
         except TimeoutException:
             self.__driver.execute_script("window.stop();")
-            self._showTrace(f"图书馆登录页面加载超时 ! 请检查网络环境是否正常")
+            self._showTrace(
+                 f"图书馆登录页面加载超时 ! 请检查网络环境是否正常", self.TraceLevel.ERROR
+            )
             return False
         if not self.__waitResponseLoad():
             return False
@@ -256,6 +261,7 @@ class AutoLib(MsgBase):
             if can_renew:
                 if self.__lib_renew.renew(username, record, reserve_info):
                     if self.__lib_checker.postRenewCheck(record):
+                        self._showTrace(f"用户 {username} 续约成功 !")
                         result = 0
                     else:
                         result = 1
@@ -303,7 +309,8 @@ class AutoLib(MsgBase):
             )
             if r == -1:
                 self._showTrace(
-                    f"用户 {user["username"]} 处理过程中页面发生异常，无法继续操作, 任务已终止 !"
+                    f"用户 {user["username"]} 处理过程中页面发生异常，无法继续操作, 任务已终止 !",
+                    self.TraceLevel.WARNING
                 )
                 break
             elif r == 0:
