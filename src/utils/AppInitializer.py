@@ -45,8 +45,8 @@ def initializeLogManager(
 def initializeApp(
 ) -> bool:
 
-    if not initializeConfigManager():
-        return False
     if not initializeLogManager():
+        return False
+    if not initializeConfigManager():
         return False
     return True
