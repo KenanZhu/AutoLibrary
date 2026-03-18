@@ -125,8 +125,13 @@ class LibReserve(LibTimeSelector):
         except ValueError as e:
             self._showTrace(
                 f"预约信息错误 ! : {e}, "\
-                f"由于缺少必要的预约信息, 无法开始预约流程, 请检查预约信息是否完整",
+                f"由于缺少必要的预约信息, 无法开始预约流程",
                 self.TraceLevel.ERROR
+            )
+            self._showTrace(
+                f"预约信息错误 ! : {e}, "\
+                f"由于缺少必要的预约信息, 无法开始预约流程, 请检查预约信息是否完整",
+                no_log=True
             )
             return False
 
@@ -481,7 +486,8 @@ class LibReserve(LibTimeSelector):
                 seat_status = seat_link.get_attribute("title")
                 self._showTrace(f"座位 {seat_id} 选择成功 ! : 当前状态 - '{seat_status}'")
                 return True
-            self._showTrace(f"座位 {seat_id} 在该楼层区域中不存在, 请检查座位号是否正确", self.TraceLevel.WARNING)
+            self._showLog(f"座位 {seat_id} 在该楼层区域中不存在", self.TraceLevel.WARNING)
+            self._showTrace(f"座位 {seat_id} 在该楼层区域中不存在, 请检查座位号是否正确", no_log=True)
         except:
             self._showTrace(f"座位选择失败 !", self.TraceLevel.ERROR)
             return False

@@ -91,7 +91,7 @@ class LibLogin(LibOperator):
             captcha_img = base64.b64decode(base64_str)
             captcha_text = self.__ddddocr.classification(captcha_img)
             captcha_text = ''.join(filter(str.isalnum, captcha_text)).lower()
-            self._showTrace(f"识别到验证码为 : '{captcha_text}'")
+            self._showTrace(f"识别到验证码为 : '{captcha_text}'", no_log=True)
             if len(captcha_text) != 4:
                 self._showLog("识别到的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
                 raise Exception("识别到的验证码长度不等于 4 个字符 !")
@@ -109,7 +109,7 @@ class LibLogin(LibOperator):
         try:
             self._showMsg("请输入验证码:")
             captcha_text = self._waitMsg(timeout=15)
-            self._showTrace(f"输入的验证码为 : '{captcha_text}'")
+            self._showTrace(f"输入的验证码为 : '{captcha_text}'", no_log=True)
             if len(captcha_text) != 4:
                 self._showLog("输入的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
                 raise Exception("输入的验证码长度不等于 4 个字符 !")
@@ -125,7 +125,7 @@ class LibLogin(LibOperator):
 
         # refresh captcha
         try:
-            self._showTrace("刷新验证码......")
+            self._showTrace("刷新验证码......", no_log=True)
             self.__driver.find_element(
                 By.ID, "loadImgId"
             ).click()
@@ -145,7 +145,7 @@ class LibLogin(LibOperator):
             if auto_captcha:
                 captcha_text = self.__autoRecognizeCaptcha()
             else:
-                self._showTrace(f"用户未配置自动识别验证码, 请手动输入验证码 !")
+                self._showTrace(f"用户未配置自动识别验证码, 请手动输入验证码 !", no_log=True)
                 captcha_text = self.__manualRecognizeCaptcha()
             if captcha_text:
                 return captcha_text
@@ -187,7 +187,7 @@ class LibLogin(LibOperator):
             return False
         # begin login process
         for attempt in range(max_attempts):
-            self._showTrace(f"用户 {username} 第 {attempt + 1} 次尝试登录......")
+            self._showTrace(f"用户 {username} 第 {attempt + 1} 次尝试登录......", no_log=True)
             if not self.__fillLogInElements(
                 username,
                 password,
@@ -198,7 +198,7 @@ class LibLogin(LibOperator):
                 continue
             if not self.__fillCaptchaElement(captcha_text):
                 continue
-            self._showTrace("尝试登录...")
+            self._showTrace("尝试登录...", no_log=True)
             try:
                 self.__driver.find_element(
                     By.XPATH,

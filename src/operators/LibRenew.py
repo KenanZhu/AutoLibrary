@@ -61,7 +61,7 @@ class LibRenew(LibTimeSelector):
             result_message = result_message.text.strip()
             self._showTrace(f"\n"\
                 f"      续约失败 !\n"\
-                f"          {result_message}")
+                f"          {result_message}", no_log=True)
             return False
         try:
             WebDriverWait(self.__driver, 2).until(
@@ -186,7 +186,8 @@ class LibRenew(LibTimeSelector):
             self._showTrace(f"用户 {username} 续约界面加载失败 !", self.TraceLevel.ERROR)
             return False
         if "disabled" in renew_btn.get_attribute("class"):
-            self._showTrace(f"用户 {username} 续约按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试")
+            self._showLog(f"用户 {username} 续约按钮不可用, 可能不在场馆内")
+            self._showTrace(f"用户 {username} 续约按钮不可用, 可能不在场馆内, 请连接图书馆网络后重试", no_log=True)
             return False
         renew_btn.click()
         if not self.__waitRenewDialog():

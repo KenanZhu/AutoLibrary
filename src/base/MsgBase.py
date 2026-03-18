@@ -70,12 +70,13 @@ class MsgBase:
     def _showTrace(
         self,
         msg: str,
-        level: int = logging.INFO
+        level: int = logging.INFO,
+        no_log: bool = False
     ):
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         self._output_queue.put(f"{timestamp}-[{self._class_name:<15}] : {msg}")
-        if self._logger:
+        if self._logger and not no_log:
             self._logger.log(level, msg)
 
 

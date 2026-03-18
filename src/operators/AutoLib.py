@@ -54,7 +54,7 @@ class AutoLib(MsgBase):
         self
     ) -> bool:
 
-        self._showTrace("正在初始化浏览器驱动......")
+        self._showTrace("正在初始化浏览器驱动......", no_log=True)
 
         web_driver_config = self.__run_config.get("web_driver", None)
         self.__driver_type = web_driver_config.get("driver_type")
@@ -126,7 +126,7 @@ class AutoLib(MsgBase):
                     service = ChromeService(executable_path=self.__driver_path)
                     self.__driver = webdriver.Chrome(service=service, options=driver_options)
                 case "firefox":
-                    self._showTrace(f"Firefox 浏览器驱动初始化略慢, 请耐心等待...")
+                    self._showTrace(f"Firefox 浏览器驱动初始化略慢, 请耐心等待...", no_log=True)
                     service = FirefoxService(executable_path=self.__driver_path)
                     self.__driver = webdriver.Firefox(service=service, options=driver_options)
                 case _: # actually will not happen, beacuse we have checked it at the initlization
@@ -245,8 +245,10 @@ class AutoLib(MsgBase):
             else:
                 self._showTrace(f"用户 {username} 无法预约，已跳过")
                 result = 2
+
         # checkin
-        if run_mode["auto_checkin"] and result != 1:
+        last_result = result
+        if run_mode["auto_checkin"] and last_result != 1:
             if self.__lib_checker.canCheckin():
                 if self.__lib_checkin.checkin(username):
                     result = 0
@@ -255,8 +257,12 @@ class AutoLib(MsgBase):
             else:
                 self._showTrace(f"用户 {username} 无法签到，已跳过")
                 result = 2
+        if last_result == 0: # partly success
+            result = 0
+
         # renewal
-        if run_mode["auto_renewal"] and result != 1:
+        last_result = result
+        if run_mode["auto_renewal"] and last_result != 1:
             can_renew, record = self.__lib_checker.canRenew()
             if can_renew:
                 if self.__lib_renew.renew(username, record, reserve_info):
@@ -264,12 +270,18 @@ class AutoLib(MsgBase):
                         self._showTrace(f"用户 {username} 续约成功 !")
                         result = 0
                     else:
-                        result = 1
+                        if result != 1: # partly success
+                            result = 0
+                        else:
+                            result = 1
                 else:
                     result = 1
             else:
                 self._showTrace(f"用户 {username} 无法续约，已跳过")
                 result = 2
+        if last_result == 0: # partly success
+            result = 0
+
         # logout
         if not self.__lib_logout.logout(
             username
@@ -294,7 +306,8 @@ class AutoLib(MsgBase):
         for user in users:
             user_counter["current"] += 1
             self._showTrace(
-                f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user["username"]}......"
+                f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user["username"]}......",
+                no_log=True
             )
             if not user["enabled"]:
                 self._showTrace(f"用户 {user["username"]} 已跳过")
@@ -333,11 +346,14 @@ class AutoLib(MsgBase):
 
         if self.__driver:
             if self.__driver_type.lower() == "firefox":
-                self._showTrace(f"Firefox 浏览器驱动关闭略慢, 请耐心等待...")
+                self._showTrace(
+                    f"Firefox 浏览器驱动关闭略慢, 请耐心等待...",
+                    no_log=True
+                )
             self.__driver.quit()
             self.__driver = None
             self._showTrace(f"浏览器驱动已关闭")
             return True
         else:
-            self._showTrace(f"浏览器驱动未初始化, 无需关闭")
+            self._showTrace(f"浏览器驱动未初始化, 无需关闭", no_log=True)
             return False

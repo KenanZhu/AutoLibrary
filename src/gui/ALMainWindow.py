@@ -59,6 +59,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.connectSignals()
         self.startMsgPolling()
         self.startTimerTaskPolling()
+        self._showLog("主窗口初始化完成")
 
 
     def modifyUi(
@@ -186,6 +187,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
             # the config widget is already deleted in the 'self.onConfigWidgetClosed'
+        self._showLog("主窗口关闭")
         QMainWindow.closeEvent(self, event)
 
 
@@ -300,6 +302,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget = None
         self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
         self.setControlButtons(True, None, None)
+        self._showLog("配置窗口已关闭，配置文件路径已更新")
 
     @Slot(dict)
     def onTimerTaskIsReady(
@@ -347,6 +350,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__alTimerTaskManageWidget.raise_()
         self.__alTimerTaskManageWidget.activateWindow()
         self.TimerTaskManageWidgetButton.setEnabled(False)
+        self._showLog("打开定时任务管理窗口")
 
     @Slot()
     def onConfigButtonClicked(
@@ -360,6 +364,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__alConfigWidget.raise_()
         self.__alConfigWidget.activateWindow()
         self.ConfigButton.setEnabled(False)
+        self._showLog("打开配置窗口")
 
     @Slot()
     def onStartButtonClicked(
@@ -376,6 +381,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__auto_lib_thread.autoLibWorkerIsFinished.connect(self.onStopButtonClicked)
             self.__auto_lib_thread.autoLibWorkerFinishedWithError.connect(self.onStopButtonClicked)
         self.__auto_lib_thread.start()
+        self._showLog("开始手动执行任务")
 
     @Slot()
     def onStopButtonClicked(
@@ -383,14 +389,15 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         if self.__auto_lib_thread:
-            self._showTrace("正在停止操作......")
+            self._showTrace("正在停止操作......", no_log=True)
             self.__auto_lib_thread.wait(2000)
-            self._showTrace("操作已停止")
+            self._showTrace("操作已停止", no_log=True)
             self.__auto_lib_thread.autoLibWorkerIsFinished.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.autoLibWorkerFinishedWithError.disconnect(self.onStopButtonClicked)
             self.__auto_lib_thread.deleteLater()
             self.__auto_lib_thread = None
         self.setControlButtons(None, False, True)
+        self._showLog("任务已停止")
 
     @Slot()
     def onSendButtonClicked(

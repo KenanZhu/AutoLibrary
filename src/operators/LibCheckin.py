@@ -107,7 +107,7 @@ class LibCheckin(LibOperator):
         result = self.__driver.execute_script(script)
         time.sleep(0.1)
         if result:
-            self._showTrace("签到按钮已启用")
+            self._showTrace("签到按钮已启用", no_log=True)
         else:
             self._showTrace("签到按钮启用失败", self.TraceLevel.WARNING)
         return result
@@ -129,13 +129,13 @@ class LibCheckin(LibOperator):
             self._showTrace(f"用户 {username} 签到界面加载失败 !", self.TraceLevel.ERROR)
             return False
         if "disabled" in checkin_btn.get_attribute("class"):
-            self._showTrace("签到按钮不可用, 可能不在场馆内, 正在尝试启用......")
+            self._showTrace("签到按钮不可用, 可能不在场馆内, 正在尝试启用......", no_log=True)
             if not self.__enableCheckinBtn():
                 self._showTrace(f"签到按钮启用失败 !", self.TraceLevel.ERROR)
                 return False
         checkin_btn.click()
         if self._waitResponseLoad():
-            self._showTrace(f"用户 {username} 签到成功 !")
+            self._showTrace(f"用户 {username} 签到成功 !", no_log=True)
             return True
         else:
             self._showTrace(f"用户 {username} 签到失败 !", self.TraceLevel.ERROR)
