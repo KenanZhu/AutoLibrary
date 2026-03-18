@@ -298,6 +298,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
             self.__alConfigWidget.deleteLater()
             self.__alConfigWidget = None
+        self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
         self.setControlButtons(True, None, None)
 
     @Slot(dict)
