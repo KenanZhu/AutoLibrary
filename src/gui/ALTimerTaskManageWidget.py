@@ -378,7 +378,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             self.__timer_tasks.append(timer_task)
             self.timerTasksChanged.emit()
 
-
     @staticmethod
     def getTimerTaskDetailMessage(
         timer_task: dict
@@ -389,7 +388,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             f"添加时间：{timer_task["added_time"]}\n"
             f"当前状态：{timer_task["status"].value}\n"
             f"下次执行时间：{datetime.strftime(timer_task["execute_time"], "%Y-%m-%d %H:%M:%S")}\n"
-            f"已执行次数：{len(timer_task['history'] if 'history' in timer_task else 0)}"
+            f"已记录次数：{len(timer_task['history'] if 'history' in timer_task else 0)}"
         )
 
 
@@ -597,7 +596,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             execute_time = timer_task["execute_time"]
             execute_weekday = execute_time.weekday()
             delta_days = (current_time - execute_time).days
-            for i in range(delta_days):
+            for i in range(delta_days + 1):
                 if (execute_weekday + i)%7 in timer_task["repeat_days"]:
                     timer_task["history"].append({
                         "execute_time": (execute_time + timedelta(days=i)).strftime("%Y-%m-%d %H:%M:%S"),
