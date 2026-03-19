@@ -575,17 +575,37 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         timer_task: dict
     ) -> dict:
 
+        # only these status are valid
+        valid_statuses = {ALTimerTaskStatus.EXECUTED, ALTimerTaskStatus.ERROR,
+                         ALTimerTaskStatus.OUTDATED}
+        if status not in valid_statuses:
+            return timer_task
         if "history" not in timer_task:
             timer_task["history"] = []
-        executed_time = datetime.now()
-        duration = (executed_time - timer_task["execute_time"]).total_seconds()
-        timer_task["history"].append({
-            "execute_time": timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S"),
-            "executed_time": executed_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "result": status,
-            "duration": duration if status is ALTimerTaskStatus.EXECUTED else 0,
-            "uuid": timer_task["task_uuid"]
-        })
+        if status != ALTimerTaskStatus.OUTDATED:
+            executed_time = datetime.now()
+            duration = (executed_time - timer_task["execute_time"]).total_seconds()
+            timer_task["history"].append({
+                "execute_time": timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S"),
+                "executed_time": executed_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "result": status,
+                "duration": duration,
+                "uuid": timer_task["task_uuid"]
+            })
+        else:
+            current_time = datetime.now()
+            execute_time = timer_task["execute_time"]
+            execute_weekday = execute_time.weekday()
+            delta_days = (current_time - execute_time).days
+            for i in range(delta_days):
+                if (execute_weekday + i)%7 in timer_task["repeat_days"]:
+                    timer_task["history"].append({
+                        "execute_time": (execute_time + timedelta(days=i)).strftime("%Y-%m-%d %H:%M:%S"),
+                        "executed_time": (execute_time + timedelta(days=i)).strftime("%Y-%m-%d %H:%M:%S"),
+                        "result": status,
+                        "duration": 0,
+                        "uuid": timer_task["task_uuid"]
+                    })
         next_time = TimerUtils.calculateNextRepeatTime(
             timer_task["repeat_days"],
             timer_task["repeat_hour"],
@@ -598,6 +618,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             timer_task["executed"] = False
         else:
             timer_task["status"] = status
+        return timer_task
 
     @Slot(dict)
     def onTimerTaskIsExecuted(
