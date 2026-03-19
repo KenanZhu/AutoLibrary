@@ -49,7 +49,7 @@ class ALTimerTaskHistoryDialog(QDialog):
         TaskNameLabel = QLabel(f"任务: {self.__task_data.get('name', '未命名')}")
         TaskNameLabel.setStyleSheet("font-weight: bold; font-size: 12px;")
         InfoLayout.addWidget(TaskNameLabel, 0, 0)
-        TaskUUIDLabel = QLabel(f"UUID: {self.__task_data.get('task_uuid', '未命名')}")
+        TaskUUIDLabel = QLabel(f"UUID: {self.__task_data.get('uuid', '未命名')}")
         TaskUUIDLabel.setStyleSheet("color: #969696; font-size: 11px;")
         InfoLayout.addWidget(TaskUUIDLabel, 1, 0)
         InfoLayout.setColumnStretch(0, 1)

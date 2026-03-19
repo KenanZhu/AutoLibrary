@@ -334,7 +334,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             1000
         )
         self._showTrace(
-            f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['task_uuid']}"
+            f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['uuid']}"
         )
         if not is_error:
             self.timerTaskIsExecuted.emit(timer_task)
