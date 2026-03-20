@@ -370,7 +370,7 @@ class LibChecker(LibOperator):
             else:
                 self._showTrace(f"\n"\
                     f"      续约失败 !\n"\
-                    f"          续约后结束时间为 {act_record["time"]["end"]}，与预期结束时间 {record["time"]["end"]} 不符 !"
+                    f"          续约后结束时间为 {act_record["time"]["end"]},与预期结束时间 {record["time"]["end"]} 不符 !"
                 )
                 return False
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法检查续约结果")

@@ -240,5 +240,5 @@ def instance(
                 return _config_manager_instance
             if getBaseConfigDir() != config_dir:
                 raise ValueError(
-                    "ConfigManager 的实例已初始化，不能使用不同的配置目录。")
+                    "ConfigManager 的实例已初始化,不能使用不同的配置目录。")
     return _config_manager_instance

@@ -302,7 +302,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget = None
         self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
         self.setControlButtons(True, None, None)
-        self._showLog("配置窗口已关闭，配置文件路径已更新")
+        self._showLog("配置窗口已关闭,配置文件路径已更新")
 
     @Slot(dict)
     def onTimerTaskIsReady(

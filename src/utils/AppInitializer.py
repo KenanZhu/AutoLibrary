@@ -25,7 +25,7 @@ def initializeConfigManager(
     new_config_dir = os.path.join(app_dir, "configs")
     if QDir(old_config_dir).exists(): # old config dir exists
         #we rename it to compatible with new version
-        logger.info("存在旧配置目录 %s，将其重命名为 %s", old_config_dir, new_config_dir)
+        logger.info("存在旧配置目录 %s,将其重命名为 %s", old_config_dir, new_config_dir)
         if not QDir().rename(old_config_dir, new_config_dir):
             logger.error("重命名旧配置目录 %s 到 %s 失败", old_config_dir, new_config_dir)
             return False

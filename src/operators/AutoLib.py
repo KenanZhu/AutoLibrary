@@ -243,7 +243,7 @@ class AutoLib(MsgBase):
                 else:
                     result = 1
             else:
-                self._showTrace(f"用户 {username} 无法预约，已跳过")
+                self._showTrace(f"用户 {username} 无法预约, 已跳过")
                 result = 2
 
         # checkin
@@ -255,7 +255,7 @@ class AutoLib(MsgBase):
                 else:
                     result = 1
             else:
-                self._showTrace(f"用户 {username} 无法签到，已跳过")
+                self._showTrace(f"用户 {username} 无法签到, 已跳过")
                 result = 2
         if last_result == 0: # partly success
             result = 0
@@ -277,7 +277,7 @@ class AutoLib(MsgBase):
                 else:
                     result = 1
             else:
-                self._showTrace(f"用户 {username} 无法续约，已跳过")
+                self._showTrace(f"用户 {username} 无法续约, 已跳过")
                 result = 2
         if last_result == 0: # partly success
             result = 0
@@ -322,7 +322,7 @@ class AutoLib(MsgBase):
             )
             if r == -1:
                 self._showTrace(
-                    f"用户 {user["username"]} 处理过程中页面发生异常，无法继续操作, 任务已终止 !",
+                    f"用户 {user["username"]} 处理过程中页面发生异常, 无法继续操作, 任务已终止 !",
                     self.TraceLevel.WARNING
                 )
                 break

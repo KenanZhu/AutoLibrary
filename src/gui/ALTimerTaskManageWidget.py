@@ -446,7 +446,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             QMessageBox.warning(
                 self,
                 "警告 - AutoLibrary",
-                f"存在 {in_queue_count} 个正在执行或已就绪的队列任务，无法清除所有定时任务 !"
+                f"存在 {in_queue_count} 个正在执行或已就绪的队列任务,无法清除所有定时任务 !"
             )
             return
         # repeat tasks ask before clear
@@ -463,7 +463,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             msgbox.setText(
-                f"存在 {repeat_tasks_count} 个可重复性任务，\n"
+                f"存在 {repeat_tasks_count} 个可重复性任务,\n"
                 "删除可重复性任务将同时删除所有已执行的记录 !\n"
                 "是否继续 ?"
             )

@@ -130,10 +130,10 @@ class LibRenew(LibTimeSelector):
         if target_renew_mins > LIBRARY_CLOSE_TIME:
             actual_renew_duration = LIBRARY_CLOSE_TIME - self._timeStrToMins(end_time)
             if actual_renew_duration <= 0:
-                self._showTrace(f"当前结束时间 {end_time} 已接近闭馆时间，无法续约 !", self.TraceLevel.ERROR)
+                self._showTrace(f"当前结束时间 {end_time} 已接近闭馆时间,无法续约 !", self.TraceLevel.ERROR)
                 return False
             self._showTrace(
-                f"续约时间已调整至闭馆时间 {self._minsToTimeStr(LIBRARY_CLOSE_TIME)}，"
+                f"续约时间已调整至闭馆时间 {self._minsToTimeStr(LIBRARY_CLOSE_TIME)},"
                 f"实际续约时长为 {actual_renew_duration//60} 小时 {actual_renew_duration%60} 分钟"
             )
             return True
