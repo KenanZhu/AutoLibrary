@@ -55,46 +55,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirement.txt
 
-    - name: Solve ddddocr compatibility and copy model files
-      run: |
-        $ddddocrPath = python -c "import ddddocr, os; print(os.path.dirname(ddddocr.__file__))"
-        Write-Host "ddddocr package location: $ddddocrPath"
-
-        $initFile = Join-Path $ddddocrPath "__init__.py"
-        if (Test-Path $initFile) {
-          Write-Host "Fixing ddddocr compatibility in: $initFile"
-          (Get-Content $initFile) -replace 'Image\.ANTIALIAS', 'Image.Resampling.LANCZOS' | Set-Content $initFile
-          Write-Host "✓ Fixed: Image.ANTIALIAS -> Image.Resampling.LANCZOS"
-        } else {
-          Write-Error "✗ ddddocr __init__.py not found"
-          exit 1
-        }
-
-        if (-not (Test-Path "models")) {
-          New-Item -ItemType Directory -Path "models" | Out-Null
-          Write-Host "✓ Created models directory"
-        }
-
-        $onnxSource = Join-Path $ddddocrPath "common.onnx"
-        $onnxDest = "models/common.onnx"
-        if (Test-Path $onnxSource) {
-          Copy-Item $onnxSource $onnxDest -Force
-          Write-Host "✓ Copied ONNX model from: $onnxSource"
-          Write-Host "✓ ONNX model copied to: $onnxDest"
-        } else {
-          Write-Error "✗ ONNX model not found in ddddocr package: $onnxSource"
-          exit 1
-        }
-
-        if (Test-Path $onnxDest) {
-          $fileSize = (Get-Item $onnxDest).Length / 1MB
-          Write-Host "✓ Model file verified: $onnxDest (Size: $([math]::Round($fileSize, 2)) MB)"
-        } else {
-          Write-Error "✗ Failed to copy model file"
-          exit 1
-        }
-      shell: pwsh
-
     - name: Compile Qt Resource files
       run: |
         cd batchs
