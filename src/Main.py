@@ -30,7 +30,7 @@ def main():
         sys.exit(-1)
     window = ALMainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
 
