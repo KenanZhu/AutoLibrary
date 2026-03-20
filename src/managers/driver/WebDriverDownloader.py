@@ -306,13 +306,12 @@ class WebDriverDownloader:
                 total_size = int(response.headers.get('Content-Length', 0))
                 if response.status_code == 206:  # Partial Content - server supports Range
                     total_size += downloaded_size
-                # download file with progress callback and speed calculation
-                start_time = time.time()
-                last_time = start_time
-                last_size = downloaded_size
-                last_progress = 0.0
+                last_callback_time = time.time()
+                last_callback_size = downloaded_size
+                callback_interval = 0.1
                 with open(self.download_path, mode) as f:
                     for chunk in response.iter_content(CHUNK_SIZE):
+                        current_time = time.time()
                         if cancel_event and cancel_event.is_set():
                             response.close()
                             return False
@@ -320,20 +319,18 @@ class WebDriverDownloader:
                             continue
                         f.write(chunk)
                         downloaded_size += len(chunk)
-                        if not progress_callback or total_size == 0:
+                        if not progress_callback or total_size <= 0:
                             continue
-                        current_time = time.time()
                         current_progress = (downloaded_size/total_size)*98.0
-                        if current_progress - last_progress >= 1.0 or current_progress == 98.0:
-                            elapsed = current_time - last_time
+                        if current_time - last_callback_time >= callback_interval or current_progress >= 98.0:
+                            elapsed = current_time - last_callback_time
                             if elapsed > 0:
-                                speed = (downloaded_size - last_size)/elapsed/1024.0  # KB/s
+                                speed = (downloaded_size - last_callback_size)/(elapsed*1024.0)
                             else:
                                 speed = 0.0
                             progress_callback(current_progress, 100, speed, "下载中...")
-                            last_progress = current_progress
-                            last_size = downloaded_size
-                            last_time = current_time
+                            last_callback_time = current_time
+                            last_callback_size = downloaded_size
                 if total_size > 0 and self.download_path.stat().st_size < total_size:
                     raise Exception(f"下载不完整 : {self.download_path.stat().st_size}/{total_size} 字节")
                 return True
