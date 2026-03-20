@@ -1,6 +1,7 @@
 import os
 import time
 import shutil
+import threading
 import requests
 import zipfile
 import tarfile
@@ -243,29 +244,33 @@ class WebDriverDownloader:
 
     def download(
         self,
-        progress_callback: Optional[Callable[[int, int, float, str], None]] = None
+        progress_callback: Optional[Callable[[float, int, float, str], None]] = None,
+        cancel_event: Optional[threading.Event] = None
     ) -> Optional[Path]:
 
         try:
             # downlaod file : 0% - 98%
-            if not self._download(progress_callback):
+            if not self._download(progress_callback, cancel_event=cancel_event):
                 return None
             # verify file : 98% - 99%
             if not self._verify(progress_callback):
+                progress_callback(0, 100, 0.0, "验证失败")
                 return None
             # extract file : 99% - 100%
             driver_path = self._extract(progress_callback)
             if not driver_path:
+                progress_callback(0, 100, 0.0, "解压失败")
                 return None
             return driver_path
-        except Exception:
-            return None
+        except Exception as e:
+            raise e
 
 
     def _download(
         self,
-        progress_callback: Optional[Callable[[int, int, float, str], None]] = None,
-        max_retries: int = 3
+        progress_callback: Optional[Callable[[float, int, float, str], None]] = None,
+        max_retries: int = 3,
+        cancel_event: Optional[threading.Event] = None
     ) -> bool:
 
         CHUNK_SIZE = 8192*8 # 64KB chunk
@@ -276,6 +281,8 @@ class WebDriverDownloader:
 
         for attempt in range(max_retries):
             try:
+                if cancel_event and cancel_event.is_set():
+                    return False
                 # resume download if file exists
                 if self.download_path.exists():
                     downloaded_size = self.download_path.stat().st_size
@@ -287,7 +294,7 @@ class WebDriverDownloader:
                     headers_ = headers
                     mode = 'wb'
                 # get response
-                response = requests.get(str(self.download_url), headers=headers_, stream=True, timeout=120)
+                response = requests.get(str(self.download_url), headers=headers_, stream=True, timeout=10)
                 if response.status_code not in [200, 206]:
                     if self.download_path.exists():
                         self.download_path.unlink()
@@ -306,6 +313,9 @@ class WebDriverDownloader:
                 last_progress = 0.0
                 with open(self.download_path, mode) as f:
                     for chunk in response.iter_content(CHUNK_SIZE):
+                        if cancel_event and cancel_event.is_set():
+                            response.close()
+                            return False
                         if not chunk:
                             continue
                         f.write(chunk)
@@ -328,8 +338,10 @@ class WebDriverDownloader:
                     raise Exception(f"下载不完整 : {self.download_path.stat().st_size}/{total_size} 字节")
                 return True
             except Exception as e:
+                if cancel_event and cancel_event.is_set():
+                    return False
                 if attempt < max_retries - 1:
-                    progress_callback(0, 100, 0.0, "准备重试...")
+                    progress_callback(0, 100, 0.0, f"第 {attempt+1} 次重试...")
                     time.sleep(1)
                     continue
                 raise e
@@ -337,7 +349,7 @@ class WebDriverDownloader:
 
     def _verify(
         self,
-        progress_callback: Optional[Callable[[int, int, float, str], None]] = None
+        progress_callback: Optional[Callable[[float, int, float, str], None]] = None
     ) -> bool:
 
         progress_callback(98, 100, 0.0, "验证完成")
@@ -346,7 +358,7 @@ class WebDriverDownloader:
 
     def _extract(
         self,
-        progress_callback: Optional[Callable[[int, int, float, str], None]] = None
+        progress_callback: Optional[Callable[[float, int, float, str], None]] = None
     ) -> Optional[Path]:
 
         try:
