@@ -35,9 +35,9 @@ class DownloadWorker(QThread):
     """
 
     progress = Signal(float, int, float, str)
-    finished = Signal(object, str)
-    error = Signal(str)
-    cancelled = Signal()
+    downloadFinished = Signal(object, str)
+    downloadError = Signal(str)
+    downloadCancelled = Signal()
 
     def __init__(
         self,
@@ -66,7 +66,7 @@ class DownloadWorker(QThread):
     ):
         try:
             if self.__cancelled:
-                self.cancelled.emit()
+                self.downloadCancelled.emit()
                 return
             self.__driver_path = self.__driver_manager.installDriver(
                 self.__driver_info,
@@ -74,15 +74,15 @@ class DownloadWorker(QThread):
                 cancel_event=self.__cancel_event
             )
             if self.__cancelled:
-                self.cancelled.emit()
+                self.downloadCancelled.emit()
                 return
             if self.__driver_path:
-                self.finished.emit(self.__driver_path, "")
+                self.downloadFinished.emit(self.__driver_path, "")
             else:
-                self.error.emit("下载失败: 未返回有效路径")
+                self.downloadError.emit("下载失败: 未返回有效路径")
         except Exception as e:
             if not self.__cancelled:
-                self.error.emit(f"下载失败: {str(e)}")
+                self.downloadError.emit(f"下载失败: {str(e)}")
 
     def onProgress(
         self,
@@ -96,6 +96,20 @@ class DownloadWorker(QThread):
             self.__cancelled = True
         if not self.__cancelled:
             self.progress.emit(downloaded, total, speed, message)
+
+    def stop(
+        self
+    ):
+        """
+            Cancel and wait for the thread to finish.
+            Must only be called from the main thread.
+        """
+
+        self.cancel()
+        if not self.isFinished():
+            if not self.wait(5000):
+                self.terminate()
+                self.wait()
 
 
 class ALWebDriverDownloadDialog(QDialog):
@@ -328,9 +342,10 @@ class ALWebDriverDownloadDialog(QDialog):
         self.ProgressText.setText("正在下载驱动...")
         self.__download_thread = DownloadWorker(self.__driver_manager, driver_info)
         self.__download_thread.progress.connect(self.onDownloadProgress)
-        self.__download_thread.finished.connect(self.onDownloadFinished)
-        self.__download_thread.error.connect(self.onDownloadError)
-        self.__download_thread.cancelled.connect(self.onDownloadCancelled)
+        self.__download_thread.downloadFinished.connect(self.onDownloadFinished)
+        self.__download_thread.downloadError.connect(self.onDownloadError)
+        self.__download_thread.downloadCancelled.connect(self.onDownloadCancelled)
+        self.__download_thread.finished.connect(self.__onThreadFinished)
         self.__download_thread.start()
 
     @Slot()
@@ -363,7 +378,6 @@ class ALWebDriverDownloadDialog(QDialog):
         if 0 <= index < len(self.__driver_infos):
             driver_info = self.__driver_infos[index]
             self.updateDriverInfoDisplay(driver_info)
-            self.__download_thread = None
         self.ConfirmButton.setEnabled(True)
         self.DownloadButton.setEnabled(False)
         self.RefreshButton.setEnabled(True)
@@ -389,9 +403,6 @@ class ALWebDriverDownloadDialog(QDialog):
         self
     ):
 
-        if self.__download_thread:
-            self.__download_thread.wait(3000)
-            self.__download_thread = None
         index = self.DriverComboBox.currentIndex()
         if 0 <= index < len(self.__driver_infos):
             driver_info = self.__driver_infos[index]
@@ -458,12 +469,19 @@ class ALWebDriverDownloadDialog(QDialog):
             if reply == QMessageBox.StandardButton.No:
                 event.ignore()
                 return
-            self.__download_thread.cancel()
-            self.__download_thread.wait(5000)
+            self.__download_thread.stop()
         if not self.__confirmed:
             self.__selected_driver_info = None
         event.accept()
         super().closeEvent(event)
+
+    def __onThreadFinished(
+        self
+    ):
+
+        if self.__download_thread:
+            self.__download_thread.deleteLater()
+            self.__download_thread = None
 
 
     def getSelectedDriverInfo(
