@@ -1233,12 +1233,31 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QGroupBox" name="BrowserConfigGroupBox">
-         <property name="title">
-          <string>浏览器设置</string>
+       <item row="2" column="0">
+        <widget class="QFrame" name="SystemConfigSpaceFrame">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>270</height>
+          </size>
          </property>
-         <layout class="QVBoxLayout" name="BrowserConfigLayout">
+         <property name="frameShape">
+          <enum>QFrame::Shape::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Plain</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" colspan="2">
+        <widget class="QGroupBox" name="RunModeConfigGroupBox">
+         <property name="title">
+          <string>运行模式</string>
+         </property>
+         <layout class="QVBoxLayout" name="RunModeConfigLayout">
           <property name="spacing">
            <number>5</number>
           </property>
@@ -1255,162 +1274,59 @@
            <number>3</number>
           </property>
           <item>
-           <widget class="QLabel" name="BrowserTypeLabel">
+           <widget class="QCheckBox" name="AutoReserveCheckBox">
             <property name="minimumSize">
              <size>
-              <width>80</width>
+              <width>100</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>80</width>
+              <width>100</width>
               <height>25</height>
              </size>
             </property>
             <property name="text">
-             <string>浏览器类型：</string>
+             <string>自动预约</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="BrowserTypeComboBox">
+           <widget class="QCheckBox" name="AutoCheckinCheckBox">
             <property name="minimumSize">
              <size>
-              <width>80</width>
+              <width>100</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>80</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;脚本运行使用的浏览器类型&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="whatsThis">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="currentText">
-             <string>edge</string>
-            </property>
-            <property name="currentIndex">
-             <number>0</number>
-            </property>
-            <property name="maxVisibleItems">
-             <number>3</number>
-            </property>
-            <property name="maxCount">
-             <number>3</number>
-            </property>
-            <item>
-             <property name="text">
-              <string>edge</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>chrome</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>firefox</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="BrowserDriverLabel">
-            <property name="minimumSize">
-             <size>
-              <width>80</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>80</width>
+              <width>100</width>
               <height>25</height>
              </size>
             </property>
             <property name="text">
-             <string>驱动路径：</string>
+             <string>自动签到</string>
             </property>
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="BrowserDriverLayout">
-            <property name="spacing">
-             <number>5</number>
-            </property>
-            <item>
-             <widget class="QLineEdit" name="BrowseBrowserDriverEdit">
-              <property name="minimumSize">
-               <size>
-                <width>250</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>300</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅 &lt;a href=&quot;https://www.autolibrary.kenanzhu.com/manuals&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#69fcff;&quot;&gt;用户手册&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="whatsThis">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="BrowseBrowserDriverButton">
-              <property name="minimumSize">
-               <size>
-                <width>35</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>35</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>...</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="HeadlessCheckBox">
+           <widget class="QCheckBox" name="AutoRenewalCheckBox">
             <property name="minimumSize">
              <size>
-              <width>0</width>
+              <width>100</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>100</width>
               <height>25</height>
              </size>
             </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;运行时不显示浏览器&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="whatsThis">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
             <property name="text">
-             <string>无头模式</string>
+             <string>自动续约</string>
             </property>
            </widget>
           </item>
@@ -1529,15 +1445,12 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="1" colspan="2">
-        <widget class="QGroupBox" name="RunModeConfigGroupBox">
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="BrowserConfigGroupBox">
          <property name="title">
-          <string>运行模式</string>
+          <string>浏览器设置</string>
          </property>
-         <layout class="QVBoxLayout" name="RunModeConfigLayout">
-          <property name="spacing">
-           <number>5</number>
-          </property>
+         <layout class="QGridLayout" name="BrowserConfigLayout">
           <property name="leftMargin">
            <number>3</number>
           </property>
@@ -1550,83 +1463,201 @@
           <property name="bottomMargin">
            <number>3</number>
           </property>
-          <item>
-           <widget class="QCheckBox" name="AutoReserveCheckBox">
+          <property name="spacing">
+           <number>5</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="BrowserTypeLabel">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>80</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>100</width>
+              <width>80</width>
               <height>25</height>
              </size>
             </property>
             <property name="text">
-             <string>自动预约</string>
+             <string>浏览器类型：</string>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QCheckBox" name="AutoCheckinCheckBox">
+          <item row="1" column="0">
+           <widget class="QComboBox" name="BrowserTypeComboBox">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>80</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>100</width>
+              <width>80</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;脚本运行使用的浏览器类型&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="currentText">
+             <string>edge</string>
+            </property>
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <property name="maxVisibleItems">
+             <number>3</number>
+            </property>
+            <property name="maxCount">
+             <number>3</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>edge</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>chrome</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>firefox</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="BrowserDriverLabel">
+            <property name="minimumSize">
+             <size>
+              <width>175</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>175</width>
               <height>25</height>
              </size>
             </property>
             <property name="text">
-             <string>自动签到</string>
+             <string>驱动路径：</string>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QCheckBox" name="AutoRenewalCheckBox">
+          <item row="3" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="BrowserDriverLayout">
+            <property name="spacing">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLineEdit" name="BrowseBrowserDriverEdit">
+              <property name="minimumSize">
+               <size>
+                <width>250</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;详情请参阅 &lt;a href=&quot;https://www.autolibrary.kenanzhu.com/manuals&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#69fcff;&quot;&gt;用户手册&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="whatsThis">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="BrowseBrowserDriverButton">
+              <property name="minimumSize">
+               <size>
+                <width>35</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>35</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="4" column="0">
+           <widget class="QCheckBox" name="HeadlessCheckBox">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>0</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>100</width>
+              <width>16777215</width>
               <height>25</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;运行时不显示浏览器&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
-             <string>自动续约</string>
+             <string>无头模式</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="AutoDownloadWebDriverButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>120</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LayoutDirection::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>自动下载驱动</string>
+            </property>
+            <property name="icon">
+             <iconset theme="document-properties"/>
             </property>
            </widget>
           </item>
          </layout>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QFrame" name="SystemConfigSpaceFrame">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>270</height>
-          </size>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Shadow::Plain</enum>
-         </property>
-         <property name="lineWidth">
-          <number>0</number>
-         </property>
         </widget>
        </item>
       </layout>
