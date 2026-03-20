@@ -91,18 +91,28 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirement.txt
 
-    - name: Copy ddddocr model files
+    - name: Solve ddddocr compatibility and copy model files
       run: |
         $ddddocrPath = python -c "import ddddocr, os; print(os.path.dirname(ddddocr.__file__))"
         Write-Host "ddddocr package location: $ddddocrPath"
+
+        $initFile = Join-Path $ddddocrPath "__init__.py"
+        if (Test-Path $initFile) {
+          Write-Host "Fixing ddddocr compatibility in: $initFile"
+          (Get-Content $initFile) -replace 'Image\.ANTIALIAS', 'Image.Resampling.LANCZOS' | Set-Content $initFile
+          Write-Host "✓ Fixed: Image.ANTIALIAS -> Image.Resampling.LANCZOS"
+        } else {
+          Write-Error "✗ ddddocr __init__.py not found"
+          exit 1
+        }
 
         if (-not (Test-Path "models")) {
           New-Item -ItemType Directory -Path "models" | Out-Null
           Write-Host "✓ Created models directory"
         }
 
-        $onnxSource = Join-Path $ddddocrPath "common_old.onnx"
-        $onnxDest = "models/common_old.onnx"
+        $onnxSource = Join-Path $ddddocrPath "common.onnx"
+        $onnxDest = "models/common.onnx"
         if (Test-Path $onnxSource) {
           Copy-Item $onnxSource $onnxDest -Force
           Write-Host "✓ Copied ONNX model from: $onnxSource"
@@ -150,7 +160,7 @@ jobs:
           "    pathex=[],"
           "    binaries=[],"
           "    datas=["
-          "        ('models\\common_old.onnx', 'ddddocr'),"
+          "        ('models\\common.onnx', 'ddddocr'),"
           "        ('src\\gui\\resources\\icons\\AutoLibrary_32x32.ico', 'gui\\resources\\icons'),"
           "    ],"
           "    hiddenimports=[],"
