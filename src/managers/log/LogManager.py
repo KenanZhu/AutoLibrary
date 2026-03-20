@@ -55,12 +55,17 @@ class CallerInfoFormatter(logging.Formatter):
             if depth < len(record.stack_list):
                 frame = record.stack_list[-depth-1]
                 record.filename = os.path.basename(frame.filename)
-                record.lineno = frame.lineno
+                record.lineno = int(frame.lineno)
                 record.funcName = frame.name
         record.name = record.name[-15:].ljust(15)
         record.levelname = record.levelname.ljust(8)
         record.filename = record.filename[-20:].ljust(20)
-        record.lineno = f"{record.lineno:04d}"
+        # Ensure lineno is always integer before formatting
+        try:
+            lineno_int = int(record.lineno)
+        except (ValueError, TypeError):
+            lineno_int = 0
+        record.lineno = f"{lineno_int:04d}"
 
         return super().format(record)
 
@@ -178,7 +183,7 @@ def instance(
             _log_manager_instance = LogManager(log_dir)
         else:
             if log_dir and _log_manager_instance.logDir() != os.path.abspath(log_dir):
-                raise ValueError("LogManager 的实例已初始化,不能使用不同的日志目录")
+                raise ValueError("LogManager 的实例已初始化, 不能使用不同的日志目录")
     return _log_manager_instance
 
 
@@ -187,5 +192,5 @@ def getLogger(
 ) -> logging.Logger:
 
     if _log_manager_instance is None:
-        raise RuntimeError("LogManager 未初始化，请先调用 LogManager.instance(log_dir) 初始化")
+        raise RuntimeError("LogManager 未初始化, 请先调用 LogManager.instance(log_dir) 初始化")
     return _log_manager_instance.getLogger(name)
