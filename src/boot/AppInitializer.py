@@ -11,9 +11,21 @@ import os
 
 from PySide6.QtCore import QStandardPaths, QDir
 
-from utils.ConfigManager import instance as configInstance
-from utils.LogManager import instance as logInstance
+from managers.log.LogManager import instance as logInstance
+from managers.config.ConfigManager import instance as configInstance
+from managers.driver.WebDriverManager import instance as webdriverInstance
 
+
+def initializeLogManager(
+) -> bool:
+
+    app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+    log_dir = os.path.join(app_dir, "logs")
+    if not QDir(log_dir).exists():
+        if not QDir().mkpath(log_dir):
+            return False
+    logInstance(log_dir)
+    return True
 
 def initializeConfigManager(
 ) -> bool:
@@ -37,15 +49,20 @@ def initializeConfigManager(
     configInstance(new_config_dir)
     return True
 
-def initializeLogManager(
+def initializeWebDriverManager(
 ) -> bool:
 
+    logger = logInstance().getLogger("AppInitializer")
+
     app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-    log_dir = os.path.join(app_dir, "logs")
-    if not QDir(log_dir).exists():
-        if not QDir().mkpath(log_dir):
+    driver_dir = os.path.join(app_dir, "drivers")
+    logger.info("初始化驱动目录 %s", driver_dir)
+    if not QDir(driver_dir).exists():
+        logger.error("创建驱动目录 %s 失败", driver_dir)
+        if not QDir().mkpath(driver_dir):
+            logger.error("创建驱动目录 %s 失败", driver_dir)
             return False
-    logInstance(log_dir)
+    webdriverInstance(driver_dir)
     return True
 
 def initializeApp(
@@ -54,5 +71,7 @@ def initializeApp(
     if not initializeLogManager():
         return False
     if not initializeConfigManager():
+        return False
+    if not initializeWebDriverManager():
         return False
     return True

@@ -20,7 +20,7 @@ from PySide6.QtGui import (
      QCloseEvent, QAction
 )
 
-import utils.ConfigManager as ConfigManager
+import managers.config.ConfigManager as ConfigManager
 
 from utils.JSONReader import JSONReader
 from utils.JSONWriter import JSONWriter

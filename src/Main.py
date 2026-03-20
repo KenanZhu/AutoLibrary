@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication
 from gui.ALMainWindow import ALMainWindow
 from gui.resources import ALResource
 
-from utils.AppInitializer import initializeApp
+from boot.AppInitializer import initializeApp
 
 
 def main():

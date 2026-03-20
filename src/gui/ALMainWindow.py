@@ -19,7 +19,7 @@ from PySide6.QtGui import (
     QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
 )
 
-import utils.ConfigManager as ConfigManager
+import managers.config.ConfigManager as ConfigManager
 
 from base.MsgBase import MsgBase
 

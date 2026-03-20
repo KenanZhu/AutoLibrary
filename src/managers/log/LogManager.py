@@ -174,11 +174,11 @@ def instance(
     with _instance_lock:
         if _log_manager_instance is None:
             if not log_dir:
-                raise ValueError("LogManager initialization requires log_dir parameter")
+                raise ValueError("LogManager 需要日志目录参数")
             _log_manager_instance = LogManager(log_dir)
         else:
             if log_dir and _log_manager_instance.logDir() != os.path.abspath(log_dir):
-                raise ValueError("LogManager instance already initialized with a different log directory")
+                raise ValueError("LogManager 的实例已初始化,不能使用不同的日志目录")
     return _log_manager_instance
 
 
@@ -187,5 +187,5 @@ def getLogger(
 ) -> logging.Logger:
 
     if _log_manager_instance is None:
-        raise RuntimeError("LogManager not initialized, please call LogManager.instance(log_dir) first")
+        raise RuntimeError("LogManager 未初始化，请先调用 LogManager.instance(log_dir) 初始化")
     return _log_manager_instance.getLogger(name)

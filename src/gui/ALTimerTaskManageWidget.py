@@ -25,7 +25,7 @@ from PySide6.QtGui import (
     QCloseEvent
 )
 
-import utils.ConfigManager as ConfigManager
+import managers.config.ConfigManager as ConfigManager
 import utils.TimerUtils as TimerUtils
 
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget

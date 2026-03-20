@@ -11,7 +11,7 @@ import logging
 import queue
 import datetime
 
-from utils.LogManager import getLogger
+from managers.log.LogManager import getLogger
 
 
 class MsgBase:
