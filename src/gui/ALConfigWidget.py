@@ -8,7 +8,6 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import os
-import sys
 
 from PySide6.QtCore import (
     Qt, Signal, Slot, QTime, QDate, QDir, QFileInfo
@@ -21,7 +20,7 @@ from PySide6.QtGui import (
      QCloseEvent, QAction
 )
 
-import utils.ConfigManager as ConfigManager
+import managers.config.ConfigManager as ConfigManager
 
 from utils.JSONReader import JSONReader
 from utils.JSONWriter import JSONWriter
@@ -30,6 +29,7 @@ from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
 from gui.ALSeatMapTable import ALSeatMapTable
 from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType
+from gui.ALWebDriverDownloadDialog import ALWebDriverDownloadDialog
 
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):
@@ -81,6 +81,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.AddUserButton.clicked.connect(self.onAddUserButtonClicked)
         self.DelUserButton.clicked.connect(self.onDelUserButtonClicked)
         self.BrowseBrowserDriverButton.clicked.connect(self.onBrowseBrowserDriverButtonClicked)
+        self.AutoDownloadWebDriverButton.clicked.connect(self.onAutoDownloadWebDriverButtonClicked)
         self.BrowseCurrentRunConfigButton.clicked.connect(self.onBrowseCurrentRunConfigButtonClicked)
         self.BrowseCurrentUserConfigButton.clicked.connect(self.onBrowseCurrentUserConfigButtonClicked)
         self.BrowseExportRunConfigButton.clicked.connect(self.onBrowseExportRunConfigButtonClicked)
@@ -948,6 +949,21 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         )[0]
         if browser_driver_path:
             self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(browser_driver_path))
+
+
+    @Slot()
+    def onAutoDownloadWebDriverButtonClicked(
+        self
+    ):
+
+        dialog = ALWebDriverDownloadDialog(self)
+        dialog.show()
+        dialog.exec_()
+        selected_driver_info = dialog.getSelectedDriverInfo()
+        if selected_driver_info and selected_driver_info.driver_path:
+            self.BrowserTypeComboBox.setCurrentText(selected_driver_info.driver_type.value)
+            self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(str(selected_driver_info.driver_path)))
+
 
     @Slot()
     def onBrowseCurrentRunConfigButtonClicked(

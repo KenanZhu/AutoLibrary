@@ -9,6 +9,8 @@ See the LICENSE file for details.
 """
 import queue
 
+from datetime import datetime
+
 from base.LibOperator import LibOperator
 
 
@@ -29,25 +31,33 @@ class LibTimeSelector(LibOperator):
         super().__init__(input_queue, output_queue)
 
     @staticmethod
-    def _timeToMins(
+    def _timeStrToMins(
         time_str: str
     ) -> int:
 
         """
             Convert time string "HH:MM" to minutes since midnight.
+
+            Example:
+                "10:00" -> 600
+                "13:30" -> 810
         """
         hour, minute = map(int, time_str.split(":"))
         return hour*60 + minute
 
     @staticmethod
-    def _minsToTime(
+    def _minsToTimeStr(
         mins: int
     ) -> str:
 
         """
             Convert minutes since midnight to time string "HH:MM".
+
+            Example:
+                600 -> "10:00"
+                810 -> "13:30"
         """
-        hour, minute = divmod(mins, 60)
+        hour, minute = divmod(int(mins), 60)
         return f"{hour:02d}:{minute:02d}"
 
 
@@ -99,11 +109,11 @@ class LibTimeSelector(LibOperator):
         for time_opt in time_options:
             # Parse time value based on context
             if is_reserve:
+                # Reservation context: parse 'time' attribute
                 time_attr = time_opt.get_attribute("time")
                 if time_attr == "now":
-                    from datetime import datetime
                     now = datetime.now()
-                    time_val = now.hour * 60 + now.minute
+                    time_val = now.hour*60 + now.minute
                 elif time_attr and time_attr.isdigit():
                     time_val = int(time_attr)
                 else:
@@ -114,9 +124,7 @@ class LibTimeSelector(LibOperator):
                 if not (time_attr and time_attr.isdigit()):
                     continue
                 time_val = int(time_attr)
-
-            free_times.append(time_opt.text.strip() if not is_reserve else self._minsToTime(time_val))
-
+            free_times.append(time_opt.text.strip() if not is_reserve else self._minsToTimeStr(time_val))
             actual_diff = time_val - target_time
             abs_diff = abs(actual_diff)
 
@@ -125,11 +133,9 @@ class LibTimeSelector(LibOperator):
                 (abs_diff == best_time_diff and
                  ((prefer_earlier and actual_diff <= 0) or
                   (not prefer_earlier and actual_diff >= 0)))):
-
                 best_time_diff = abs_diff
                 best_actual_diff = actual_diff
                 best_time_opt = time_opt
-
         if best_time_opt is not None:
             return (best_time_opt, best_time_opt.text.strip(), best_actual_diff, free_times)
         return (None, None, None, free_times)

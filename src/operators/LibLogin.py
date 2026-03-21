@@ -52,7 +52,10 @@ class LibLogin(LibOperator):
             )
             return True
         except:
-            self._showTrace(f"登录页面加载失败 ! : 用户账号或者密码错误/验证码错误, 具体以页面提示为准")
+            self._showTrace(
+                f"登录页面加载失败 ! : 用户账号或者密码错误/验证码错误, 具体以页面提示为准",
+                self.TraceLevel.ERROR
+            )
             return False
 
 
@@ -71,7 +74,7 @@ class LibLogin(LibOperator):
             password_element.clear()
             password_element.send_keys(password)
         except Exception as e:
-            self._showTrace(f"用户名或密码填写失败 ! : {e}")
+            self._showTrace(f"用户名或密码填写失败 ! : {e}", self.TraceLevel.ERROR)
             return False
         return True
 
@@ -88,12 +91,13 @@ class LibLogin(LibOperator):
             captcha_img = base64.b64decode(base64_str)
             captcha_text = self.__ddddocr.classification(captcha_img)
             captcha_text = ''.join(filter(str.isalnum, captcha_text)).lower()
-            self._showTrace(f"识别到验证码为 : '{captcha_text}'")
+            self._showTrace(f"识别到验证码为 : '{captcha_text}'", no_log=True)
             if len(captcha_text) != 4:
+                self._showLog("识别到的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
                 raise Exception("识别到的验证码长度不等于 4 个字符 !")
             return captcha_text
         except Exception as e:
-            self._showTrace(f"验证码识别失败 ! : {e}")
+            self._showTrace(f"验证码识别失败 ! : {e}", self.TraceLevel.ERROR)
             return ""
 
 
@@ -105,12 +109,13 @@ class LibLogin(LibOperator):
         try:
             self._showMsg("请输入验证码:")
             captcha_text = self._waitMsg(timeout=15)
-            self._showTrace(f"输入的验证码为 : '{captcha_text}'")
+            self._showTrace(f"输入的验证码为 : '{captcha_text}'", no_log=True)
             if len(captcha_text) != 4:
+                self._showLog("输入的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
                 raise Exception("输入的验证码长度不等于 4 个字符 !")
             return captcha_text
         except Exception as e:
-            self._showTrace(f"输入验证码失败 ! : {e}")
+            self._showTrace(f"输入验证码失败 ! : {e}", self.TraceLevel.ERROR)
             return ""
 
 
@@ -120,13 +125,13 @@ class LibLogin(LibOperator):
 
         # refresh captcha
         try:
-            self._showTrace("刷新验证码......")
+            self._showTrace("刷新验证码......", no_log=True)
             self.__driver.find_element(
                 By.ID, "loadImgId"
             ).click()
             return True
         except Exception as e:
-            self._showTrace(f"刷新验证码失败 ! : {e}")
+            self._showTrace(f"刷新验证码失败 ! : {e}", self.TraceLevel.ERROR)
             return False
 
 
@@ -140,14 +145,17 @@ class LibLogin(LibOperator):
             if auto_captcha:
                 captcha_text = self.__autoRecognizeCaptcha()
             else:
-                self._showTrace(f"用户未配置自动识别验证码, 请手动输入验证码 !")
+                self._showTrace(f"用户未配置自动识别验证码, 请手动输入验证码 !", no_log=True)
                 captcha_text = self.__manualRecognizeCaptcha()
             if captcha_text:
                 return captcha_text
             else:
                 if not self.__refreshCaptcha():
                     return ""
-        self._showTrace(f"验证码识别失败 {max_attempts} 次, 达到最大尝试次数 !")
+        self._showTrace(
+            f"验证码识别失败 {max_attempts} 次, 达到最大尝试次数 !",
+              self.TraceLevel.WARNING
+        )
         return ""
 
 
@@ -162,7 +170,7 @@ class LibLogin(LibOperator):
             captcha_element.send_keys(captcha_text)
             return True
         except Exception as e:
-            self._showTrace(f"验证码填写失败 ! : {e}")
+            self._showTrace(f"验证码填写失败 ! : {e}", self.TraceLevel.ERROR)
             return False
 
 
@@ -175,11 +183,11 @@ class LibLogin(LibOperator):
     ) -> bool:
 
         if self.__driver is None:
-            self._showTrace("未提供有效 WebDriver 实例 !")
+            self._showTrace("未提供有效 WebDriver 实例 !", self.TraceLevel.WARNING)
             return False
         # begin login process
         for attempt in range(max_attempts):
-            self._showTrace(f"用户 {username} 第 {attempt + 1} 次尝试登录......")
+            self._showTrace(f"用户 {username} 第 {attempt + 1} 次尝试登录......", no_log=True)
             if not self.__fillLogInElements(
                 username,
                 password,
@@ -190,7 +198,7 @@ class LibLogin(LibOperator):
                 continue
             if not self.__fillCaptchaElement(captcha_text):
                 continue
-            self._showTrace("尝试登录...")
+            self._showTrace("尝试登录...", no_log=True)
             try:
                 self.__driver.find_element(
                     By.XPATH,
@@ -203,5 +211,5 @@ class LibLogin(LibOperator):
                 self._showTrace(f"用户 {username} 第 {attempt + 1} 次登录成功 !")
                 return True
             else:
-                self._showTrace(f"用户 {username} 第 {attempt + 1} 次登录失败 !")
+                self._showTrace(f"用户 {username} 第 {attempt + 1} 次登录失败 !",self.TraceLevel.WARNING)
         return False

@@ -7,25 +7,16 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-import os
 import sys
 
-from PySide6.QtCore import QTranslator, QStandardPaths, QDir
+from PySide6.QtCore import QTranslator
 from PySide6.QtWidgets import QApplication
 
 from gui.ALMainWindow import ALMainWindow
 from gui.resources import ALResource
 
-from utils.ConfigManager import instance
+from boot.AppInitializer import initializeApp
 
-
-def initializeConfigManager():
-
-    app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-    config_dir = os.path.join(app_dir, "config")
-    if not QDir(config_dir).exists():
-        QDir().mkpath(config_dir)
-    instance(config_dir)
 
 def main():
 
@@ -35,11 +26,11 @@ def main():
         app.installTranslator(translator)
     app.setStyle('Fusion')
     app.setApplicationName("AutoLibrary")
-    initializeConfigManager()
+    if not initializeApp():
+        sys.exit(-1)
     window = ALMainWindow()
     window.show()
-    sys.exit(app.exec_())
-
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
 

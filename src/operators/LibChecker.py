@@ -63,7 +63,7 @@ class LibChecker(LibOperator):
                 EC.presence_of_element_located((By.CLASS_NAME, "myReserveList"))
             )
         except:
-            self._showTrace("加载预约记录页面失败 !")
+            self._showTrace("加载预约记录页面失败 !", self.TraceLevel.ERROR)
             return False
         return True
 
@@ -174,7 +174,7 @@ class LibChecker(LibOperator):
             )
             return reservations
         except:
-            self._showTrace("加载预约记录失败 !")
+            self._showTrace("加载预约记录失败 !", self.TraceLevel.ERROR)
             return None
 
 
@@ -197,10 +197,10 @@ class LibChecker(LibOperator):
                 self.__driver.execute_script("arguments[0].click();", more_btn)
                 return True
             else:
-                self._showTrace("用户无法加载更多预约记录")
+                self._showTrace("用户无法加载更多预约记录", self.TraceLevel.WARNING)
                 return False
         except:
-            self._showTrace("加载更多预约记录失败 !")
+            self._showTrace("加载更多预约记录失败 !", self.TraceLevel.ERROR)
             return False
 
 
@@ -211,9 +211,9 @@ class LibChecker(LibOperator):
     ) -> dict:
 
         if wanted_date is None:
-            self._showTrace("日期未指定, 无法检查当前预约状态")
+            self._showTrace("日期未指定, 无法检查当前预约状态", self.TraceLevel.WARNING)
             return None
-        self._showTrace(f"正在检查用户在 {wanted_date} 是否有预约状态为 {wanted_status} 的预约记录......")
+        self._showTrace(f"正在检查用户在 {wanted_date} 是否有预约状态为 {wanted_status} 的预约记录......", no_log=True)
 
         checked_count = 0
         max_check_times = 6 # we only check (4*(6-1)=)20 reservations, the last time cant be checked
@@ -245,7 +245,8 @@ class LibChecker(LibOperator):
                     self._showTrace(
                         f"寻找到用户第 {checked_count} 条状态为 {wanted_status} 的预约记录, "
                         f"详细信息: {record["date"]} "
-                        f"{record["time"]["begin"]} - {record["time"]["end"]} {record["info"]["location"]}"
+                        f"{record["time"]["begin"]} - {record["time"]["end"]} {record["info"]["location"]}",
+                        no_log=True
                     )
                     return record
             if not self.__showMoreReserveRecords():
@@ -369,7 +370,7 @@ class LibChecker(LibOperator):
             else:
                 self._showTrace(f"\n"\
                     f"      续约失败 !\n"\
-                    f"          续约后结束时间为 {act_record["time"]["end"]}，与预期结束时间 {record["time"]["end"]} 不符 !"
+                    f"          续约后结束时间为 {act_record["time"]["end"]},与预期结束时间 {record["time"]["end"]} 不符 !"
                 )
                 return False
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法检查续约结果")

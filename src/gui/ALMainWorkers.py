@@ -44,9 +44,11 @@ class AutoLibWorker(MsgBase, QThread):
         current_time = time.strftime("%H:%M", time.localtime())
         if current_time >= "23:30" or current_time <= "07:30":
             self._showTrace(
-                "当前时间不在图书馆开放时间内, 请在 07:30 - 23:30 之间尝试"
+                "当前时间不在图书馆开放时间内, 请在 07:30 - 23:30 之间尝试",
+                self.TraceLevel.WARNING
             )
             return False
+        self._showLog(f"时间检查通过, 当前时间: {current_time}", self.TraceLevel.INFO)
         return True
 
 
@@ -57,8 +59,12 @@ class AutoLibWorker(MsgBase, QThread):
         if not all(
             os.path.exists(path) for path in self.__config_paths.values()
         ):
-            self._showTrace("配置文件路径不存在, 请检查配置文件路径是否正确")
+            self._showTrace(
+                "配置文件路径不存在, 请检查配置文件路径是否正确",
+                self.TraceLevel.ERROR
+            )
             return False
+        self._showLog(f"配置文件路径检查通过, 路径: {self.__config_paths}", self.TraceLevel.INFO)
         return True
 
 
@@ -67,22 +73,28 @@ class AutoLibWorker(MsgBase, QThread):
     ) -> bool:
 
         self._showTrace(
-            f"正在加载配置文件, 运行配置文件路径: {self.__config_paths["run"]}"
+            f"正在加载配置文件, 运行配置文件路径: {self.__config_paths["run"]}",
+            no_log=True
         )
         self.__run_config = JSONReader(self.__config_paths["run"]).data()
         self._showTrace(
-            f"正在加载配置文件, 用户配置文件路径: {self.__config_paths["user"]}"
+            f"正在加载配置文件, 用户配置文件路径: {self.__config_paths["user"]}",
+            no_log=True
         )
         self.__user_config = JSONReader(self.__config_paths["user"]).data()
         if self.__run_config is None or self.__user_config is None:
-            self._showTrace("配置文件加载失败, 请检查配置文件是否正确")
-            self._showTrace("配置文件加载失败, 请检查配置文件是否正确")
+            self._showTrace(
+                "配置文件加载失败, 请检查配置文件是否正确",
+                self.TraceLevel.ERROR
+            )
             return False
         if not self.__user_config.get("groups"):
             self._showTrace(
-                "用户配置文件中无有效任务组, 请检查用户配置文件是否正确"
+                "用户配置文件中无有效任务组, 请检查用户配置文件是否正确",
+                self.TraceLevel.WARNING
             )
             return False
+        self._showLog(f"配置文件加载成功, 任务组数量: {len(self.__user_config.get('groups', []))}", self.TraceLevel.INFO)
         return True
 
 
@@ -108,14 +120,17 @@ class AutoLibWorker(MsgBase, QThread):
                 groups = self.__user_config.get("groups")
                 for group in groups:
                     if not group["enabled"]:
-                        self._showTrace(f"任务组 {group["name"]} 已跳过")
+                        self._showTrace(f"任务组 {group["name"]} 已跳过", no_log=True)
                         continue
-                    self._showTrace(f"正在运行任务组 {group["name"]}")
+                    self._showTrace(f"正在运行任务组 {group["name"]}", no_log=True)
                     auto_lib.run(
                         { "users": group.get("users", []) }
                     )
             except Exception as e:
-                self._showTrace(f"AutoLibrary 运行时发生异常 : {e}")
+                self._showTrace(
+                    f"AutoLibrary 运行时发生异常 : {e}",
+                    self.TraceLevel.ERROR
+                )
                 self.autoLibWorkerFinishedWithError.emit()
                 return
         if auto_lib:
@@ -154,7 +169,10 @@ class TimerTaskWorker(AutoLibWorker):
         self
     ):
 
-        self._showTrace(f"定时任务 {self.__timer_task['name']} 运行时发生异常")
+        self._showTrace(
+            f"定时任务 {self.__timer_task['name']} 运行时发生异常",
+            self.TraceLevel.ERROR
+        )
         self.timerTaskWorkerIsFinished.emit(True, self.__timer_task)
 
     @Slot()

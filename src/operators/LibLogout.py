@@ -42,7 +42,7 @@ class LibLogout(LibOperator):
     ) -> bool:
 
         if self.__driver is None:
-            self._showTrace("未提供有效 WebDriver 实例 !")
+            self._showTrace("未提供有效 WebDriver 实例 !", self.TraceLevel.WARNING)
             return False
         try:
             self.__driver.find_element(
@@ -51,5 +51,5 @@ class LibLogout(LibOperator):
             self._showTrace(f"用户 {username} 注销成功 !")
             return True
         except Exception as e:
-            self._showTrace(f"用户 {username} 注销失败 ! : {e}")
+            self._showTrace(f"用户 {username} 注销失败 ! : {e}", self.TraceLevel.ERROR)
             return False

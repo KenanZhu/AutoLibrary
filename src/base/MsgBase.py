@@ -7,8 +7,11 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
+import logging
 import queue
 import datetime
+
+from managers.log.LogManager import getLogger
 
 
 class MsgBase:
@@ -29,6 +32,18 @@ class MsgBase:
             implement queue polling to retrieve and process messages.
     """
 
+    class TraceLevel:
+        """
+            Enum class for trace levels.
+
+            This class provides the trace levels for the logger.
+        """
+        DEBUG = logging.DEBUG
+        INFO = logging.INFO
+        WARNING = logging.WARNING
+        ERROR = logging.ERROR
+        CRITICAL = logging.CRITICAL
+
     def __init__(
         self,
         input_queue: queue.Queue,
@@ -38,6 +53,10 @@ class MsgBase:
         self._class_name = self.__class__.__name__
         self._input_queue = input_queue
         self._output_queue = output_queue
+        try:
+            self._logger = getLogger(self._class_name)
+        except RuntimeError:
+            self._logger = None
 
 
     def _showMsg(
@@ -50,11 +69,25 @@ class MsgBase:
 
     def _showTrace(
         self,
-        msg: str
+        msg: str,
+        level: int = logging.INFO,
+        no_log: bool = False
     ):
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         self._output_queue.put(f"{timestamp}-[{self._class_name:<15}] : {msg}")
+        if self._logger and not no_log:
+            self._logger.log(level, msg)
+
+
+    def _showLog(
+        self,
+        msg: str,
+        level: int = logging.INFO
+    ):
+
+        if self._logger:
+            self._logger.log(level, msg)
 
 
     def _waitMsg(

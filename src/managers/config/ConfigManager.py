@@ -234,11 +234,12 @@ def instance(
     global _config_manager_instance
     with _instance_lock:
         if _config_manager_instance is None:
+            if not config_dir:
+                raise ValueError("ConfigManager 需要配置目录参数")
             _config_manager_instance = ConfigManager(config_dir)
         else:
             if config_dir == "":
                 return _config_manager_instance
             if getBaseConfigDir() != config_dir:
-                raise ValueError(
-                    "ConfigManager 的实例已初始化，不能使用不同的配置目录。")
+                raise ValueError("ConfigManager 的实例已初始化,不能使用不同的配置目录。")
     return _config_manager_instance

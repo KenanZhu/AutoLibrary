@@ -121,11 +121,11 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             )
         task_data = {
             "name": name,
-            "task_uuid": uuid.uuid4().hex.upper() + f"-{added_time.strftime("%Y%m%d%H%M%S")}",
+            "uuid": uuid.uuid4().hex.upper() + f"-{added_time.strftime("%Y%m%d%H%M%S")}",
             "time_type": self.TimerTypeComboBox.currentText(),
             "execute_time": execute_time,
             "silent": silent,
-            "add_time": added_time,
+            "added_time": added_time,
             "status": ALTimerTaskStatus.PENDING,
             "executed": False,
             "repeat": self.RepeatCheckBox.isChecked(),
@@ -158,7 +158,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 task_data["repeat_minute"],
                 task_data["repeat_second"]
             )
-
         return task_data
 
     @Slot(int)
