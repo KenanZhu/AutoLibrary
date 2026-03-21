@@ -24,7 +24,7 @@ from managers.driver.WebDriverDownloader import (
 )
 
 
-class DriverStatus(Enum):
+class WebDriverStatus(Enum):
     """
         Web driver status.
     """
@@ -57,7 +57,7 @@ class WebDriverInfo:
         self.driver_version = ""
         self.browser_version = ""
         self.driver_path: Optional[Path] = None
-        self.driver_status = DriverStatus.NOT_INSTALLED
+        self.driver_status = WebDriverStatus.NOT_INSTALLED
 
 
 class WebDriverManager:
@@ -115,7 +115,7 @@ class WebDriverManager:
                 driver_path = self._getDriverPath(driver_info)
                 if driver_path and driver_path.exists() and driver_path.is_file():
                     driver_info.driver_path = driver_path
-                    driver_info.driver_status = DriverStatus.INSTALLED
+                    driver_info.driver_status = WebDriverStatus.INSTALLED
 
 
     def _mapWebBrowserTypeToDriver(
@@ -321,7 +321,7 @@ class WebDriverManager:
         driver_info: WebDriverInfo
     ) -> Optional[Path]:
 
-        if driver_info and driver_info.driver_status == DriverStatus.INSTALLED:
+        if driver_info and driver_info.driver_status == WebDriverStatus.INSTALLED:
             return driver_info.driver_path
         return None
 
@@ -339,7 +339,7 @@ class WebDriverManager:
                     progress_callback(0, 0, 0, "未找到浏览器信息")
                 else:
                     raise ValueError("未找到浏览器信息")
-            if driver_info and driver_info.driver_status == DriverStatus.DOWNLOADING:
+            if driver_info and driver_info.driver_status == WebDriverStatus.DOWNLOADING:
                 if progress_callback:
                     progress_callback(0, 0, 0, f"{driver_info.driver_type} 驱动正在下载中")
                 else:
@@ -375,19 +375,19 @@ class WebDriverManager:
                 else:
                     raise ValueError(f"不支持的 Web Driver 类型")
             with self.__lock:
-                driver_info.driver_status = DriverStatus.DOWNLOADING
+                driver_info.driver_status = WebDriverStatus.DOWNLOADING
             driver_path = downloader.download(progress_callback=progress_callback, cancel_event=cancel_event)
             with self.__lock:
                 if driver_path:
                     driver_info.driver_path = driver_path
                     driver_info.driver_version = driver_version
-                    driver_info.driver_status = DriverStatus.INSTALLED
+                    driver_info.driver_status = WebDriverStatus.INSTALLED
                 else:
-                    driver_info.driver_status = DriverStatus.ERROR
+                    driver_info.driver_status = WebDriverStatus.ERROR
             return driver_path
         except Exception as e:
             with self.__lock:
-                driver_info.driver_status = DriverStatus.ERROR
+                driver_info.driver_status = WebDriverStatus.ERROR
             raise e
 
 
@@ -406,7 +406,7 @@ class WebDriverManager:
                     shutil.rmtree(download_dir, ignore_errors=True)
             with self.__lock:
                 driver_info.driver_path = None
-                driver_info.driver_status = DriverStatus.NOT_INSTALLED
+                driver_info.driver_status = WebDriverStatus.NOT_INSTALLED
             return True
         except Exception:
             return False
@@ -424,7 +424,7 @@ class WebDriverManager:
                     progress_callback(0, 0, 0, "未找到浏览器信息")
                 else:
                     raise ValueError("未找到浏览器信息")
-            if driver_info.driver_status != DriverStatus.INSTALLED:
+            if driver_info.driver_status != WebDriverStatus.INSTALLED:
                 if progress_callback:
                     progress_callback(0, 0, 0, f"{driver_info.driver_type} 驱动未安装")
                 else:
@@ -434,11 +434,11 @@ class WebDriverManager:
             driver_path.unlink()
             with self.__lock:
                 driver_info.driver_path = None
-                driver_info.driver_status = DriverStatus.NOT_INSTALLED
+                driver_info.driver_status = WebDriverStatus.NOT_INSTALLED
             return True
         except Exception:
             with self.__lock:
-                driver_info.driver_status = DriverStatus.ERROR
+                driver_info.driver_status = WebDriverStatus.ERROR
             raise
 
 
