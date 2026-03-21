@@ -20,33 +20,34 @@
 1. 自动预约 - 支持自动预约
 2. 自动续约 - 支持自动续约
 3. 自动签到 - 支持自动签到
-4. 批量操作 - 支持同时预约多个用户，可以指定当前需要跳过的用户，并将用户分成多个组
-5. 定时任务 - 使用内置定时任务管理，添加定时任务，指定时间后按当前预约信息自动运行
+4. 远程签到 - 支持远程签到，无需在图书馆网络环境下即可签到
+5. 批量操作 - 支持同时预约多个用户，可以指定当前需要跳过的用户，并将用户分成多个组
+6. 定时任务 - 使用内置定时任务管理，添加定时任务，指定时间后按当前预约信息自动运行，支持设置重复任务
+7. 驱动管理 - 内置浏览器驱动自动管理，支持自动检测浏览器版本并下载对应驱动，无需手动下载
 
-*1,2,3 的具体操作方法和注意事项请访问我们的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals)*
+*具体操作方法和注意事项请访问我们的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals)*
 
 ### 如何使用
 
-1. 下载最新版本的 [AutoLibrary 压缩包](https://github.com/KenanZhu/AutoLibrary/releases/latest)。
-2. 解压下载的文件到任意目录。
-3. 下载对应浏览器类型和版本（具体操作请参考适用软件版本的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals)）的驱动文件，并在配置界面的运行配置选项卡对应位置选择你下载好的浏览器驱动。
-4. 运行 `AutoLibrary-[主版本号].[次版本号].[修订版本号].Z.exe` 文件 （如 `AutoLibrary-1.0.0.exe`）。
-5. 点击 [配置] 按钮，在配置界面填写好预约信息和运行配置后，点击 [确认] 按钮。
-6. 点击 [启动脚本] 按钮，即可开始自动预约、续约、签到等操作。
+1. 下载最新版本的 [AutoLibrary 安装程序](https://github.com/KenanZhu/AutoLibrary/releases/latest) 或 [压缩包](https://github.com/KenanZhu/AutoLibrary/releases/latest) 。
+2. 双击运行安装程序进行安装，或将压缩包解压到任意目录。
+3. 运行 `AutoLibrary`，即可打开主界面。
+4. 点击 [配置] 按钮，在配置界面填写好预约信息和运行配置后，点击 [确认] 按钮。
+5. 点击 [启动脚本] 按钮，即可开始自动预约、续约、签到等操作。
 
-*注意 1*: 关于浏览器驱动的下载和其它相关问题，请参考我们的 [帮助手册](https://www.autolibrary.kenanzhu.com/manuals) 中对应软件版本的内容。
+*注意 1*: 工具内置浏览器驱动自动管理功能，会自动检测本地浏览器版本并下载对应的驱动文件。如果自动下载失败，也可以手动下载驱动文件并在配置界面的运行配置选项卡对应位置选择驱动文件路径。
 
 #### 平台支持 & 编译步骤
 
 本工具目前仅支持 Windows 平台，由于使用 PySide6 库开发，理论上是可以自行编译并在 Linux 和 macOS 上运行，这里提供简单的编译步骤：
 
 1. 确保系统安装了 Python 3.13 版本 （推荐，过低或高版本会导致兼容问题）。
-2. 安装 pyside6 selenium ddddocr 库，命令为 `pip install pyside6 selenium ddddocr`。
+2. 安装所有依赖库，命令为 `pip install -r requirements.txt` （建议在虚拟环境下操作）。
 3. 在 `batchs` 目录下运行 `compile_ui.bat` （linux 和 macOS 系统使用 `compile_ui.sh`） 文件来编译 Qt 的 UI 文件。
 4. 在上一步相同目录内运行 `compile_rc.bat` （linux 和 macOS 系统使用 `compile_rc.sh`） 文件来编译 Qt 的资源文件。
 5. 待上述步骤完成后，运行 `src/Main.py` 文件即可。
 
-*注意 1*：如果 python 使用的是虚拟环境，请在虚拟环境安装依赖后，在激活的虚拟环境终端中使用 `cd src/gui/batchs` 命令切换到 `batchs` 目录下，再运行编译脚本。否则会提示缺少必要的 Qt PySide 依赖库。
+*注意 1*：如果 python 使用的是虚拟环境，请在虚拟环境安装依赖后，在激活的虚拟环境终端中使用 `cd batchs` 命令切换到 `batchs` 目录下，再运行编译脚本。否则会提示缺少必要的 Qt PySide 依赖库。
 
 *注意 2*：由于 ddddocr 的代码版本问题，其中 `__init__.py` 文件中的函数 `def classification(self, img: bytes):` 中的 `image.resize` 方法传入了不符合当前 pillow 版本的 `resample` 参数 `Image.ANTIALIAS`，该重采样常量已经在 10.0.0 版中删除 [1](@ref)。请将 `image.resize` 方法中的参数替换为 `resample=Image.Resampling.LANCZOS`，具体函数如下：
 ```python
