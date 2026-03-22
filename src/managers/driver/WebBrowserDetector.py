@@ -1,5 +1,5 @@
 import platform
-import installed_browsers
+import browsers
 
 from pathlib import Path
 from enum import Enum
@@ -128,7 +128,7 @@ class WebBrowserDetector:
 
         self.browser_infos = []
         try:
-            all_browsers = installed_browsers.browsers()
+            all_browsers = list(browsers.browsers())
         except Exception as e:
             self.browser_infos = []
             return self.browser_infos
@@ -140,14 +140,14 @@ class WebBrowserDetector:
             'msedge': WebBrowserType.EDGE,
         }
         for browser in all_browsers:
-            internal_name = browser.get('name', '').lower()
+            internal_name = browser.get("browser_type", "").lower()
             if internal_name not in type_map:
                 continue  # Not one of the browsers we care about
-            version = browser.get('version')
+            version = browser.get("version", "")
             if not version:
                 # Skip browsers with no version info (unlikely, but defensive)
                 continue
-            exe_path = browser.get('location')
+            exe_path = browser.get("path", "")
             if not exe_path:
                 continue
             try:
@@ -163,4 +163,13 @@ class WebBrowserDetector:
                 browser_path=path,
             )
             self.browser_infos.append(info)
+        # Deduplicate: keep only one entry per (type, version)
+        seen = set()
+        unique = []
+        for info in self.browser_infos:
+            key = (info.browser_type, info.browser_version)
+            if key not in seen:
+                seen.add(key)
+                unique.append(info)
+        self.browser_infos = unique
         return self.browser_infos
