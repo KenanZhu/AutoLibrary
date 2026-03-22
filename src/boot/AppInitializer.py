@@ -56,9 +56,8 @@ def initializeWebDriverManager(
 
     app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
     driver_dir = os.path.join(app_dir, "drivers")
-    logger.info("初始化驱动目录 %s", driver_dir)
     if not QDir(driver_dir).exists():
-        logger.error("创建驱动目录 %s 失败", driver_dir)
+        logger.info("初始化驱动目录 %s", driver_dir)
         if not QDir().mkpath(driver_dir):
             logger.error("创建驱动目录 %s 失败", driver_dir)
             return False
