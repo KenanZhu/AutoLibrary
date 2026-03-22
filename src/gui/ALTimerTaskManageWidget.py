@@ -383,12 +383,17 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         timer_task: dict
     ):
 
+        if "history" not in timer_task:
+            history = []
+        else:
+            history = timer_task["history"]
+        history_count = len(history)
         return (
             f"任务名称：{timer_task["name"]}\n"
             f"添加时间：{timer_task["added_time"]}\n"
             f"当前状态：{timer_task["status"].value}\n"
             f"下次执行时间：{datetime.strftime(timer_task["execute_time"], "%Y-%m-%d %H:%M:%S")}\n"
-            f"已记录次数：{len(timer_task['history'] if 'history' in timer_task else 0)}"
+            f"已记录次数：{history_count}"
         )
 
 
