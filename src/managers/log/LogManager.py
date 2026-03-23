@@ -186,7 +186,7 @@ def instance(
                 raise ValueError("LogManager 的实例已初始化, 不能使用不同的日志目录")
     return _log_manager_instance
 
-
+# export function to get logger
 def getLogger(
     name: Optional[str] = None
 ) -> logging.Logger:

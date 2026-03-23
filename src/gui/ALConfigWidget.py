@@ -24,6 +24,7 @@ import managers.config.ConfigManager as ConfigManager
 
 from utils.JSONReader import JSONReader
 from utils.JSONWriter import JSONWriter
+from utils.ConfigUtils import ConfigUtils
 
 from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
@@ -43,7 +44,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         super().__init__(parent)
         self.__cfg_mgr = ConfigManager.instance()
-        self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
+        self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.__config_data = {"run": {}, "user": {}}
 
         self.setupUi(self)

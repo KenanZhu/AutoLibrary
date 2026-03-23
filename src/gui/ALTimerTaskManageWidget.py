@@ -26,7 +26,7 @@ from PySide6.QtGui import (
 )
 
 import managers.config.ConfigManager as ConfigManager
-import utils.TimerUtils as TimerUtils
+from utils.TimerUtils import TimerUtils
 
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
@@ -610,7 +610,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                         "duration": 0,
                         "uuid": timer_task["uuid"]
                     })
-        next_time = TimerUtils.calculateNextRepeatTime(
+        next_time = TimerUtils.getNextTimerRepeatTime(
             timer_task["repeat_days"],
             timer_task["repeat_hour"],
             timer_task["repeat_minute"],

@@ -19,9 +19,8 @@ from PySide6.QtGui import (
     QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
 )
 
-import managers.config.ConfigManager as ConfigManager
-
 from base.MsgBase import MsgBase
+from utils.ConfigUtils import ConfigUtils
 
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.resources import ALResource
@@ -44,9 +43,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         MsgBase.__init__(self, queue.Queue(), queue.Queue())
         QMainWindow.__init__(self)
-        self.__cfg_mgr = ConfigManager.instance()
         self.__timer_task_queue = queue.Queue()
-        self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
+        self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.__alTimerTaskManageWidget = None
         self.__alConfigWidget = None
         self.__auto_lib_thread = None
@@ -300,7 +298,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__alConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
             self.__alConfigWidget.deleteLater()
             self.__alConfigWidget = None
-        self.__config_paths = ConfigManager.getValidateAutomationConfigPaths()
+        self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.setControlButtons(True, None, None)
         self._showLog("配置窗口已关闭,配置文件路径已更新")
 

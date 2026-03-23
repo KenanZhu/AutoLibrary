@@ -11,7 +11,7 @@ import logging
 import queue
 import datetime
 
-from managers.log.LogManager import getLogger
+import managers.log.LogManager as LogManager
 
 
 class MsgBase:
@@ -54,7 +54,7 @@ class MsgBase:
         self._input_queue = input_queue
         self._output_queue = output_queue
         try:
-            self._logger = getLogger(self._class_name)
+            self._logger = LogManager.getLogger(self._class_name)
         except RuntimeError:
             self._logger = None
 

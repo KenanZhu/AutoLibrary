@@ -16,7 +16,7 @@ from PySide6.QtCore import Slot, QDateTime
 from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QGridLayout, QDateTimeEdit
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
-import utils.TimerUtils as TimerUtils
+from utils.TimerUtils import TimerUtils
 
 
 class ALTimerTaskStatus(Enum):
@@ -131,6 +131,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "repeat": self.RepeatCheckBox.isChecked(),
         }
         if task_data["repeat"]:
+            task_data["history"] = [] # repeat history
             repeat_days = []
             if self.MonCheckBox.isChecked():
                 repeat_days.append(0)
@@ -152,7 +153,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             task_data["repeat_hour"] = execute_time.hour
             task_data["repeat_minute"] = execute_time.minute
             task_data["repeat_second"] = execute_time.second
-            task_data["execute_time"] = TimerUtils.calculateNextRepeatTime(
+            task_data["execute_time"] = TimerUtils.getNextTimerRepeatTime(
                 task_data["repeat_days"],
                 task_data["repeat_hour"],
                 task_data["repeat_minute"],

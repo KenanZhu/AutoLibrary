@@ -176,49 +176,7 @@ class ConfigManager:
 
 
 # ConfigManager singleton instance.
-_config_manager_instance = None
-
-# Utility functions.
-#
-# Utility function to get validated automation config paths.
-def getValidateAutomationConfigPaths(
-) -> dict:
-    """
-        Get validated automation config paths from ConfigManager instance.
-        These function will validate the config paths and return the validated paths in a dict.
-
-        Returns:
-            dict: Validated automation config paths.
-    """
-    config_paths = {"run": "", "user": ""}
-    auto_config = _config_manager_instance.get(ConfigType.GLOBAL, "automation", {})
-    for cfg_type in ["run", "user"]:
-            paths = auto_config.get(f"{cfg_type}_path", {}).get("paths", [])
-            index = auto_config.get(f"{cfg_type}_path", {}).get("current", 0)
-            if paths == []:
-                paths.append(os.path.join(_config_manager_instance.configDir(), f"{cfg_type}.json"))
-            if index < 0:
-                index = 0
-            if index >= len(paths):
-                index = len(paths) - 1
-            config_paths[cfg_type] = paths[index]
-            data = {"current": index, "paths": paths}
-            auto_config[f"{cfg_type}_path"] = data
-    _config_manager_instance.set(ConfigType.GLOBAL, "automation", auto_config)
-    return config_paths
-
-# Utility function to get base config directory.
-def getBaseConfigDir(
-) -> str:
-    """
-        Get base config directory, on Windows, it is usually at :
-            'C:\\Users\\<username>\\AppData\\Local\\AutoLibrary\\config'.
-
-        Returns:
-            str: Base config directory.
-    """
-
-    return _config_manager_instance.configDir()
+_config_manager_instance : ConfigManager | None = None
 
 # Singleton instance of ConfigManager.
 _instance_lock = threading.Lock()
@@ -240,6 +198,6 @@ def instance(
         else:
             if config_dir == "":
                 return _config_manager_instance
-            if getBaseConfigDir() != config_dir:
+            if _config_manager_instance.configDir() != config_dir:
                 raise ValueError("ConfigManager 的实例已初始化,不能使用不同的配置目录。")
     return _config_manager_instance
