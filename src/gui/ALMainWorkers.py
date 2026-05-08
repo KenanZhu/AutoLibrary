@@ -18,7 +18,7 @@ from PySide6.QtCore import (
 from base.MsgBase import MsgBase
 from operators.AutoLib import AutoLib
 from utils.JSONReader import JSONReader
-from utils.PreprocEngine import PreprocEngine
+from utils.AutoScriptEngine import AutoScriptEngine
 
 
 class AutoLibWorker(MsgBase, QThread):
@@ -161,6 +161,7 @@ class TimerTaskWorker(AutoLibWorker):
         self.autoLibWorkerIsFinished.connect(self.onTimerTaskIsFinished)
         self.autoLibWorkerFinishedWithError.connect(self.onTimerTaskFinishedWithError)
 
+
     def run(
         self
     ):
@@ -173,7 +174,7 @@ class TimerTaskWorker(AutoLibWorker):
         try:
             if not self.loadConfigs():
                 raise Exception("配置文件加载失败")
-            self._applyRepeatPreproc()
+            self._applyRepeatAutoScript()
             auto_lib = AutoLib(
                 self._input_queue,
                 self._output_queue,
@@ -206,15 +207,15 @@ class TimerTaskWorker(AutoLibWorker):
         self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
 
 
-    def _applyRepeatPreproc(
+    def _applyRepeatAutoScript(
         self
     ):
 
-        preproc_script = self.__timer_task.get("repeat_preproc", "")
-        if not preproc_script or not preproc_script.strip():
+        auto_script = self.__timer_task.get("repeat_auto_script", "")
+        if not auto_script or not auto_script.strip():
             return
         self._showTrace(
-            f"检测到重复定时任务预处理脚本, 开始执行...",
+            f"检测到重复定时任务 AutoScript, 开始执行...",
             no_log=True
         )
         groups = self._user_config.get("groups", [])
@@ -224,15 +225,15 @@ class TimerTaskWorker(AutoLibWorker):
                 continue
             for user in group.get("users", []):
                 try:
-                    PreprocEngine.execute(preproc_script, user)
+                    AutoScriptEngine.execute(auto_script, user)
                     affected_count += 1
                 except ValueError as e:
                     self._showTrace(
-                        f"预处理脚本执行错误 (用户 {user['username']}): {e}",
+                        f"AutoScript 执行错误 (用户 {user['username']}): {e}",
                         self.TraceLevel.ERROR
                     )
         self._showLog(
-            f"预处理脚本执行完毕, "
+            f"AutoScript 执行完毕, "
             f"影响 {affected_count} 个用户",
             self.TraceLevel.INFO
         )

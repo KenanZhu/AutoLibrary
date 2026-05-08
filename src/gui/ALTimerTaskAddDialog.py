@@ -12,11 +12,12 @@ import uuid
 from enum import Enum
 from datetime import datetime, timedelta
 
-from PySide6.QtCore import Slot, QDateTime
+from PySide6.QtCore import Slot, QDateTime, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout, QDateTimeEdit, QGroupBox, QPushButton
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
-from gui.ALPreprocOrchDialog import ALPreprocOrchDialog
+from gui.ALAutoScriptOrchDialog import ALAutoScriptOrchDialog
 from utils.TimerUtils import TimerUtils
 
 
@@ -87,32 +88,46 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.TimerConfigLayout.addWidget(self.RelativeTimerWidget)
         self.RelativeTimerWidget.setVisible(False)
 
-        self.PreprocGroupBox = QGroupBox("预处理脚本")
-        self.PreprocLayout = QVBoxLayout(self.PreprocGroupBox)
-        self.PreprocLayout.setContentsMargins(3, 3, 3, 3)
-        self.PreprocLayout.setSpacing(3)
-
-        preproc_btn_layout = QHBoxLayout()
-        self.PreprocSetButton = QPushButton("设置预处理指令")
-        self.PreprocSetButton.setMinimumHeight(25)
-        self.PreprocSetButton.setFixedWidth(130)
-        preproc_btn_layout.addWidget(self.PreprocSetButton)
-        self.PreprocPreviewButton = QPushButton("预览")
-        self.PreprocPreviewButton.setMinimumHeight(25)
-        self.PreprocPreviewButton.setFixedWidth(60)
-        self.PreprocPreviewButton.setEnabled(False)
-        preproc_btn_layout.addWidget(self.PreprocPreviewButton)
-        preproc_btn_layout.addStretch()
-        self.PreprocStatusLabel = QLabel("未设置")
-        self.PreprocStatusLabel.setStyleSheet("color: #969696;")
-        self.PreprocStatusLabel.setFixedHeight(25)
-        preproc_btn_layout.addWidget(self.PreprocStatusLabel)
-        self.PreprocLayout.addLayout(preproc_btn_layout)
+        self.AutoScriptGroupBox = QGroupBox("AutoScript 指令")
+        self.AutoScriptLayout = QVBoxLayout(self.AutoScriptGroupBox)
+        self.AutoScriptLayout.setContentsMargins(3, 3, 3, 3)
+        self.AutoScriptLayout.setSpacing(3)
+        autoScriptBtnLayout = QHBoxLayout()
+        self.AutoScriptSetButton = QPushButton("设置指令")
+        self.AutoScriptSetButton.setMinimumHeight(25)
+        self.AutoScriptSetButton.setFixedWidth(130)
+        autoScriptBtnLayout.addWidget(self.AutoScriptSetButton)
+        self.AutoScriptPreviewButton = QPushButton("预览")
+        self.AutoScriptPreviewButton.setMinimumHeight(25)
+        self.AutoScriptPreviewButton.setFixedWidth(60)
+        self.AutoScriptPreviewButton.setEnabled(False)
+        autoScriptBtnLayout.addWidget(self.AutoScriptPreviewButton)
+        autoScriptBtnLayout.addStretch()
+        self.AutoScriptHelpButton = QPushButton("?")
+        self.AutoScriptHelpButton.setFixedSize(20, 20)
+        self.AutoScriptHelpButton.setToolTip(
+            "AutoScript 是一种轻量级 DSL\n"
+            "用于在重复定时任务执行前，对用户的预约数据进行预处理\n"
+            "\n"
+            "点击查看完整在线文档"
+        )
+        self.AutoScriptHelpButton.setStyleSheet(
+            "QPushButton { border-radius: 10px; border: 1px solid #999; "
+            "font-weight: bold; color: #555; }"
+            "QPushButton:hover { background-color: #E0E0E0; }"
+        )
+        autoScriptBtnLayout.addWidget(self.AutoScriptHelpButton)
+        self.AutoScriptStatusLabel = QLabel("未设置")
+        self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
+        self.AutoScriptStatusLabel.setFixedHeight(25)
+        autoScriptBtnLayout.addWidget(self.AutoScriptStatusLabel)
+        self.AutoScriptLayout.addLayout(autoScriptBtnLayout)
         self.ALAddTimerTaskLayout.insertWidget(
             self.ALAddTimerTaskLayout.indexOf(self.TaskConfigGroupBox) + 1,
-            self.PreprocGroupBox
+            self.AutoScriptGroupBox
         )
-        self.__repeat_preproc_script = ""
+        self.AutoScriptGroupBox.setVisible(False)
+        self.__auto_script = ""
 
 
     def connectSignals(
@@ -123,35 +138,44 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
         self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
-        self.PreprocSetButton.clicked.connect(self._onSetPreproc)
-        self.PreprocPreviewButton.clicked.connect(self._onPreviewPreproc)
-
+        self.AutoScriptSetButton.clicked.connect(self._onSetAutoScript)
+        self.AutoScriptPreviewButton.clicked.connect(self._onPreviewAutoScript)
+        self.AutoScriptHelpButton.clicked.connect(self._onAutoScriptHelp)
 
     @Slot()
-    def _onSetPreproc(self):
-        dlg = ALPreprocOrchDialog(self, existingScript=self.__repeat_preproc_script)
+    def _onSetAutoScript(self):
+        dlg = ALAutoScriptOrchDialog(self, existingScript=self.__auto_script)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             script = dlg.getScript()
-            self.__repeat_preproc_script = script
+            self.__auto_script = script
             if script:
-                self.PreprocStatusLabel.setText("已设置")
-                self.PreprocStatusLabel.setStyleSheet("color: #4CAF50;")
-                self.PreprocPreviewButton.setEnabled(True)
+                self.AutoScriptStatusLabel.setText("已设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
+                self.AutoScriptPreviewButton.setEnabled(True)
             else:
-                self.PreprocStatusLabel.setText("未设置")
-                self.PreprocStatusLabel.setStyleSheet("color: #969696;")
-                self.PreprocPreviewButton.setEnabled(False)
+                self.AutoScriptStatusLabel.setText("未设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
+                self.AutoScriptPreviewButton.setEnabled(False)
+        dlg.deleteLater()
+
+    @Slot()
+    def _onPreviewAutoScript(self):
+        if not self.__auto_script:
+            return
+        from gui.ALAutoScriptPrevDialog import ALAutoScriptPreviewDialog
+        dlg = ALAutoScriptPreviewDialog(self, self.__auto_script)
+        dlg.exec()
         dlg.deleteLater()
 
 
     @Slot()
-    def _onPreviewPreproc(self):
-        if not self.__repeat_preproc_script:
-            return
-        from gui.ALPreProcPrevDialog import ALScriptPreviewDialog
-        dlg = ALScriptPreviewDialog(self, self.__repeat_preproc_script)
-        dlg.exec()
-        dlg.deleteLater()
+    def _onAutoScriptHelp(
+        self
+    ):
+
+        QDesktopServices.openUrl(
+            QUrl("https://www.autolibrary.kenanzhu.com/manuals/autoscript")
+        )
 
 
     def getTimerTask(
@@ -186,7 +210,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "status": ALTimerTaskStatus.PENDING,
             "executed": False,
             "repeat": self.RepeatCheckBox.isChecked(),
-            "repeat_preproc": self.__repeat_preproc_script,
+            "repeat_auto_script": self.__auto_script,
         }
         if task_data["repeat"]:
             task_data["history"] = [] # repeat history
@@ -241,3 +265,4 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.FriCheckBox.setEnabled(checked)
         self.SatCheckBox.setEnabled(checked)
         self.SunCheckBox.setEnabled(checked)
+        self.AutoScriptGroupBox.setVisible(checked)

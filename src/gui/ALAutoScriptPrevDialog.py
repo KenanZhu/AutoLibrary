@@ -31,40 +31,40 @@ class ALScriptHighlighter(QSyntaxHighlighter):
         keywordFmt.setForeground(QColor("#316BFF"))
         keywordFmt.setFontWeight(QFont.Weight.Bold)
         for kw in ["IF", "ELSE IF", "ELSE", "ENDIF", "END IF",
-                    "SET", "PASS", "THEN", ".TRUE.", ".FALSE."]:
+                    "SET", "PASS", "THEN"]:
             pattern = r"\b" + kw.replace(" ", r"\s+") + r"\b"
             self._rules.append((pattern, keywordFmt))
-
+        literalFmt = QTextCharFormat()
+        literalFmt.setForeground(QColor("#C2185B"))
+        literalFmt.setFontWeight(QFont.Weight.Bold)
+        for lit in [".TRUE.", ".FALSE."]:
+            self._rules.append((r"\b" + lit.replace(".", r"\.") + r"\b", literalFmt))
         opFmt = QTextCharFormat()
         opFmt.setForeground(QColor("#9C27B0"))
         for op in [r"\.EQ\.", r"\.NEQ\.", r"\.BGT\.", r"\.BLT\.",
                    r"\.BGE\.", r"\.BLE\.", r"\.ADD\.", r"\.SUB\."]:
             self._rules.append((op, opFmt))
-
         varFmt = QTextCharFormat()
         varFmt.setForeground(QColor("#E65100"))
         for var in ["RESERVE_BEGIN_TIME", "RESERVE_END_TIME",
                     "RESERVE_DATE", "USERNAME", "USER_ENABLE",
                     "PRIORITY", "CURRENT_TIME", "CURRENT_DATE"]:
             self._rules.append((r"\b" + var + r"\b", varFmt))
-
         funcFmt = QTextCharFormat()
         funcFmt.setForeground(QColor("#2E7D32"))
         self._rules.append((r"\bTIME\([^)]+\)", funcFmt))
         self._rules.append((r"\bDATE\([^)]+\)", funcFmt))
-
         strFmt = QTextCharFormat()
         strFmt.setForeground(QColor("#388E3C"))
         self._rules.append((r"'[^']*'", strFmt))
-
         numFmt = QTextCharFormat()
         numFmt.setForeground(QColor("#D32F2F"))
         self._rules.append((r"\b\d+\b", numFmt))
-
         commentFmt = QTextCharFormat()
         commentFmt.setForeground(QColor("#999999"))
         commentFmt.setFontItalic(True)
         self._rules.append((r"//[^\n]*", commentFmt))
+
 
     def highlightBlock(
         self,
@@ -79,7 +79,7 @@ class ALScriptHighlighter(QSyntaxHighlighter):
                 self.setFormat(start, length, fmt)
 
 
-class ALScriptPreviewDialog(QDialog):
+class ALAutoScriptPreviewDialog(QDialog):
 
     def __init__(
         self,
@@ -88,7 +88,6 @@ class ALScriptPreviewDialog(QDialog):
     ):
 
         super().__init__(parent)
-
         self.__fontSize = 13
 
         self.modifyUi()
@@ -104,7 +103,7 @@ class ALScriptPreviewDialog(QDialog):
         self
     ):
 
-        self.setWindowTitle("预处理脚本预览 - AutoLibrary")
+        self.setWindowTitle("AutoScript 预览 - AutoLibrary")
         self.setMinimumSize(520, 360)
 
         layout = QVBoxLayout(self)
@@ -136,7 +135,6 @@ class ALScriptPreviewDialog(QDialog):
         self._copyBtn.setToolTip("复制脚本")
         toolbarLayout.addWidget(self._copyBtn)
         layout.addLayout(toolbarLayout)
-
         self._textEdit = QPlainTextEdit(self)
         self._textEdit.setReadOnly(True)
         self._textEdit.setLineWrapMode(

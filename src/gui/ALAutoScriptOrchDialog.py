@@ -17,10 +17,10 @@ from PySide6.QtWidgets import (
     QGroupBox, QSizePolicy
 )
 
-from utils.PreprocEngine import PreprocEngine
+from utils.AutoScriptEngine import AutoScriptEngine
 
 
-VARIABLE_META = PreprocEngine.VARIABLE_META
+VARIABLE_META = AutoScriptEngine.VARIABLE_META
 
 _VAR_COMBO_ITEMS = [
     (display, varname, vartype)
@@ -637,7 +637,7 @@ class ConditionalBlock(QGroupBox):
         return len(self._actionWidgets)
 
 
-class ALPreprocOrchDialog(QDialog):
+class ALAutoScriptOrchDialog(QDialog):
 
     def __init__(
         self,
@@ -661,7 +661,7 @@ class ALPreprocOrchDialog(QDialog):
         self
     ):
 
-        self.setWindowTitle("预处理指令编排 - AutoLibrary")
+        self.setWindowTitle("AutoScript 指令编排 - AutoLibrary")
         self.setMinimumSize(420, 400)
         self.setModal(True)
         mainLayout = QVBoxLayout(self)
