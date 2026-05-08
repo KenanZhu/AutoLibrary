@@ -13,9 +13,10 @@ from enum import Enum
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import Slot, QDateTime
-from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QGridLayout, QDateTimeEdit
+from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout, QDateTimeEdit, QGroupBox, QPushButton
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
+from gui.ALPreprocOrchDialog import ALPreprocOrchDialog
 from utils.TimerUtils import TimerUtils
 
 
@@ -86,6 +87,33 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.TimerConfigLayout.addWidget(self.RelativeTimerWidget)
         self.RelativeTimerWidget.setVisible(False)
 
+        self.PreprocGroupBox = QGroupBox("预处理脚本")
+        self.PreprocLayout = QVBoxLayout(self.PreprocGroupBox)
+        self.PreprocLayout.setContentsMargins(3, 3, 3, 3)
+        self.PreprocLayout.setSpacing(3)
+
+        preproc_btn_layout = QHBoxLayout()
+        self.PreprocSetButton = QPushButton("设置预处理指令")
+        self.PreprocSetButton.setMinimumHeight(25)
+        self.PreprocSetButton.setFixedWidth(130)
+        preproc_btn_layout.addWidget(self.PreprocSetButton)
+        self.PreprocPreviewButton = QPushButton("预览")
+        self.PreprocPreviewButton.setMinimumHeight(25)
+        self.PreprocPreviewButton.setFixedWidth(60)
+        self.PreprocPreviewButton.setEnabled(False)
+        preproc_btn_layout.addWidget(self.PreprocPreviewButton)
+        preproc_btn_layout.addStretch()
+        self.PreprocStatusLabel = QLabel("未设置")
+        self.PreprocStatusLabel.setStyleSheet("color: #969696;")
+        self.PreprocStatusLabel.setFixedHeight(25)
+        preproc_btn_layout.addWidget(self.PreprocStatusLabel)
+        self.PreprocLayout.addLayout(preproc_btn_layout)
+        self.ALAddTimerTaskLayout.insertWidget(
+            self.ALAddTimerTaskLayout.indexOf(self.TaskConfigGroupBox) + 1,
+            self.PreprocGroupBox
+        )
+        self.__repeat_preproc_script = ""
+
 
     def connectSignals(
         self
@@ -95,6 +123,35 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
         self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
+        self.PreprocSetButton.clicked.connect(self._onSetPreproc)
+        self.PreprocPreviewButton.clicked.connect(self._onPreviewPreproc)
+
+
+    @Slot()
+    def _onSetPreproc(self):
+        dlg = ALPreprocOrchDialog(self, existingScript=self.__repeat_preproc_script)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            script = dlg.getScript()
+            self.__repeat_preproc_script = script
+            if script:
+                self.PreprocStatusLabel.setText("已设置")
+                self.PreprocStatusLabel.setStyleSheet("color: #4CAF50;")
+                self.PreprocPreviewButton.setEnabled(True)
+            else:
+                self.PreprocStatusLabel.setText("未设置")
+                self.PreprocStatusLabel.setStyleSheet("color: #969696;")
+                self.PreprocPreviewButton.setEnabled(False)
+        dlg.deleteLater()
+
+
+    @Slot()
+    def _onPreviewPreproc(self):
+        if not self.__repeat_preproc_script:
+            return
+        from gui.ALPreProcPrevDialog import ALScriptPreviewDialog
+        dlg = ALScriptPreviewDialog(self, self.__repeat_preproc_script)
+        dlg.exec()
+        dlg.deleteLater()
 
 
     def getTimerTask(
@@ -129,6 +186,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "status": ALTimerTaskStatus.PENDING,
             "executed": False,
             "repeat": self.RepeatCheckBox.isChecked(),
+            "repeat_preproc": self.__repeat_preproc_script,
         }
         if task_data["repeat"]:
             task_data["history"] = [] # repeat history
