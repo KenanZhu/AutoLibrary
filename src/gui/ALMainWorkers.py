@@ -18,6 +18,7 @@ from PySide6.QtCore import (
 from base.MsgBase import MsgBase
 from operators.AutoLib import AutoLib
 from utils.JSONReader import JSONReader
+from utils.AutoScriptEngine import AutoScriptEngine
 
 
 class AutoLibWorker(MsgBase, QThread):
@@ -76,25 +77,28 @@ class AutoLibWorker(MsgBase, QThread):
             f"正在加载配置文件, 运行配置文件路径: {self.__config_paths["run"]}",
             no_log=True
         )
-        self.__run_config = JSONReader(self.__config_paths["run"]).data()
+        self._run_config = JSONReader(self.__config_paths["run"]).data()
         self._showTrace(
             f"正在加载配置文件, 用户配置文件路径: {self.__config_paths["user"]}",
             no_log=True
         )
-        self.__user_config = JSONReader(self.__config_paths["user"]).data()
-        if self.__run_config is None or self.__user_config is None:
+        self._user_config = JSONReader(self.__config_paths["user"]).data()
+        if self._run_config is None or self._user_config is None:
             self._showTrace(
                 "配置文件加载失败, 请检查配置文件是否正确",
                 self.TraceLevel.ERROR
             )
             return False
-        if not self.__user_config.get("groups"):
+        if not self._user_config.get("groups"):
             self._showTrace(
                 "用户配置文件中无有效任务组, 请检查用户配置文件是否正确",
                 self.TraceLevel.WARNING
             )
             return False
-        self._showLog(f"配置文件加载成功, 任务组数量: {len(self.__user_config.get('groups', []))}", self.TraceLevel.INFO)
+        self._showLog(
+            f"配置文件加载成功, 任务组数量: {len(self._user_config.get('groups', []))}",
+            self.TraceLevel.INFO
+        )
         return True
 
 
@@ -115,9 +119,9 @@ class AutoLibWorker(MsgBase, QThread):
                 auto_lib = AutoLib(
                     self._input_queue,
                     self._output_queue,
-                    self.__run_config
+                    self._run_config
                 )
-                groups = self.__user_config.get("groups")
+                groups = self._user_config.get("groups")
                 for group in groups:
                     if not group["enabled"]:
                         self._showTrace(f"任务组 {group["name"]} 已跳过", no_log=True)
@@ -157,12 +161,90 @@ class TimerTaskWorker(AutoLibWorker):
         self.autoLibWorkerIsFinished.connect(self.onTimerTaskIsFinished)
         self.autoLibWorkerFinishedWithError.connect(self.onTimerTaskFinishedWithError)
 
+
     def run(
         self
     ):
 
         self._showTrace(f"定时任务 {self.__timer_task['name']} 开始运行")
-        super().run()
+        if not self.checkTimeAvailable() or not self.checkConfigPaths():
+            self._showTrace("定时任务跳过执行 (时间或配置文件检查未通过)")
+            self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
+            return
+        try:
+            if not self.loadConfigs():
+                raise Exception("配置文件加载失败")
+            self.applyRepeatAutoScript()
+            auto_lib = AutoLib(
+                self._input_queue,
+                self._output_queue,
+                self._run_config
+            )
+            groups = self._user_config.get("groups")
+            for group in groups:
+                if not group["enabled"]:
+                    self._showTrace(
+                        f"任务组 {group['name']} 已跳过",
+                        no_log=True
+                    )
+                    continue
+                self._showTrace(
+                    f"正在运行任务组 {group['name']}",
+                    no_log=True
+                )
+                auto_lib.run(
+                    {"users": group.get("users", [])}
+                )
+            auto_lib.close()
+        except Exception as e:
+            self._showTrace(
+                f"定时任务 {self.__timer_task['name']} 运行时发生异常: {e}",
+                self.TraceLevel.ERROR
+            )
+            self.timerTaskWorkerIsFinished.emit(True, self.__timer_task)
+            return
+        self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
+        self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
+
+
+    def applyRepeatAutoScript(
+        self
+    ):
+
+        auto_script = self.__timer_task.get("repeat_auto_script", "")
+        if not auto_script or not auto_script.strip():
+            return
+        self._showTrace(
+            f"检测到重复定时任务 AutoScript, 开始执行...",
+            no_log=True
+        )
+        groups = self._user_config.get("groups", [])
+        affected_count = 0
+        for group in groups:
+            if not group.get("enabled", False):
+                continue
+            for user in group.get("users", []):
+                try:
+                    AutoScriptEngine.execute(auto_script, user)
+                    affected_count += 1
+                except ValueError as e:
+                    self._showTrace(
+                        f"AutoScript 执行错误 (用户 {user['username']}): {e}",
+                        self.TraceLevel.ERROR
+                    )
+        self._showLog(
+            f"AutoScript 执行完毕, "
+            f"影响 {affected_count} 个用户",
+            self.TraceLevel.INFO
+        )
+
+    @Slot()
+    def onTimerTaskIsFinished(
+        self
+    ):
+
+        self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
+        self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
 
     @Slot()
     def onTimerTaskFinishedWithError(
@@ -174,11 +256,3 @@ class TimerTaskWorker(AutoLibWorker):
             self.TraceLevel.ERROR
         )
         self.timerTaskWorkerIsFinished.emit(True, self.__timer_task)
-
-    @Slot()
-    def onTimerTaskIsFinished(
-        self
-    ):
-
-        self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
-        self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)

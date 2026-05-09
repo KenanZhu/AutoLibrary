@@ -10,6 +10,7 @@
     - ALSeatMapTable: Seat map table class.
     - ALSeatMapSelectDialog: Seat map select dialog class.
     - ALTimerTaskAddDialog: Timer task add dialog class.
+    - ALAutoScriptOrchDialog: AutoScript orchestration dialog class.
     - ALTimerTaskHistoryDialog: Timer task history dialog class.
     - ALTimerTaskManageWidget: Timer task manage widget class.
     - ALUserTreeWidget: User tree widget class.
