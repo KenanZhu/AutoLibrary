@@ -30,7 +30,7 @@ class ALTimerTaskHistoryDialog(QDialog):
         super().__init__(parent)
 
         self.__task_data = task_data
-        self.__history = task_data.get("history", [])
+        self.__history = task_data.get("repeat_history", [])
 
         self.modifyUi()
         self.connectSignals()
@@ -130,6 +130,13 @@ class ALTimerTaskHistoryDialog(QDialog):
         self.HistoryTableWidget.setItem(row, 2, DurationItem)
         self.HistoryTableWidget.setRowHeight(row, 25)
 
+
+    def getHistory(
+        self
+    ) -> list:
+
+        return self.__history
+
     @Slot()
     def onClearHistoryButtonClicked(
         self
@@ -137,11 +144,4 @@ class ALTimerTaskHistoryDialog(QDialog):
 
         self.__history.clear()
         self.HistoryTableWidget.setRowCount(0)
-        self.__task_data["history"] = self.__history
-
-
-    def getHistory(
-        self
-    ) -> list:
-
-        return self.__history
+        self.__task_data["repeat_history"] = self.__history

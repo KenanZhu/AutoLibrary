@@ -36,14 +36,19 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
 
     def __init__(
         self,
-        parent = None
+        parent = None,
+        timer_task: dict = None
     ):
 
         super().__init__(parent)
+        self.__edit_timer_task = timer_task
 
         self.setupUi(self)
         self.modifyUi()
         self.connectSignals()
+
+        if self.__edit_timer_task:
+            self.loadTask(self.__edit_timer_task)
 
 
     def modifyUi(
@@ -130,6 +135,45 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.__auto_script = ""
 
 
+    def loadTask(
+        self,
+        task: dict
+    ):
+
+        self.TaskNameLineEdit.setText(task.get("name", ""))
+        time_type = task.get("time_type", "特定时间")
+        self.TimerTypeComboBox.setCurrentText(time_type)
+        self.SpecificDateTimeEdit.setDateTime(
+            QDateTime(task["execute_time"])
+        )
+        self.RelativeDaySpinBox.setValue(0)
+        self.RelativeHourSpinBox.setValue(0)
+        self.RelativeMinuteSpinBox.setValue(0)
+        self.RelativeSecondSpinBox.setValue(0)
+        if task.get("silent", False):
+            self.SilentlyRunRadioButton.setChecked(True)
+        else:
+            self.ShowBeforeRunRadioButton.setChecked(True)
+        repeat = task.get("repeat", False)
+        self.RepeatCheckBox.setChecked(repeat)
+        if repeat:
+            repeat_days = task.get("repeat_days", [])
+            self.MonCheckBox.setChecked(0 in repeat_days)
+            self.TueCheckBox.setChecked(1 in repeat_days)
+            self.WedCheckBox.setChecked(2 in repeat_days)
+            self.ThuCheckBox.setChecked(3 in repeat_days)
+            self.FriCheckBox.setChecked(4 in repeat_days)
+            self.SatCheckBox.setChecked(5 in repeat_days)
+            self.SunCheckBox.setChecked(6 in repeat_days)
+            auto_script = task.get("repeat_auto_script", "")
+            if auto_script:
+                self.__auto_script = auto_script
+                self.AutoScriptStatusLabel.setText("已设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
+                self.AutoScriptPreviewButton.setEnabled(True)
+        self.ConfirmButton.setText("保存")
+
+
     def connectSignals(
         self
     ):
@@ -138,44 +182,9 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
         self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
-        self.AutoScriptSetButton.clicked.connect(self._onSetAutoScript)
-        self.AutoScriptPreviewButton.clicked.connect(self._onPreviewAutoScript)
-        self.AutoScriptHelpButton.clicked.connect(self._onAutoScriptHelp)
-
-    @Slot()
-    def _onSetAutoScript(self):
-        dlg = ALAutoScriptOrchDialog(self, existingScript=self.__auto_script)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            script = dlg.getScript()
-            self.__auto_script = script
-            if script:
-                self.AutoScriptStatusLabel.setText("已设置")
-                self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
-                self.AutoScriptPreviewButton.setEnabled(True)
-            else:
-                self.AutoScriptStatusLabel.setText("未设置")
-                self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
-                self.AutoScriptPreviewButton.setEnabled(False)
-        dlg.deleteLater()
-
-    @Slot()
-    def _onPreviewAutoScript(self):
-        if not self.__auto_script:
-            return
-        from gui.ALAutoScriptPrevDialog import ALAutoScriptPreviewDialog
-        dlg = ALAutoScriptPreviewDialog(self, self.__auto_script)
-        dlg.exec()
-        dlg.deleteLater()
-
-
-    @Slot()
-    def _onAutoScriptHelp(
-        self
-    ):
-
-        QDesktopServices.openUrl(
-            QUrl("https://www.autolibrary.kenanzhu.com/manuals/autoscript")
-        )
+        self.AutoScriptSetButton.clicked.connect(self.onSetAutoScript)
+        self.AutoScriptPreviewButton.clicked.connect(self.onPreviewAutoScript)
+        self.AutoScriptHelpButton.clicked.connect(self.onAutoScriptHelp)
 
 
     def getTimerTask(
@@ -200,20 +209,34 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 minutes = self.RelativeMinuteSpinBox.value(),
                 seconds = self.RelativeSecondSpinBox.value()
             )
-        task_data = {
-            "name": name,
-            "uuid": uuid.uuid4().hex.upper() + f"-{added_time.strftime("%Y%m%d%H%M%S")}",
-            "time_type": self.TimerTypeComboBox.currentText(),
-            "execute_time": execute_time,
-            "silent": silent,
-            "added_time": added_time,
-            "status": ALTimerTaskStatus.PENDING,
-            "executed": False,
-            "repeat": self.RepeatCheckBox.isChecked(),
-            "repeat_auto_script": self.__auto_script,
-        }
-        if task_data["repeat"]:
-            task_data["history"] = [] # repeat history
+
+        if self.__edit_timer_task:
+            task_data = dict(self.__edit_timer_task)
+            task_data["name"] = name
+            task_data["execute_time"] = execute_time
+            task_data["silent"] = silent
+            task_data["status"] = ALTimerTaskStatus.PENDING
+            task_data["executed"] = False
+            task_data["repeat_auto_script"] = self.__auto_script
+        else:
+            task_data = {
+                "name": name,
+                "uuid": uuid.uuid4().hex.upper() + f"-{added_time.strftime("%Y%m%d%H%M%S")}",
+                "time_type": self.TimerTypeComboBox.currentText(),
+                "execute_time": execute_time,
+                "silent": silent,
+                "added_time": added_time,
+                "status": ALTimerTaskStatus.PENDING,
+                "executed": False,
+                "repeat": self.RepeatCheckBox.isChecked(),
+                "repeat_auto_script": self.__auto_script,
+            }
+
+        repeat = self.RepeatCheckBox.isChecked()
+        task_data["repeat"] = repeat
+        if repeat:
+            if "repeat_history" not in task_data:
+                task_data["repeat_history"] = []
             repeat_days = []
             if self.MonCheckBox.isChecked():
                 repeat_days.append(0)
@@ -266,3 +289,39 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.SatCheckBox.setEnabled(checked)
         self.SunCheckBox.setEnabled(checked)
         self.AutoScriptGroupBox.setVisible(checked)
+
+    @Slot()
+    def onSetAutoScript(self):
+        dlg = ALAutoScriptOrchDialog(self, existingScript=self.__auto_script)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            script = dlg.getScript()
+            self.__auto_script = script
+            if script:
+                self.AutoScriptStatusLabel.setText("已设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
+                self.AutoScriptPreviewButton.setEnabled(True)
+            else:
+                self.AutoScriptStatusLabel.setText("未设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
+                self.AutoScriptPreviewButton.setEnabled(False)
+        dlg.deleteLater()
+
+    @Slot()
+    def onPreviewAutoScript(self):
+        if not self.__auto_script:
+            return
+        from gui.ALAutoScriptPrevDialog import ALAutoScriptPreviewDialog
+        dlg = ALAutoScriptPreviewDialog(self, self.__auto_script)
+        dlg.exec()
+        dlg.deleteLater()
+
+    @Slot()
+    def onAutoScriptHelp(
+        self
+    ):
+
+        QDesktopServices.openUrl(
+            QUrl("https://www.autolibrary.kenanzhu.com/manuals/autoscript")
+        )
+
+

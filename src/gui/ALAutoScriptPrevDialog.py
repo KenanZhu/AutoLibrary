@@ -8,6 +8,8 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 
+from PySide6.QtCore import Slot
+
 from PySide6.QtGui import (
     QSyntaxHighlighter, QTextCharFormat, QColor, QFont, QIcon
 )
@@ -162,53 +164,13 @@ class ALAutoScriptPreviewDialog(QDialog):
     ):
 
         self._btnBox.rejected.connect(self.reject)
-        self._zoomInBtn.clicked.connect(self._onZoomIn)
-        self._zoomOutBtn.clicked.connect(self._onZoomOut)
-        self._zoomResetBtn.clicked.connect(self._onZoomReset)
-        self._copyBtn.clicked.connect(self._onCopy)
+        self._zoomInBtn.clicked.connect(self.onZoomIn)
+        self._zoomOutBtn.clicked.connect(self.onZoomOut)
+        self._zoomResetBtn.clicked.connect(self.onZoomReset)
+        self._copyBtn.clicked.connect(self.onCopy)
 
 
-    def _onZoomIn(
-        self
-    ):
-
-        self.__fontSize = min(self.__fontSize + 2, 40)
-        self._updateFontSize()
-
-
-    def _onZoomOut(
-        self
-    ):
-
-        self.__fontSize = max(self.__fontSize - 2, 8)
-        self._updateFontSize()
-
-
-    def _onZoomReset(
-        self
-    ):
-
-        self.__fontSize = 13
-        self._updateFontSize()
-
-
-    def _onCopy(
-        self
-    ):
-
-        clipboard = QApplication.clipboard()
-        clipboard.setText(self._textEdit.toPlainText())
-        original = self._copyBtn.text()
-        self._copyBtn.setText("已复制")
-        self._copyBtn.setEnabled(False)
-        from PySide6.QtCore import QTimer
-        QTimer.singleShot(2000, lambda: (
-            self._copyBtn.setText(original),
-            self._copyBtn.setEnabled(True)
-        ))
-
-
-    def _updateFontSize(
+    def updateFontSize(
         self
     ):
 
@@ -222,3 +184,43 @@ class ALAutoScriptPreviewDialog(QDialog):
             "}"
         )
         self._zoomLabel.setText(f"{self.__fontSize}px")
+
+    @Slot()
+    def onZoomIn(
+        self
+    ):
+
+        self.__fontSize = min(self.__fontSize + 2, 40)
+        self.updateFontSize()
+
+    @Slot()
+    def onZoomOut(
+        self
+    ):
+
+        self.__fontSize = max(self.__fontSize - 2, 8)
+        self.updateFontSize()
+
+    @Slot()
+    def onZoomReset(
+        self
+    ):
+
+        self.__fontSize = 13
+        self.updateFontSize()
+
+    @Slot()
+    def onCopy(
+        self
+    ):
+
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self._textEdit.toPlainText())
+        original = self._copyBtn.text()
+        self._copyBtn.setText("已复制")
+        self._copyBtn.setEnabled(False)
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(2000, lambda: (
+            self._copyBtn.setText(original),
+            self._copyBtn.setEnabled(True)
+        ))

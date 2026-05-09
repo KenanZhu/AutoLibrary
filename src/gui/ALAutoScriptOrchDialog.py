@@ -8,7 +8,7 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 
-from PySide6.QtCore import QTime, QDate
+from PySide6.QtCore import QTime, QDate, Slot
 from PySide6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QPushButton, QScrollArea, QTimeEdit,
@@ -21,18 +21,15 @@ from utils.AutoScriptEngine import AutoScriptEngine
 
 
 VARIABLE_META = AutoScriptEngine.VARIABLE_META
-
 _VAR_COMBO_ITEMS = [
     (display, varname, vartype)
     for display, (varname, vartype) in VARIABLE_META.items()
 ]
-
 _VAR_COMBO_ITEMS_SET = [
     (display, varname, vartype)
     for display, (varname, vartype) in VARIABLE_META.items()
     if not varname.startswith("CURRENT_")
 ]
-
 OP_ITEMS = [
     ("等于", ".EQ."),
     ("不等于", ".NEQ."),
@@ -298,7 +295,7 @@ class ActionStepFrame(QFrame):
 
         self.setupUi()
         self.connectSignals()
-        self._onTargetChanged(0)
+        self.onTargetChanged(0)
 
 
     def setupUi(
@@ -316,7 +313,7 @@ class ActionStepFrame(QFrame):
         self.targetCombo = _makeSetVarCombo()
         self.valueWidgetStack = QStackedWidget()
         self.valueWidgetStack.setFixedHeight(25)
-        self._initValueStack()
+        self.initValueStack()
 
         setLabel = QLabel("设置")
         setLabel.setFixedHeight(25)
@@ -337,9 +334,10 @@ class ActionStepFrame(QFrame):
         self
     ):
 
-        self.targetCombo.currentIndexChanged.connect(self._onTargetChanged)
+        self.targetCombo.currentIndexChanged.connect(self.onTargetChanged)
 
-    def _initValueStack(
+
+    def initValueStack(
         self
     ):
 
@@ -353,18 +351,6 @@ class ActionStepFrame(QFrame):
             self._valueWidgets.get("String", self.valueWidgetStack.widget(0))
         )
 
-    def _onTargetChanged(
-        self,
-        idx
-    ):
-        if idx < 0:
-            return
-        data = self.targetCombo.itemData(idx)
-        if data:
-            _, vartype = data
-            w = self._valueWidgets.get(vartype)
-            if w:
-                self.valueWidgetStack.setCurrentWidget(w)
 
     def getTarget(
         self
@@ -373,12 +359,14 @@ class ActionStepFrame(QFrame):
         data = self.targetCombo.currentData()
         return data[0] if data else ""
 
+
     def getTargetType(
         self
     ) -> str:
 
         data = self.targetCombo.currentData()
         return data[1] if data else "String"
+
 
     def getValueRaw(
         self
@@ -389,6 +377,7 @@ class ActionStepFrame(QFrame):
         if w:
             return _getValueFromWidget(w)
         return ""
+
 
     def toScriptLine(
         self
@@ -405,6 +394,7 @@ class ActionStepFrame(QFrame):
             return f"    {target} .ADD. {hours}"
         return f"    SET {target} = {encoded}"
 
+
     def loadFromScript(
         self,
         targetVar: str,
@@ -416,9 +406,10 @@ class ActionStepFrame(QFrame):
             if data and data[0] == targetVar:
                 self.targetCombo.setCurrentIndex(idx)
                 break
-        self._setValueFromExpr(valueExpr)
+        self.setValueFromExpr(valueExpr)
 
-    def _setValueFromExpr(
+
+    def setValueFromExpr(
         self,
         expr: str
     ):
@@ -428,6 +419,20 @@ class ActionStepFrame(QFrame):
         if not w:
             return
         _setWidgetValue(w, targetType, expr)
+
+    @Slot(int)
+    def onTargetChanged(
+        self,
+        idx
+    ):
+        if idx < 0:
+            return
+        data = self.targetCombo.itemData(idx)
+        if data:
+            _, vartype = data
+            w = self._valueWidgets.get(vartype)
+            if w:
+                self.valueWidgetStack.setCurrentWidget(w)
 
 
 class ConditionalBlock(QGroupBox):
@@ -444,7 +449,7 @@ class ConditionalBlock(QGroupBox):
 
         self.setupUi()
         self.connectSignals()
-        self._onOperandChanged(0)
+        self.onOperandChanged(0)
 
 
     def setupUi(
@@ -453,7 +458,7 @@ class ConditionalBlock(QGroupBox):
 
         self.setStyleSheet(
             "QGroupBox { font-weight: bold; border: 1px solid #ccc; "
-            "margin-top: 8px; padding-top: 8px; }"
+            "margin-top: 5px; padding-top: 5px; }"
         )
         self.setSizePolicy(
             QSizePolicy.Policy.Preferred,
@@ -522,41 +527,12 @@ class ConditionalBlock(QGroupBox):
         self
     ):
 
-        self.operandCombo.currentIndexChanged.connect(self._onOperandChanged)
-        self.typeCombo.currentIndexChanged.connect(self._onTypeChanged)
-        self.addActionBtn.clicked.connect(self._addActionStep)
+        self.operandCombo.currentIndexChanged.connect(self.onOperandChanged)
+        self.typeCombo.currentIndexChanged.connect(self.onTypeChanged)
+        self.addActionBtn.clicked.connect(self.addActionStep)
 
-    def _onOperandChanged(
-        self,
-        idx
-    ):
-        if idx < 0:
-            return
-        data = self.operandCombo.itemData(idx)
-        if data:
-            _, vartype = data
-            w = self._condValueWidgets.get(vartype)
-            if w:
-                self.condValueStack.setCurrentWidget(w)
 
-    def _onTypeChanged(
-        self,
-        idx
-    ):
-        isCond = self.typeCombo.currentData() in ("IF", "ELSE IF")
-        self.conditionWidget.setVisible(isCond)
-        self.actionLabel.setText("执行步骤:" if isCond else "ELSE 执行步骤:")
-
-    def _addActionStep(
-        self
-    ):
-
-        step = ActionStepFrame(self)
-        step.deleteBtn.clicked.connect(lambda: self._removeActionStep(step))
-        self._actionWidgets.append(step)
-        self.actionsLayout.addWidget(step)
-
-    def _removeActionStep(
+    def removeActionStep(
         self,
         step: ActionStepFrame
     ):
@@ -567,11 +543,13 @@ class ConditionalBlock(QGroupBox):
             step.hide()
             step.deleteLater()
 
+
     def getBlockType(
         self
     ) -> str:
 
         return self.typeCombo.currentData()
+
 
     def toScriptLines(
         self
@@ -602,6 +580,7 @@ class ConditionalBlock(QGroupBox):
 
         return lines
 
+
     def getConditionSummary(
         self
     ) -> str:
@@ -617,6 +596,7 @@ class ConditionalBlock(QGroupBox):
         rawVal = self.getConditionRawValuePreview()
         return f"{bt} ({operandDisplay} {opDisplay} {rawVal})"
 
+
     def getConditionRawValuePreview(
         self
     ) -> str:
@@ -630,11 +610,45 @@ class ConditionalBlock(QGroupBox):
             return _getValueFromWidget(w)
         return ""
 
+
     def countActionSteps(
         self
     ) -> int:
 
         return len(self._actionWidgets)
+
+    @Slot(int)
+    def onOperandChanged(
+        self,
+        idx
+    ):
+        if idx < 0:
+            return
+        data = self.operandCombo.itemData(idx)
+        if data:
+            _, vartype = data
+            w = self._condValueWidgets.get(vartype)
+            if w:
+                self.condValueStack.setCurrentWidget(w)
+
+    @Slot(int)
+    def onTypeChanged(
+        self,
+        idx
+    ):
+        isCond = self.typeCombo.currentData() in ("IF", "ELSE IF")
+        self.conditionWidget.setVisible(isCond)
+        self.actionLabel.setText("执行步骤:" if isCond else "ELSE 执行步骤:")
+
+    @Slot()
+    def addActionStep(
+        self
+    ):
+
+        step = ActionStepFrame(self)
+        step.deleteBtn.clicked.connect(lambda: self.removeActionStep(step))
+        self._actionWidgets.append(step)
+        self.actionsLayout.addWidget(step)
 
 
 class ALAutoScriptOrchDialog(QDialog):
@@ -651,9 +665,9 @@ class ALAutoScriptOrchDialog(QDialog):
         self.connectSignals()
 
         if existingScript and existingScript.strip():
-            self._loadFromScript(existingScript)
+            self.loadFromScript(existingScript)
         else:
-            self._addBlock()
+            self.addBlock()
         self._scrollLayout.addStretch()
 
 
@@ -695,28 +709,10 @@ class ALAutoScriptOrchDialog(QDialog):
 
         self.btnBox.accepted.connect(self.accept)
         self.btnBox.rejected.connect(self.reject)
-        self.addBlockBtn.clicked.connect(self._addBlock)
+        self.addBlockBtn.clicked.connect(self.addBlock)
 
-    def _addBlock(
-        self
-    ):
 
-        block = ConditionalBlock(len(self._blocks), self)
-        block.deleteBlockBtn.clicked.connect(lambda: self._removeBlock(block))
-        self._blocks.append(block)
-        block._addActionStep()
-        if self._scrollLayout.count() > 0:
-            lastItem = self._scrollLayout.itemAt(
-                self._scrollLayout.count() - 1
-            )
-            if lastItem and lastItem.spacerItem():
-                self._scrollLayout.insertWidget(
-                    self._scrollLayout.count() - 1, block
-                )
-                return
-        self._scrollLayout.addWidget(block)
-
-    def _removeBlock(
+    def removeBlock(
         self,
         block: ConditionalBlock
     ):
@@ -726,6 +722,7 @@ class ALAutoScriptOrchDialog(QDialog):
             self._scrollLayout.removeWidget(block)
             block.hide()
             block.deleteLater()
+
 
     def getScript(
         self
@@ -742,6 +739,7 @@ class ALAutoScriptOrchDialog(QDialog):
             parts.append("ENDIF")
         return "\n".join(parts)
 
+
     def getScriptPreview(
         self
     ) -> str:
@@ -751,7 +749,8 @@ class ALAutoScriptOrchDialog(QDialog):
             return s[:7] + "..."
         return s
 
-    def _loadFromScript(
+
+    def loadFromScript(
         self,
         script: str
     ):
@@ -759,7 +758,7 @@ class ALAutoScriptOrchDialog(QDialog):
         import re
         lines = [l.strip() for l in script.split("\n") if l.strip()]
         if not lines:
-            self._addBlock()
+            self.addBlock()
             return
 
         currentBlock = None
@@ -773,11 +772,11 @@ class ALAutoScriptOrchDialog(QDialog):
             typeIdxMap = {"IF": 0, "ELSE IF": 1, "ELSE": 2}
             idx = typeIdxMap.get(currentBlockType, 0)
             currentBlock.typeCombo.setCurrentIndex(idx)
-            currentBlock._onTypeChanged(idx)
+            currentBlock.onTypeChanged(idx)
             for oldStep in list(currentBlock._actionWidgets):
-                currentBlock._removeActionStep(oldStep)
+                currentBlock.removeActionStep(oldStep)
             for target, valueExpr in actionsBuffer:
-                currentBlock._addActionStep()
+                currentBlock.addActionStep()
                 step = currentBlock._actionWidgets[-1]
                 step.loadFromScript(target, valueExpr)
         self._blocks.clear()
@@ -792,24 +791,24 @@ class ALAutoScriptOrchDialog(QDialog):
                 flushBlock()
                 currentBlockType = "IF"
                 actionsBuffer = []
-                self._addBlock()
+                self.addBlock()
                 currentBlock = self._blocks[-1]
-                self._parseConditionToBlock(currentBlock, ifMatch.group(1))
+                self.parseConditionToBlock(currentBlock, ifMatch.group(1))
                 continue
             elifIfMatch = re.match(r"^ELSE\s+IF\((.+)\)\s*THEN\s*$", upper)
             if elifIfMatch:
                 flushBlock()
                 currentBlockType = "ELSE IF"
                 actionsBuffer = []
-                self._addBlock()
+                self.addBlock()
                 currentBlock = self._blocks[-1]
-                self._parseConditionToBlock(currentBlock, elifIfMatch.group(1))
+                self.parseConditionToBlock(currentBlock, elifIfMatch.group(1))
                 continue
             if upper == "ELSE":
                 flushBlock()
                 currentBlockType = "ELSE"
                 actionsBuffer = []
-                self._addBlock()
+                self.addBlock()
                 currentBlock = self._blocks[-1]
                 currentBlock.conditionWidget.setVisible(False)
                 continue
@@ -833,9 +832,10 @@ class ALAutoScriptOrchDialog(QDialog):
                 continue
         flushBlock()
         if not self._blocks:
-            self._addBlock()
+            self.addBlock()
 
-    def _parseConditionToBlock(
+
+    def parseConditionToBlock(
         self,
         block: ConditionalBlock,
         condStr: str
@@ -862,3 +862,23 @@ class ALAutoScriptOrchDialog(QDialog):
                 if w:
                     _setWidgetValue(w, vartype, rightPart)
                 return
+
+    @Slot()
+    def addBlock(
+        self
+    ):
+
+        block = ConditionalBlock(len(self._blocks), self)
+        block.deleteBlockBtn.clicked.connect(lambda: self.removeBlock(block))
+        self._blocks.append(block)
+        block.addActionStep()
+        if self._scrollLayout.count() > 0:
+            lastItem = self._scrollLayout.itemAt(
+                self._scrollLayout.count() - 1
+            )
+            if lastItem and lastItem.spacerItem():
+                self._scrollLayout.insertWidget(
+                    self._scrollLayout.count() - 1, block
+                )
+                return
+        self._scrollLayout.addWidget(block)

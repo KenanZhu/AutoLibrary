@@ -19,10 +19,10 @@ from PySide6.QtCore import (
 )
 from PySide6.QtWidgets import (
     QDialog, QWidget, QListWidgetItem, QMessageBox,
-    QHBoxLayout, QVBoxLayout, QLabel, QPushButton
+    QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QMenu
 )
 from PySide6.QtGui import (
-    QCloseEvent
+    QCloseEvent, QAction
 )
 
 import managers.config.ConfigManager as ConfigManager
@@ -35,6 +35,8 @@ from gui.ALTimerTaskHistoryDialog import ALTimerTaskHistoryDialog
 
 class ALTimerTaskItemWidget(QWidget):
 
+    editRequested = Signal(dict)
+
     def __init__(
         self,
         parent = None,
@@ -45,6 +47,8 @@ class ALTimerTaskItemWidget(QWidget):
         self.__timer_task = timer_task
 
         self.modifyUi()
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
 
 
     def modifyUi(
@@ -145,6 +149,27 @@ class ALTimerTaskItemWidget(QWidget):
             self.DeleteButton.setEnabled(False)
         self.setFixedHeight(55)
 
+    @Slot(object)
+    def showContextMenu(
+        self,
+        pos
+    ):
+
+        menu = QMenu(self)
+        edit_action = QAction("编辑", self)
+        edit_action.triggered.connect(
+            lambda: self.editRequested.emit(self.__timer_task)
+        )
+        menu.addAction(edit_action)
+        if self.__timer_task["status"] != ALTimerTaskStatus.RUNNING\
+        and self.__timer_task["status"] != ALTimerTaskStatus.READY:
+            delete_action = QAction("删除", self)
+            delete_action.triggered.connect(
+                lambda: self.parent().deleteTask(self.__timer_task)
+            )
+            menu.addAction(delete_action)
+        menu.exec(self.mapToGlobal(pos))
+
 
 class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
 
@@ -224,8 +249,8 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                     task["added_time"] = datetime.strptime(task["added_time"], "%Y-%m-%d %H:%M:%S")
                     task["execute_time"] = datetime.strptime(task["execute_time"], "%Y-%m-%d %H:%M:%S")
                     task["status"] = ALTimerTaskStatus(task["status"])
-                    if "history" in task:
-                        for item in task["history"]:
+                    if "repeat_history" in task:
+                        for item in task["repeat_history"]:
                             item["result"] = ALTimerTaskStatus(item["result"])
                 return timer_tasks["timer_tasks"]
             raise Exception("定时任务配置文件格式错误")
@@ -248,8 +273,8 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 task["added_time"] = task["added_time"].strftime("%Y-%m-%d %H:%M:%S")
                 task["execute_time"] = task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
                 task["status"] = task["status"].value
-                if "history" in task:
-                    for item in task["history"]:
+                if "repeat_history" in task:
+                    for item in task["repeat_history"]:
                         item["result"] = item["result"].value
             self.__cfg_mgr.set(ConfigManager.ConfigType.TIMERTASK, "", { "timer_tasks": timer_tasks })
             return True
@@ -363,6 +388,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 widget.HistoryButton.clicked.connect(
                     lambda _, task = timer_task: self.showTaskHistory(task)
                 )
+            widget.editRequested.connect(self.editTask)
             item.setSizeHint(widget.size())
             self.TimerTasksListWidget.addItem(item)
             self.TimerTasksListWidget.setItemWidget(item, widget)
@@ -378,15 +404,30 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             self.__timer_tasks.append(timer_task)
             self.timerTasksChanged.emit()
 
+
+    def editTask(
+        self,
+        timer_task: dict
+    ):
+
+        dialog = ALTimerTaskAddDialog(self, timer_task)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            updated = dialog.getTimerTask()
+            for i, task in enumerate(self.__timer_tasks):
+                if task["uuid"] == updated["uuid"]:
+                    self.__timer_tasks[i] = updated
+                    break
+            self.timerTasksChanged.emit()
+
     @staticmethod
     def getTimerTaskDetailMessage(
         timer_task: dict
     ):
 
-        if "history" not in timer_task:
+        if "repeat_history" not in timer_task:
             history = []
         else:
-            history = timer_task["history"]
+            history = timer_task["repeat_history"]
         history_count = len(history)
         return (
             f"任务名称：{timer_task["name"]}\n"
@@ -395,7 +436,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             f"下次执行时间：{datetime.strftime(timer_task["execute_time"], "%Y-%m-%d %H:%M:%S")}\n"
             f"已记录次数：{history_count}"
         )
-
+    
 
     def deleteTask(
         self,
@@ -559,7 +600,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.updateTimerTaskList()
         self.updateStat()
 
-
     @Slot(dict)
     def onTimerTaskIsRunning(
         self,
@@ -584,12 +624,12 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                          ALTimerTaskStatus.OUTDATED}
         if status not in valid_statuses:
             return timer_task
-        if "history" not in timer_task:
-            timer_task["history"] = []
+        if "repeat_history" not in timer_task:
+            timer_task["repeat_history"] = []
         if status != ALTimerTaskStatus.OUTDATED:
             executed_time = datetime.now()
             duration = (executed_time - timer_task["execute_time"]).total_seconds()
-            timer_task["history"].append({
+            timer_task["repeat_history"].append({
                 "execute_time": timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S"),
                 "executed_time": executed_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "result": status,
@@ -603,7 +643,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             delta_days = (current_time - execute_time).days
             for i in range(delta_days + 1):
                 if (execute_weekday + i)%7 in timer_task["repeat_days"]:
-                    timer_task["history"].append({
+                    timer_task["repeat_history"].append({
                         "execute_time": (execute_time + timedelta(days=i)).strftime("%Y-%m-%d %H:%M:%S"),
                         "executed_time": (execute_time + timedelta(days=i)).strftime("%Y-%m-%d %H:%M:%S"),
                         "result": status,

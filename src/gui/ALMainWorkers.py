@@ -174,7 +174,7 @@ class TimerTaskWorker(AutoLibWorker):
         try:
             if not self.loadConfigs():
                 raise Exception("配置文件加载失败")
-            self._applyRepeatAutoScript()
+            self.applyRepeatAutoScript()
             auto_lib = AutoLib(
                 self._input_queue,
                 self._output_queue,
@@ -207,7 +207,7 @@ class TimerTaskWorker(AutoLibWorker):
         self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
 
 
-    def _applyRepeatAutoScript(
+    def applyRepeatAutoScript(
         self
     ):
 
@@ -239,6 +239,14 @@ class TimerTaskWorker(AutoLibWorker):
         )
 
     @Slot()
+    def onTimerTaskIsFinished(
+        self
+    ):
+
+        self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
+        self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
+
+    @Slot()
     def onTimerTaskFinishedWithError(
         self
     ):
@@ -248,11 +256,3 @@ class TimerTaskWorker(AutoLibWorker):
             self.TraceLevel.ERROR
         )
         self.timerTaskWorkerIsFinished.emit(True, self.__timer_task)
-
-    @Slot()
-    def onTimerTaskIsFinished(
-        self
-    ):
-
-        self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
-        self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
