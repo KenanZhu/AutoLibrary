@@ -45,6 +45,7 @@ class ALTimerTaskItemWidget(QWidget):
 
         super().__init__(parent)
         self.__timer_task = timer_task
+        self.__manage_widget = parent
 
         self.modifyUi()
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -165,7 +166,7 @@ class ALTimerTaskItemWidget(QWidget):
         and self.__timer_task["status"] != ALTimerTaskStatus.READY:
             delete_action = QAction("删除", self)
             delete_action.triggered.connect(
-                lambda: self.parent().deleteTask(self.__timer_task)
+                lambda: self.__manage_widget.deleteTask(self.__timer_task)
             )
             menu.addAction(delete_action)
         menu.exec(self.mapToGlobal(pos))
