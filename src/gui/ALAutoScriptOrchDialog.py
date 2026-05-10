@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QGroupBox, QSizePolicy
 )
 
-from utils.AutoScriptEngine import AutoScriptEngine
+from dsl.AutoScriptEngine import AutoScriptEngine
 
 
 VARIABLE_META = AutoScriptEngine.VARIABLE_META

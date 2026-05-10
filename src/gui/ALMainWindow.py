@@ -20,7 +20,7 @@ from PySide6.QtGui import (
 )
 
 from base.MsgBase import MsgBase
-from utils.ConfigUtils import ConfigUtils
+from managers.config.ConfigUtils import ConfigUtils
 
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
 from gui.resources import ALResource

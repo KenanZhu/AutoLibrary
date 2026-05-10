@@ -18,7 +18,7 @@ from PySide6.QtCore import (
 from base.MsgBase import MsgBase
 from operators.AutoLib import AutoLib
 from utils.JSONReader import JSONReader
-from utils.AutoScriptEngine import AutoScriptEngine
+from dsl.AutoScriptEngine import AutoScriptEngine
 
 
 class AutoLibWorker(MsgBase, QThread):

@@ -24,7 +24,7 @@ import managers.config.ConfigManager as ConfigManager
 
 from utils.JSONReader import JSONReader
 from utils.JSONWriter import JSONWriter
-from utils.ConfigUtils import ConfigUtils
+from managers.config.ConfigUtils import ConfigUtils
 
 from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
