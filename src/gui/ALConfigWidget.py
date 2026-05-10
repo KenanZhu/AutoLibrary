@@ -24,6 +24,7 @@ import managers.config.ConfigManager as ConfigManager
 
 from utils.JSONReader import JSONReader
 from utils.JSONWriter import JSONWriter
+from interfaces.ConfigProvider import ConfigProvider, CfgKey
 from managers.config.ConfigUtils import ConfigUtils
 
 from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
@@ -43,7 +44,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         super().__init__(parent)
-        self.__cfg_mgr = ConfigManager.instance()
+        self.__cfg_mgr: ConfigProvider = ConfigManager.instance()
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.__config_data = {"run": {}, "user": {}}
 
@@ -985,13 +986,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setRunConfigToWidget(data)
                 self.__config_paths["run"] = run_config_path
                 self.CurrentRunConfigEdit.setText(run_config_path)
-                paths = self.__cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation.run_path.paths", [])
+                paths = self.__cfg_mgr.get(CfgKey.GLOBAL.AUTOMATION.RUN_PATH.PATHS, [])
                 if run_config_path not in paths:
                     paths.append(run_config_path)
                     index = len(paths) - 1
                 else:
                     index = paths.index(run_config_path)
-                self.__cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation.run_path", {"current": index, "paths": paths})
+                self.__cfg_mgr.set(CfgKey.GLOBAL.AUTOMATION.RUN_PATH.ROOT, {"current": index, "paths": paths})
             else:
                 QMessageBox.warning(
                     self,
@@ -1020,13 +1021,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setUsersToTreeWidget(data)
                 self.__config_paths["user"] = user_config_path
                 self.CurrentUserConfigEdit.setText(user_config_path)
-                paths = self.__cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation.user_path.paths", [])
+                paths = self.__cfg_mgr.get(CfgKey.GLOBAL.AUTOMATION.USER_PATH.PATHS, [])
                 if user_config_path not in paths:
                     paths.append(user_config_path)
                     index = len(paths) - 1
                 else:
                     index = paths.index(user_config_path)
-                self.__cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation.user_path", {"current": index, "paths": paths})
+                self.__cfg_mgr.set(CfgKey.GLOBAL.AUTOMATION.USER_PATH.ROOT, {"current": index, "paths": paths})
             else:
                 QMessageBox.warning(
                     self,

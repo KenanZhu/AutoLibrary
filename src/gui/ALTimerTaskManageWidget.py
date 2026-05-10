@@ -26,7 +26,9 @@ from PySide6.QtGui import (
 )
 
 import managers.config.ConfigManager as ConfigManager
+
 from utils.TimerUtils import TimerUtils
+from interfaces.ConfigProvider import ConfigProvider, CfgKey
 
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
@@ -190,7 +192,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ):
 
         super().__init__(parent)
-        self.__cfg_mgr = ConfigManager.instance()
+        self.__cfg_mgr: ConfigProvider = ConfigManager.instance()
         self.__timer_tasks = []
         self.__check_timer = None
         self.__sort_policy = self.SortPolicy.BY_EXECUTE_TIME
@@ -244,7 +246,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ) -> list:
 
         try:
-            timer_tasks = self.__cfg_mgr.get(ConfigManager.ConfigType.TIMERTASK)
+            timer_tasks = self.__cfg_mgr.get(CfgKey.TIMERTASK.ROOT)
             if timer_tasks and "timer_tasks" in timer_tasks:
                 for task in timer_tasks["timer_tasks"]:
                     task["added_time"] = datetime.strptime(task["added_time"], "%Y-%m-%d %H:%M:%S")
@@ -277,7 +279,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 if "repeat_history" in task:
                     for item in task["repeat_history"]:
                         item["result"] = item["result"].value
-            self.__cfg_mgr.set(ConfigManager.ConfigType.TIMERTASK, "", { "timer_tasks": timer_tasks })
+            self.__cfg_mgr.set(CfgKey.TIMERTASK.ROOT, { "timer_tasks": timer_tasks })
             return True
         except Exception as e:
             QMessageBox.warning(
@@ -437,7 +439,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             f"下次执行时间：{datetime.strftime(timer_task["execute_time"], "%Y-%m-%d %H:%M:%S")}\n"
             f"已记录次数：{history_count}"
         )
-    
+
 
     def deleteTask(
         self,

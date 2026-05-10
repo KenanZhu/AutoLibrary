@@ -11,6 +11,8 @@ import os
 
 import managers.config.ConfigManager as ConfigManager
 
+from interfaces.ConfigProvider import CfgKey
+
 class ConfigUtils:
     """
         Config utilities class.
@@ -29,7 +31,7 @@ class ConfigUtils:
         cfg_mgr = ConfigManager.instance() # config manager instance
 
         config_paths = {"run": "", "user": ""}
-        auto_config = cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation", {})
+        auto_config = cfg_mgr.get(CfgKey.GLOBAL.AUTOMATION.ROOT, {})
         for cfg_type in ["run", "user"]:
                 paths = auto_config.get(f"{cfg_type}_path", {}).get("paths", [])
                 index = auto_config.get(f"{cfg_type}_path", {}).get("current", 0)
@@ -42,5 +44,5 @@ class ConfigUtils:
                 config_paths[cfg_type] = paths[index]
                 data = {"current": index, "paths": paths}
                 auto_config[f"{cfg_type}_path"] = data
-        cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation", auto_config)
+        cfg_mgr.set(CfgKey.GLOBAL.AUTOMATION.ROOT, auto_config)
         return config_paths
