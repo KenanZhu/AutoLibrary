@@ -1,17 +1,6 @@
 """
     AutoScript module for the AutoLibrary project.
-
-    A lightweight scripting DSL for preprocessing user reservation data
-    in repeatable timer tasks. Supports IF/ELSE IF/ELSE/END IF control
-    flow, SET assignments, .ADD./.SUB. operations, and rich comparisons.
-
-    Public API:
-    - execute(script_text, target_data): Execute an AutoScript.
-    - addTargetVar(name, var_type, key_path, display_name): Register a variable.
-    - registerDefaultTargetVars(): Register all built-in target variables.
-    - META_VARS: dict of built-in read-only meta variables.
-    - ALL_VARIABLES: dict of all available variables (display_name -> (name, type)).
-    - ASTokenizer: Unified tokenizer for the orchestration dialog and engine.
+    A lightweight scripting DSL for preprocessing user reservation data.
 """
 from autoscript.ASTokenizer import (
     ASTokenizer,
@@ -27,6 +16,7 @@ from autoscript.ASEngine import (
     addTargetVar,
 )
 from autoscript.ASObject import _META_VARS as META_VARS
+from autoscript.ASObserver import ParsingObserver
 
 __all__ = [
     "execute",
@@ -41,7 +31,8 @@ __all__ = [
     "IfNode",
     "SetNode",
     "OpNode",
-    "ElifNode"
+    "ElifNode",
+    "ParsingObserver",
 ]
 
 # All variables available to scripts (display_name -> (name, type)).

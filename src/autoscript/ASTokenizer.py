@@ -326,11 +326,26 @@ class ASTokenizer:
     """
         Tokenizer / parser for the AutoScript DSL.
 
-        Provides three entry points:
+        Main class-level entry points (engine-facing):
           - classifyLine(line)   — single-line classifier.
           - tokenize(script)      — flat Stmt list.
           - parse(script)         — structured AST (Script root).
+
+        Observer-enabled API (used by pre-check & orchestration):
+          >>> obs = ScriptPrecheckObserver()
+          >>> stmts = ASTokenizer.tokenizeWithObservers(script, [obs])
     """
+
+    @classmethod
+    def _notifyObservers(
+        cls,
+        observers: list,
+        method: str,
+        *args
+    ):
+
+        for obs in observers:
+            getattr(obs, method)(*args)
 
     @classmethod
     def _matchLine(
@@ -345,18 +360,29 @@ class ASTokenizer:
         return (None, None)
 
     @classmethod
-    def classifyLine(
+    def _buildStmt(
         cls,
-        stripped: str
-    ):
+        stripped: str,
+        kind: str | None,
+        data
+    ) -> Stmt:
 
-        kind, data = cls._matchLine(stripped)
-        if kind is None or kind == K_PASS:
-            return None
-        return (kind, data)
+        stmt = Stmt(kind=kind, raw_line=stripped)
+        if kind == K_IF or kind == K_ELSE_IF:
+            stmt.condition = data
+        elif kind == K_SET:
+            stmt.target, stmt.value = data
+            stmt.op_type = OP_SET
+        elif kind == K_ADD:
+            stmt.target, stmt.value = data
+            stmt.op_type = OP_ADD
+        elif kind == K_SUB:
+            stmt.target, stmt.value = data
+            stmt.op_type = OP_SUB
+        return stmt
 
     @classmethod
-    def tokenize(
+    def _tokenizeImpl(
         cls,
         script: str
     ) -> list:
@@ -367,29 +393,15 @@ class ASTokenizer:
             if not stripped:
                 continue
             kind, data = cls._matchLine(stripped)
-            stmt = Stmt(kind=kind, raw_line=stripped)
-
-            if kind == K_IF or kind == K_ELSE_IF:
-                stmt.condition = data
-            elif kind == K_SET:
-                stmt.target, stmt.value = data
-                stmt.op_type = OP_SET
-            elif kind == K_ADD:
-                stmt.target, stmt.value = data
-                stmt.op_type = OP_ADD
-            elif kind == K_SUB:
-                stmt.target, stmt.value = data
-                stmt.op_type = OP_SUB
-            statements.append(stmt)
+            statements.append(cls._buildStmt(stripped, kind, data))
         return statements
 
     @classmethod
-    def parse(
+    def _parseTokens(
         cls,
-        script: str
+        tokens: list
     ) -> Script:
 
-        tokens = cls.tokenize(script)
         body = []
         i = 0
         while i < len(tokens):
@@ -419,6 +431,77 @@ class ASTokenizer:
                 body.append(UnrecogNode(raw_line=tok.raw_line))
                 i += 1
         return Script(body=body)
+
+    @classmethod
+    def classifyLine(
+        cls,
+        stripped: str
+    ):
+
+        kind, data = cls._matchLine(stripped)
+        if kind is None or kind == K_PASS:
+            return None
+        return (kind, data)
+
+    @classmethod
+    def tokenize(
+        cls,
+        script: str
+    ) -> list:
+
+        return cls._tokenizeImpl(script)
+
+    @classmethod
+    def parse(
+        cls,
+        script: str
+    ) -> Script:
+
+        return cls._parseTokens(cls._tokenizeImpl(script))
+
+    @classmethod
+    def tokenizeWithObservers(
+        cls,
+        script: str,
+        observers: list
+    ) -> list:
+        """
+            Tokenize and notify observers for each classified line.
+
+            Fires onParseStart, onTokenParsed, and onParseComplete
+            events to each observer.  This is the single tokenization
+            pipeline shared by pre-check and orchestration modules.
+        """
+
+        cls._notifyObservers(observers, "onParseStart", script)
+        statements = []
+        for i, raw_line in enumerate(script.split("\n"), 1):
+            stripped = raw_line.strip()
+            if not stripped:
+                continue
+            kind, data = cls._matchLine(stripped)
+            cls._notifyObservers(observers, "onTokenParsed", kind, data, i, stripped)
+            statements.append(cls._buildStmt(stripped, kind, data))
+        cls._notifyObservers(observers, "onParseComplete", statements)
+        return statements
+
+    @classmethod
+    def parseWithObservers(
+        cls,
+        script: str,
+        observers: list
+    ) -> Script:
+        """
+            Parse and notify observers throughout the pipeline.
+
+            Calls tokenizeWithObservers (which fires per-token events),
+            then builds the AST and fires onASTReady.
+        """
+
+        tokens = cls.tokenizeWithObservers(script, observers)
+        ast = cls._parseTokens(tokens)
+        cls._notifyObservers(observers, "onASTReady", ast)
+        return ast
 
     @classmethod
     def _parseIfBlock(
