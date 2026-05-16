@@ -8,10 +8,18 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import re
-from datetime import datetime, date, time
+from datetime import (
+    datetime,
+    date,
+    time
+)
 
 
-__all__ = ["ASObject", "_META_VARS", "_inferType"]
+__all__ = [
+    "ASObject",
+    "_META_VARS",
+    "_inferType"
+]
 
 
 # Default values for each supported type when no value is present
@@ -21,7 +29,7 @@ _TYPE_DEFAULTS = {
     "Boolean": False,
     "Date": None,
     "Time": None,
-    "String": "",
+    "String": ""
 }
 
 

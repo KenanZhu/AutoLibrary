@@ -7,7 +7,12 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from datetime import datetime, timedelta, date, time
+from datetime import (
+    datetime,
+    timedelta,
+    date,
+    time
+)
 
 from .ASObject import ASObject
 
@@ -51,8 +56,9 @@ class ASOperator:
     }
     _ARITH_TYPES = {"Date", "Time", "Int", "Float"}
 
-    @staticmethod
+    @classmethod
     def apply(
+        cls,
         target: ASObject,
         operand: ASObject,
         op: str,
@@ -73,7 +79,7 @@ class ASOperator:
 
         tp = target.var_type
         op_tp = operand.var_type
-        if tp not in ASOperator._ARITH_TYPES:
+        if tp not in cls._ARITH_TYPES:
             raise ValueError(f"'{tp}' 类型字段不支持操作运算")
         if op_tp not in ("Int", "Float"):
             raise ValueError(f"操作数类型 '{op_tp}' 不能用于运算，需要数值类型 (Int / Float)")
@@ -83,73 +89,70 @@ class ASOperator:
         if target_val is None:
             raise ValueError(f"'{target.name}' 的值为空，无法进行运算")
         if op == ".ADD.":
-            ASOperator._arithAdd(target, target_val, operand, target_data)
+            cls._arithAdd(target, target_val, operand, target_data)
         elif op == ".SUB.":
-            ASOperator._arithSub(target, target_val, operand, target_data)
+            cls._arithSub(target, target_val, operand, target_data)
         else:
             raise ValueError(f"不支持的操作 '{op}'")
 
-    @staticmethod
+    @classmethod
+    def _arithBinary(
+        cls,
+        target: ASObject,
+        target_val,
+        operand: ASObject,
+        target_data: dict,
+        sign: int
+    ):
+        """Apply ADD (sign=1) or SUB (sign=-1) per type."""
+
+        tp = target.var_type
+        raw_op = operand._value
+        op_name = "ADD" if sign == 1 else "SUB"
+
+        if tp == "Date":
+            if not isinstance(target_val, date):
+                raise ValueError(f"'{target.name}' 的值 '{target_val}' 不是有效日期")
+            new_val = target_val + timedelta(days=int(raw_op)) * sign
+        elif tp == "Time":
+            if not isinstance(target_val, time):
+                raise ValueError(f"'{target.name}' 的值 '{target_val}' 不是有效时间")
+            delta = timedelta(hours=int(raw_op)) * sign
+            dt = datetime.combine(datetime.today(), target_val) + delta
+            new_val = dt.time()
+        elif tp == "Int":
+            new_val = int(target_val) + int(raw_op) * sign
+        elif tp == "Float":
+            new_val = float(target_val) + float(raw_op) * sign
+        else:
+            raise ValueError(f"'{tp}' 类型不支持 {op_name} 操作")
+        target.setValue(new_val, target_data)
+
+    @classmethod
     def _arithAdd(
+        cls,
         target: ASObject,
         target_val,
         operand: ASObject,
         target_data: dict
     ):
         """Dispatch ADD per type."""
+        cls._arithBinary(target, target_val, operand, target_data, 1)
 
-        tp = target.var_type
-        raw_op = operand._value
-
-        if tp == "Date":
-            if not isinstance(target_val, date):
-                raise ValueError(f"'{target.name}' 的值 '{target_val}' 不是有效日期")
-            new_val = target_val + timedelta(days=int(raw_op))
-        elif tp == "Time":
-            if not isinstance(target_val, time):
-                raise ValueError(f"'{target.name}' 的值 '{target_val}' 不是有效时间")
-            dt = datetime.combine(datetime.today(), target_val) + timedelta(hours=int(raw_op))
-            new_val = dt.time()
-        elif tp == "Int":
-            new_val = int(target_val) + int(raw_op)
-        elif tp == "Float":
-            new_val = float(target_val) + float(raw_op)
-        else:
-            raise ValueError(f"'{tp}' 类型不支持 ADD 操作")
-        target.setValue(new_val, target_data)
-
-    @staticmethod
+    @classmethod
     def _arithSub(
+        cls,
         target: ASObject,
         target_val,
         operand: ASObject,
         target_data: dict
     ):
-
         """Dispatch SUB per type."""
+        cls._arithBinary(target, target_val, operand, target_data, -1)
 
-        tp = target.var_type
-        raw_op = operand._value
-
-        if tp == "Date":
-            if not isinstance(target_val, date):
-                raise ValueError(f"'{target.name}' 的值 '{target_val}' 不是有效日期")
-            new_val = target_val - timedelta(days=int(raw_op))
-        elif tp == "Time":
-            if not isinstance(target_val, time):
-                raise ValueError(f"'{target.name}' 的值 '{target_val}' 不是有效时间")
-            dt = datetime.combine(datetime.today(), target_val) - timedelta(hours=int(raw_op))
-            new_val = dt.time()
-        elif tp == "Int":
-            new_val = int(target_val) - int(raw_op)
-        elif tp == "Float":
-            new_val = float(target_val) - float(raw_op)
-        else:
-            raise ValueError(f"'{tp}' 类型不支持 SUB 操作")
-        target.setValue(new_val, target_data)
-
-    @staticmethod
+    @classmethod
     def compare(
+        cls,
         left: ASObject,
         right: ASObject,
         op: str,
@@ -171,7 +174,7 @@ class ASOperator:
                 ValueError: If the types are incompatible for comparison.
         """
 
-        cmp_func = ASOperator._COMPARE.get(op)
+        cmp_func = cls._COMPARE.get(op)
         if cmp_func is None:
             raise ValueError(f"未知的比较操作 '{op}'")
         left_val = left.getValue(target_data)

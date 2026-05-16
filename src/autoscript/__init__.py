@@ -11,14 +11,37 @@
     - registerDefaultTargetVars(): Register all built-in target variables.
     - META_VARS: dict of built-in read-only meta variables.
     - ALL_VARIABLES: dict of all available variables (display_name -> (name, type)).
+    - ASTokenizer: Unified tokenizer for the orchestration dialog and engine.
 """
-
-from autoscript.ASEngine import execute, addTargetVar
+from autoscript.ASTokenizer import (
+    ASTokenizer,
+    Stmt,
+    ElifNode,
+    Script,
+    IfNode,
+    SetNode,
+    OpNode,
+)
+from autoscript.ASEngine import (
+    execute,
+    addTargetVar,
+)
 from autoscript.ASObject import _META_VARS as META_VARS
 
 __all__ = [
-    "execute", "addTargetVar", "registerDefaultTargetVars",
-    "META_VARS", "ALL_VARIABLES",
+    "execute",
+    "addTargetVar",
+    "registerDefaultTargetVars",
+    "buildMockTargetData",
+    "META_VARS",
+    "ALL_VARIABLES",
+    "ASTokenizer",
+    "Stmt",
+    "Script",
+    "IfNode",
+    "SetNode",
+    "OpNode",
+    "ElifNode"
 ]
 
 # All variables available to scripts (display_name -> (name, type)).
@@ -43,9 +66,33 @@ _TARGET_VAR_DEFS = [
     ("RESERVE_BEGIN_TIME", "Time",  ["reserve_info", "begin_time", "time"], "预约开始时间"),
     ("RESERVE_END_TIME",   "Time",  ["reserve_info", "end_time",   "time"], "预约结束时间"),
 ]
+_MOCK_TYPE_VALUES = {
+    "String": "__mock__",
+    "Boolean": True,
+    "Date": "2099-01-01",
+    "Time": "00:00",
+    "Int": 0,
+    "Float": 0.0,
+}
 
 
-def registerDefaultTargetVars() -> None:
+def buildMockTargetData(
+) -> dict:
+    """
+        Build a target_data dict filled with type-appropriate mock values
+        for all registered target variables.
+    """
+    data = {}
+    for _, var_type, key_path, _ in _TARGET_VAR_DEFS:
+        d = data
+        for key in key_path[:-1]:
+            d = d.setdefault(key, {})
+        d[key_path[-1]] = _MOCK_TYPE_VALUES.get(var_type, "")
+    return data
+
+
+def registerDefaultTargetVars(
+) -> None:
     """
         Register all built-in target variables with the engine.
         This must be called before any script execution.
