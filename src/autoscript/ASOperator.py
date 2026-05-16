@@ -55,6 +55,14 @@ class ASOperator:
         ".BLE.": lambda a, b: a <= b,
     }
     _ARITH_TYPES = {"Date", "Time", "Int", "Float"}
+    # Comparison-compatible type groups
+    _COMPATIBLE_GROUPS = [
+        {"String"},
+        {"Boolean"},
+        {"Int", "Float"},
+        {"Date"},
+        {"Time"},
+    ]
 
     @classmethod
     def apply(
@@ -177,6 +185,18 @@ class ASOperator:
         cmp_func = cls._COMPARE.get(op)
         if cmp_func is None:
             raise ValueError(f"未知的比较操作 '{op}'")
+        left_tp = left.var_type
+        right_tp = right.var_type
+        if left_tp != right_tp:
+            same_group = any(
+                left_tp in g and right_tp in g
+                for g in cls._COMPATIBLE_GROUPS
+            )
+            if not same_group:
+                raise ValueError(
+                    f"类型不兼容: 无法将 '{left.name}' ({left_tp}) "
+                    f"与 '{right.name}' ({right_tp}) 进行比较"
+                )
         left_val = left.getValue(target_data)
         right_val = right.getValue(target_data)
         try:

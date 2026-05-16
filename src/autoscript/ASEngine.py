@@ -307,9 +307,12 @@ def _evaluateCondition(
             continue
         left_raw = s[:idx].strip()
         right_raw = s[idx + len(op):].strip()
-        left_obj = _resolveAsObject(left_raw, target_data)
-        right_obj = _resolveAsObject(right_raw, target_data)
-        return ASOperator.compare(left_obj, right_obj, op, target_data)
+        try:
+            left_obj = _resolveAsObject(left_raw, target_data)
+            right_obj = _resolveAsObject(right_raw, target_data)
+            return ASOperator.compare(left_obj, right_obj, op, target_data)
+        except ValueError as e:
+            raise ValueError(_errPos(line, str(e)))
     raise ValueError(
         _errPos(line, f"无法识别的条件表达式 '{condition_str}'")
     )
@@ -352,7 +355,10 @@ def _executeSet(
     if not obj:
         obj = _SCRIPT_VARS.get(upper_name)
     if obj:
-        obj.setValue(resolved, target_data)
+        try:
+            obj.setValue(resolved, target_data)
+        except ValueError as e:
+            raise ValueError(_errPos(line, str(e)))
         return
     inferred_type = _inferType(resolved, stripped)
     new_var = ASObject(
@@ -398,8 +404,11 @@ def _executeOperation(
     target = _resolveFieldObj(field_name)
     if target is None:
         raise ValueError(_errPos(line, f"未知字段 '{field_name}'"))
-    operand = _resolveAsObject(raw_value, target_data)
-    ASOperator.apply(target, operand, op, target_data)
+    try:
+        operand = _resolveAsObject(raw_value, target_data)
+        ASOperator.apply(target, operand, op, target_data)
+    except ValueError as e:
+        raise ValueError(_errPos(line, str(e)))
 
 
 def addTargetVar(
