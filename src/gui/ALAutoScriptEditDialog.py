@@ -110,16 +110,15 @@ class ALAutoScriptEditDialog(QDialog):
         super().__init__(parent)
         self._fontSize = 19
 
-        self.modifyUi()
+        self.setupUi()
         self.connectSignals()
-
-        self._textEdit.setPlainText(script)
+        self.textEdit.setPlainText(script)
         self._highlighter = ALScriptHighlighter(
-            self._textEdit.document()
+            self.textEdit.document()
         )
 
 
-    def modifyUi(
+    def setupUi(
         self
     ):
 
@@ -129,58 +128,53 @@ class ALAutoScriptEditDialog(QDialog):
         layout.setSpacing(4)
         layout.setContentsMargins(4, 4, 4, 4)
         toolbarLayout = QHBoxLayout()
-        self._zoomInBtn = QPushButton("＋")
-        self._zoomInBtn.setFixedSize(25, 25)
-        self._zoomOutBtn = QPushButton("－")
-        self._zoomOutBtn.setFixedSize(25, 25)
-        self._zoomResetBtn = QPushButton(
+        self.zoomInBtn = QPushButton("＋")
+        self.zoomInBtn.setFixedSize(25, 25)
+        self.zoomOutBtn = QPushButton("－")
+        self.zoomOutBtn.setFixedSize(25, 25)
+        self.zoomResetBtn = QPushButton(
             QApplication.style().standardIcon(
                 QStyle.StandardPixmap.SP_BrowserReload
             ), ""
         )
-        self._zoomResetBtn.setFixedSize(25, 25)
-        self._zoomResetBtn.setToolTip("重置缩放")
-        self._zoomLabel = QLabel(f"{self._fontSize}px")
-        self._zoomLabel.setFixedHeight(25)
-        toolbarLayout.addWidget(self._zoomInBtn)
-        toolbarLayout.addWidget(self._zoomOutBtn)
-        toolbarLayout.addWidget(self._zoomResetBtn)
-        toolbarLayout.addWidget(self._zoomLabel)
+        self.zoomResetBtn.setFixedSize(25, 25)
+        self.zoomResetBtn.setToolTip("重置缩放")
+        self.zoomLabel = QLabel(f"{self._fontSize}px")
+        self.zoomLabel.setFixedHeight(25)
+        toolbarLayout.addWidget(self.zoomInBtn)
+        toolbarLayout.addWidget(self.zoomOutBtn)
+        toolbarLayout.addWidget(self.zoomResetBtn)
+        toolbarLayout.addWidget(self.zoomLabel)
         toolbarLayout.addStretch()
-        self._copyBtn = QPushButton(
+        self.copyBtn = QPushButton(
             QApplication.style().standardIcon(
                 QStyle.StandardPixmap.SP_FileDialogDetailedView
             ), ""
         )
-        self._copyBtn.setFixedSize(25, 25)
-        self._copyBtn.setToolTip("复制脚本")
-        toolbarLayout.addWidget(self._copyBtn)
+        self.copyBtn.setFixedSize(25, 25)
+        self.copyBtn.setToolTip("复制脚本")
+        toolbarLayout.addWidget(self.copyBtn)
         layout.addLayout(toolbarLayout)
-        self._textEdit = QPlainTextEdit(self)
-        self._textEdit.setLineWrapMode(
+        self.textEdit = QPlainTextEdit(self)
+        self.textEdit.setLineWrapMode(
             QPlainTextEdit.LineWrapMode.NoWrap
         )
-        self._textEdit.setStyleSheet(
+        self.textEdit.setStyleSheet(
             "QPlainTextEdit {"
             "  font-family: 'Courier New', 'Consolas', monospace;"
            f"  font-size: {self._fontSize}px;"
             "}"
         )
-        layout.addWidget(self._textEdit)
-
+        layout.addWidget(self.textEdit)
         self._createButtonPanel(layout)
-
-        self._btnBox = QDialogButtonBox(
+        self.btnBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok |
             QDialogButtonBox.StandardButton.Cancel
         )
-        self._btnBox.button(
-            QDialogButtonBox.StandardButton.Ok
-        ).setText("保存")
-        self._btnBox.button(
-            QDialogButtonBox.StandardButton.Cancel
-        ).setText("取消")
-        layout.addWidget(self._btnBox)
+        self.btnBox.button(QDialogButtonBox.StandardButton.Ok).setText("确定")
+        self.btnBox.button(QDialogButtonBox.StandardButton.Cancel).setText("取消")
+        layout.addWidget(self.btnBox)
+
 
     def _createButtonPanel(
         self,
@@ -271,6 +265,7 @@ class ALAutoScriptEditDialog(QDialog):
         tab_widget.addTab(var_widget, "变量")
         parent_layout.addWidget(tab_widget)
 
+
     def _addButtonsToGrid(
         self,
         grid_layout,
@@ -308,43 +303,43 @@ class ALAutoScriptEditDialog(QDialog):
         template = btn.property("template")
         if not template:
             return
-        cursor = self._textEdit.textCursor()
+        cursor = self.textEdit.textCursor()
         cursor.insertText(template)
+
 
     def connectSignals(
         self
     ):
 
-        self._btnBox.accepted.connect(self.accept)
-        self._btnBox.rejected.connect(self.reject)
-        self._zoomInBtn.clicked.connect(self.onZoomIn)
-        self._zoomOutBtn.clicked.connect(self.onZoomOut)
-        self._zoomResetBtn.clicked.connect(self.onZoomReset)
-        self._copyBtn.clicked.connect(self.onCopy)
+        self.btnBox.accepted.connect(self.accept)
+        self.btnBox.rejected.connect(self.reject)
+        self.zoomInBtn.clicked.connect(self.onZoomIn)
+        self.zoomOutBtn.clicked.connect(self.onZoomOut)
+        self.zoomResetBtn.clicked.connect(self.onZoomReset)
+        self.copyBtn.clicked.connect(self.onCopy)
 
 
     def getScript(
         self
     ) -> str:
 
-        return self._textEdit.toPlainText()
+        return self.textEdit.toPlainText()
 
 
     def updateFontSize(
         self
     ):
 
-        font = self._textEdit.font()
+        font = self.textEdit.font()
         font.setPointSize(self._fontSize)
-        self._textEdit.setFont(font)
-        self._textEdit.setStyleSheet(
+        self.textEdit.setFont(font)
+        self.textEdit.setStyleSheet(
             "QPlainTextEdit {"
             "  font-family: 'Courier New', 'Consolas', monospace;"
             f"  font-size: {self._fontSize}px;"
             "}"
         )
-        self._zoomLabel.setText(f"{self._fontSize}px")
-
+        self.zoomLabel.setText(f"{self._fontSize}px")
 
     @Slot()
     def onZoomIn(
@@ -354,7 +349,6 @@ class ALAutoScriptEditDialog(QDialog):
         self._fontSize = min(self._fontSize + 2, 40)
         self.updateFontSize()
 
-
     @Slot()
     def onZoomOut(
         self
@@ -362,7 +356,6 @@ class ALAutoScriptEditDialog(QDialog):
 
         self._fontSize = max(self._fontSize - 2, 8)
         self.updateFontSize()
-
 
     @Slot()
     def onZoomReset(
@@ -372,19 +365,18 @@ class ALAutoScriptEditDialog(QDialog):
         self._fontSize = 13
         self.updateFontSize()
 
-
     @Slot()
     def onCopy(
         self
     ):
 
         clipboard = QApplication.clipboard()
-        clipboard.setText(self._textEdit.toPlainText())
-        original = self._copyBtn.text()
-        self._copyBtn.setText("已复制")
-        self._copyBtn.setEnabled(False)
+        clipboard.setText(self.textEdit.toPlainText())
+        original = self.copyBtn.text()
+        self.copyBtn.setText("已复制")
+        self.copyBtn.setEnabled(False)
         from PySide6.QtCore import QTimer
         QTimer.singleShot(2000, lambda: (
-            self._copyBtn.setText(original),
-            self._copyBtn.setEnabled(True)
+            self.copyBtn.setText(original),
+            self.copyBtn.setEnabled(True)
         ))

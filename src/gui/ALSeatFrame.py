@@ -31,6 +31,7 @@ class ALSeatFrame(QFrame):
 
         self.setupUi()
 
+
     def setupUi(
         self
     ):
@@ -53,6 +54,7 @@ class ALSeatFrame(QFrame):
         self.Label = QLabel(self.__seat_number, self)
         self.Label.setAlignment(Qt.AlignCenter)
         self.Label.setGeometry(0, 0, 60, 40)
+
 
     def mousePressEvent(
         self,

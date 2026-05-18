@@ -28,15 +28,14 @@ class ALTimerTaskHistoryDialog(QDialog):
     ):
 
         super().__init__(parent)
-
         self.__task_data = task_data
         self.__history = task_data.get("repeat_history", [])
 
-        self.modifyUi()
+        self.setupUi()
         self.connectSignals()
 
 
-    def modifyUi(
+    def setupUi(
         self
     ):
 
