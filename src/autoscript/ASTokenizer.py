@@ -382,6 +382,20 @@ class ASTokenizer:
         return stmt
 
     @classmethod
+    def _stripComment(
+        cls,
+        line: str
+    ) -> str:
+
+        in_single = False
+        for i, ch in enumerate(line):
+            if ch == "'":
+                in_single = not in_single
+            elif ch == "/" and i + 1 < len(line) and line[i + 1] == "/" and not in_single:
+                return line[:i].rstrip()
+        return line
+
+    @classmethod
     def _tokenizeImpl(
         cls,
         script: str
@@ -389,11 +403,11 @@ class ASTokenizer:
 
         statements = []
         for raw_line in script.split("\n"):
-            stripped = raw_line.strip()
-            if not stripped:
+            code = cls._stripComment(raw_line.strip())
+            if not code:
                 continue
-            kind, data = cls._matchLine(stripped)
-            statements.append(cls._buildStmt(stripped, kind, data))
+            kind, data = cls._matchLine(code)
+            statements.append(cls._buildStmt(code, kind, data))
         return statements
 
     @classmethod
@@ -476,12 +490,12 @@ class ASTokenizer:
         cls._notifyObservers(observers, "onParseStart", script)
         statements = []
         for i, raw_line in enumerate(script.split("\n"), 1):
-            stripped = raw_line.strip()
-            if not stripped:
+            code = cls._stripComment(raw_line.strip())
+            if not code:
                 continue
-            kind, data = cls._matchLine(stripped)
-            cls._notifyObservers(observers, "onTokenParsed", kind, data, i, stripped)
-            statements.append(cls._buildStmt(stripped, kind, data))
+            kind, data = cls._matchLine(code)
+            cls._notifyObservers(observers, "onTokenParsed", kind, data, i, code)
+            statements.append(cls._buildStmt(code, kind, data))
         cls._notifyObservers(observers, "onParseComplete", statements)
         return statements
 
