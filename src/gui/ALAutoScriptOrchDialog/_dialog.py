@@ -153,12 +153,12 @@ class ALAutoScriptOrchDialog(QDialog):
         for block in self._blocks:
             blockType = block.getBlockType()
             if blockType == "IF" and prevType is not None:
-                parts.append("ENDIF")
+                parts.append("END IF")
             lines = block.toScriptLines()
             parts.extend(lines)
             prevType = blockType
         if self._blocks and self._blocks[0].getBlockType() == "IF":
-            parts.append("ENDIF")
+            parts.append("END IF")
         return "\n".join(parts)
 
     @Slot()
