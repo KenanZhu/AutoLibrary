@@ -102,10 +102,9 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptSetButton.setMinimumHeight(25)
         self.AutoScriptSetButton.setFixedWidth(130)
         autoScriptBtnLayout.addWidget(self.AutoScriptSetButton)
-        self.AutoScriptPreviewButton = QPushButton("预览")
+        self.AutoScriptPreviewButton = QPushButton("编辑")
         self.AutoScriptPreviewButton.setMinimumHeight(25)
         self.AutoScriptPreviewButton.setFixedWidth(60)
-        self.AutoScriptPreviewButton.setEnabled(False)
         autoScriptBtnLayout.addWidget(self.AutoScriptPreviewButton)
         autoScriptBtnLayout.addStretch()
         self.AutoScriptHelpButton = QPushButton("?")
@@ -170,7 +169,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 self.__auto_script = auto_script
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
-                self.AutoScriptPreviewButton.setEnabled(True)
         self.ConfirmButton.setText("保存")
 
 
@@ -299,20 +297,24 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             if script:
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
-                self.AutoScriptPreviewButton.setEnabled(True)
             else:
                 self.AutoScriptStatusLabel.setText("未设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
-                self.AutoScriptPreviewButton.setEnabled(False)
         dlg.deleteLater()
 
     @Slot()
     def onPreviewAutoScript(self):
-        if not self.__auto_script:
-            return
-        from gui.ALAutoScriptPrevDialog import ALAutoScriptPreviewDialog
-        dlg = ALAutoScriptPreviewDialog(self, self.__auto_script)
-        dlg.exec()
+        from gui.ALAutoScriptEditDialog import ALAutoScriptEditDialog
+        dlg = ALAutoScriptEditDialog(self, self.__auto_script)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            script = dlg.getScript()
+            self.__auto_script = script
+            if script:
+                self.AutoScriptStatusLabel.setText("已设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
+            else:
+                self.AutoScriptStatusLabel.setText("未设置")
+                self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
         dlg.deleteLater()
 
     @Slot()

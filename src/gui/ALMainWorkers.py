@@ -18,7 +18,7 @@ from PySide6.QtCore import (
 from base.MsgBase import MsgBase
 from operators.AutoLib import AutoLib
 from utils.JSONReader import JSONReader
-from dsl.AutoScriptEngine import AutoScriptEngine
+from autoscript import execute, registerDefaultTargetVars
 
 
 class AutoLibWorker(MsgBase, QThread):
@@ -225,7 +225,8 @@ class TimerTaskWorker(AutoLibWorker):
                 continue
             for user in group.get("users", []):
                 try:
-                    AutoScriptEngine.execute(auto_script, user)
+                    registerDefaultTargetVars()
+                    execute(auto_script, user)
                     affected_count += 1
                 except ValueError as e:
                     self._showTrace(
