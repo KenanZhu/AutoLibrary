@@ -44,44 +44,44 @@ class ALScriptHighlighter(QSyntaxHighlighter):
         self._rules = []
 
         keywordFmt = QTextCharFormat()
-        keywordFmt.setForeground(QColor("#007ACC"))
+        keywordFmt.setForeground(QColor("#569CD6"))
         keywordFmt.setFontWeight(QFont.Weight.Bold)
         for kw in ["IF", "ELSE IF", "ELSE", "ENDIF", "END IF",
                     "SET", "PASS", "THEN"]:
             pattern = r"\b" + kw.replace(" ", r"\s+") + r"\b"
             self._rules.append((pattern, keywordFmt))
         opFmt = QTextCharFormat()
-        opFmt.setForeground(QColor("#AF00DB"))
+        opFmt.setForeground(QColor("#C586C0"))
         opFmt.setFontWeight(QFont.Weight.Normal)
         for op in [r"\.EQ\.", r"\.NEQ\.", r"\.BGT\.", r"\.BLT\.",
                    r"\.BGE\.", r"\.BLE\.", r"\.ADD\.", r"\.SUB\.",
                    r"\.AND\.", r"\.OR\."]:
             self._rules.append((op, opFmt))
-        literalFmt = QTextCharFormat()
-        literalFmt.setForeground(QColor("#AF00DB"))
-        literalFmt.setFontWeight(QFont.Weight.Bold)
-        for lit in [".TRUE.", ".FALSE."]:
-            self._rules.append((r"\b" + lit.replace(".", r"\.") + r"\b", literalFmt))
+        boolFmt = QTextCharFormat()
+        boolFmt.setForeground(QColor("#4FC1FF"))
+        boolFmt.setFontWeight(QFont.Weight.Bold)
+        self._rules.append((r"\.TRUE\.", boolFmt))
+        self._rules.append((r"\.FALSE\.", boolFmt))
         funcFmt = QTextCharFormat()
-        funcFmt.setForeground(QColor("#795E26"))
+        funcFmt.setForeground(QColor("#DCDCAA"))
         funcFmt.setFontWeight(QFont.Weight.Normal)
         self._rules.append((r"\b(?:DATE|TIME)\b", funcFmt))
         varFmt = QTextCharFormat()
-        varFmt.setForeground(QColor("#267F99"))
+        varFmt.setForeground(QColor("#9CDCFE"))
         varFmt.setFontWeight(QFont.Weight.Normal)
         var_names = [name for _, (name, _) in ALL_VARIABLES.items()]
         for var in var_names:
             self._rules.append((r"\b" + var + r"\b", varFmt))
         strFmt = QTextCharFormat()
-        strFmt.setForeground(QColor("#A31515"))
+        strFmt.setForeground(QColor("#CE9178"))
         strFmt.setFontWeight(QFont.Weight.Normal)
         self._rules.append((r"'[^']*'", strFmt))
         numFmt = QTextCharFormat()
-        numFmt.setForeground(QColor("#098658"))
+        numFmt.setForeground(QColor("#B5CEA8"))
         numFmt.setFontWeight(QFont.Weight.Normal)
         self._rules.append((r"\b\d+\b", numFmt))
         commentFmt = QTextCharFormat()
-        commentFmt.setForeground(QColor("#008000"))
+        commentFmt.setForeground(QColor("#6A9955"))
         commentFmt.setFontItalic(True)
         self._rules.append((r"//[^\n]*", commentFmt))
 
