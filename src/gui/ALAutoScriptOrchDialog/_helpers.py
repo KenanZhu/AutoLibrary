@@ -321,11 +321,11 @@ class _DateInputContainer(QWidget):
 
         s = expr.strip().upper()
         _RELATIVE_MAP = {
-            "CURRENT_DATE": 0, "TODAY": 0,
-            "CURRENT_DATE + 1": 1, "TOMORROW": 1,
-            "CURRENT_DATE + 2": 2,
-            "CURRENT_DATE - 1": 3,
-            "CURRENT_DATE - 2": 4,
+            "CURRENT_DATE": 2, "TODAY": 2,
+            "CURRENT_DATE + 1": 3, "TOMORROW": 3,
+            "CURRENT_DATE + 2": 4,
+            "CURRENT_DATE - 1": 1,
+            "CURRENT_DATE - 2": 0,
         }
         idx = _RELATIVE_MAP.get(s)
         if idx is not None:
