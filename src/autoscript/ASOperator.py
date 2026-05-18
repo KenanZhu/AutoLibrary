@@ -17,7 +17,7 @@ from datetime import (
 from .ASObject import ASObject
 
 
-__all__ = ["ASOperator"]
+__all__ = ["ASOperator", "ARITH_TYPES", "COMPARISON_OPERATORS"]
 
 
 class ASOperator:
@@ -96,12 +96,11 @@ class ASOperator:
         target_val = target.getValue(target_data)
         if target_val is None:
             raise ValueError(f"'{target.name}' 的值为空，无法进行运算")
-        if op == ".ADD.":
-            cls._arithAdd(target, target_val, operand, target_data)
-        elif op == ".SUB.":
-            cls._arithSub(target, target_val, operand, target_data)
-        else:
+        op_name = "ADD" if op == ".ADD." else "SUB" if op == ".SUB." else None
+        if op_name is None:
             raise ValueError(f"不支持的操作 '{op}'")
+        sign = 1 if op == ".ADD." else -1
+        cls._arithBinary(target, target_val, operand, target_data, sign, op_name)
 
     @classmethod
     def _arithBinary(
@@ -110,13 +109,13 @@ class ASOperator:
         target_val,
         operand: ASObject,
         target_data: dict,
-        sign: int
+        sign: int,
+        op_name: str = ""
     ):
-        """Apply ADD (sign=1) or SUB (sign=-1) per type."""
+        """Apply arithmetic per type."""
 
         tp = target.var_type
         raw_op = operand._value
-        op_name = "ADD" if sign == 1 else "SUB"
 
         if tp == "Date":
             if not isinstance(target_val, date):
@@ -129,34 +128,12 @@ class ASOperator:
             dt = datetime.combine(datetime.today(), target_val) + delta
             new_val = dt.time()
         elif tp == "Int":
-            new_val = int(target_val) + int(raw_op) * sign
+            new_val = int(target_val) + int(raw_op)*sign
         elif tp == "Float":
-            new_val = float(target_val) + float(raw_op) * sign
+            new_val = float(target_val) + float(raw_op)*sign
         else:
             raise ValueError(f"'{tp}' 类型不支持 {op_name} 操作")
         target.setValue(new_val, target_data)
-
-    @classmethod
-    def _arithAdd(
-        cls,
-        target: ASObject,
-        target_val,
-        operand: ASObject,
-        target_data: dict
-    ):
-        """Dispatch ADD per type."""
-        cls._arithBinary(target, target_val, operand, target_data, 1)
-
-    @classmethod
-    def _arithSub(
-        cls,
-        target: ASObject,
-        target_val,
-        operand: ASObject,
-        target_data: dict
-    ):
-        """Dispatch SUB per type."""
-        cls._arithBinary(target, target_val, operand, target_data, -1)
 
     @classmethod
     def compare(
@@ -206,3 +183,9 @@ class ASOperator:
                 f"无法比较 '{left.name}' ({left.var_type}) "
                 f"与 '{right.name}' ({right.var_type})"
             )
+
+
+# Public constants
+# may be used by the GUI orchestration dialog.
+ARITH_TYPES = ASOperator._ARITH_TYPES
+COMPARISON_OPERATORS = set(ASOperator._COMPARE.keys())

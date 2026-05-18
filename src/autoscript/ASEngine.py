@@ -33,7 +33,7 @@ from .ASTokenizer import (
 )
 
 
-__all__ = ["execute", "addTargetVar"]
+__all__ = ["execute", "addTargetVar", "splitTopLevel"]
 
 
 # Engine state
@@ -69,7 +69,7 @@ _RE_CUR_DATE_OFFSET = re.compile(r"^CURRENT_DATE\s*\+\s*(\d+)$", re.IGNORECASE)
 _RE_CUR_TIME_OFFSET = re.compile(r"^CURRENT_TIME\s*\+\s*(\d+)$", re.IGNORECASE)
 
 
-def _splitTopLevel(
+def splitTopLevel(
     text: str,
     delimiter: str
 ) -> list:
@@ -281,13 +281,13 @@ def _evaluateCondition(
     s = condition_str.strip()
     if not s:
         return False
-    or_parts = _splitTopLevel(s, ".OR.")
+    or_parts = splitTopLevel(s, ".OR.")
     if len(or_parts) > 1:
         return any(
             _evaluateCondition(p.strip(), target_data, line)
             for p in or_parts
         )
-    and_parts = _splitTopLevel(s, ".AND.")
+    and_parts = splitTopLevel(s, ".AND.")
     if len(and_parts) > 1:
         return all(
             _evaluateCondition(p.strip(), target_data, line)
@@ -466,11 +466,13 @@ class _EngineExecutor(NodeVisitor):
 
         return self._cur_line
 
+
     def _incLine(
         self
     ):
 
         self._cur_line += 1
+
 
     def visitScript(
         self,
@@ -479,6 +481,7 @@ class _EngineExecutor(NodeVisitor):
 
         for child in _node.body:
             child.accept(self)
+
 
     def visitIf(
         self,
@@ -506,6 +509,7 @@ class _EngineExecutor(NodeVisitor):
                 for child in _node.else_body:
                     child.accept(self)
 
+
     def visitSet(
         self,
         _node: SetNode
@@ -514,6 +518,7 @@ class _EngineExecutor(NodeVisitor):
         self._incLine()
         full_line = f"SET {_node.target} = {_node.value}"
         _executeSet(full_line, self._target_data, self._line)
+
 
     def visitOp(
         self,
@@ -525,12 +530,14 @@ class _EngineExecutor(NodeVisitor):
         full_line = f"{_node.target} .{op_upper}. {_node.value}"
         _executeOperation(full_line, self._target_data, self._line)
 
+
     def visitPass(
         self,
         _node: PassNode
     ):
 
         self._incLine()
+
 
     def visitUnrecog(
         self,

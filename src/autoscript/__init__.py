@@ -14,13 +14,16 @@ from autoscript.ASTokenizer import (
 from autoscript.ASEngine import (
     execute,
     addTargetVar,
+    splitTopLevel,
 )
 from autoscript.ASObject import _META_VARS as META_VARS
 from autoscript.ASObserver import ParsingObserver
 
+
 __all__ = [
     "execute",
     "addTargetVar",
+    "splitTopLevel",
     "registerDefaultTargetVars",
     "buildMockTargetData",
     "META_VARS",
@@ -35,18 +38,6 @@ __all__ = [
     "ParsingObserver",
 ]
 
-# All variables available to scripts (display_name -> (name, type)).
-# This mirrors the old AutoScriptEngine.VARIABLE_META for backward
-# compatibility in the UI orchestration dialog.
-ALL_VARIABLES: dict = {
-    "用户名": ("USERNAME", "String"),
-    "用户启用": ("USER_ENABLE", "Boolean"),
-    "预约日期": ("RESERVE_DATE", "Date"),
-    "预约开始时间": ("RESERVE_BEGIN_TIME", "Time"),
-    "预约结束时间": ("RESERVE_END_TIME", "Time"),
-    "当前时间": ("CURRENT_TIME", "Time"),
-    "当前日期": ("CURRENT_DATE", "Date"),
-}
 
 # Key paths into target_data dict for each target variable.
 # (name, type, key_path, display_name)
@@ -57,6 +48,15 @@ _TARGET_VAR_DEFS = [
     ("RESERVE_BEGIN_TIME", "Time",  ["reserve_info", "begin_time", "time"], "预约开始时间"),
     ("RESERVE_END_TIME",   "Time",  ["reserve_info", "end_time",   "time"], "预约结束时间"),
 ]
+
+# All variables (display_name -> (name, type)), derived from target vars + meta vars.
+ALL_VARIABLES = {
+    display_name: (name, var_type)
+    for name, var_type, _, display_name in _TARGET_VAR_DEFS
+} | {
+    obj.display_name: (obj.name, obj.var_type)
+    for obj in META_VARS.values()
+}
 _MOCK_TYPE_VALUES = {
     "String": "__mock__",
     "Boolean": True,
