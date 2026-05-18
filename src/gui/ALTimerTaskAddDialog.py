@@ -58,6 +58,8 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.TimerTypeComboBox.setCurrentIndex(0)
         self.SpecificTimerWidget = QWidget()
         self.SpecificTimerLayout = QHBoxLayout(self.SpecificTimerWidget)
+        self.SpecificTimerLayout.setContentsMargins(0, 0, 0, 0)
+        self.SpecificTimerLayout.setSpacing(5)
         self.SpecificTimerLayout.addWidget(QLabel("定时时间："))
         self.SpecificDateTimeEdit = QDateTimeEdit()
         self.SpecificDateTimeEdit.setCalendarPopup(True)
@@ -69,6 +71,8 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
 
         self.RelativeTimerWidget = QWidget()
         self.RelativeTimerLayout = QHBoxLayout(self.RelativeTimerWidget)
+        self.RelativeTimerLayout.setContentsMargins(0, 0, 0, 0)
+        self.RelativeTimerLayout.setSpacing(5)
         self.RelativeTimerLayout.addWidget(QLabel("相对时间："))
         self.RelativeDaySpinBox = QSpinBox()
         self.RelativeDaySpinBox.setMinimum(0)
@@ -325,5 +329,3 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         QDesktopServices.openUrl(
             QUrl("https://www.autolibrary.kenanzhu.com/manuals/autoscript")
         )
-
-
