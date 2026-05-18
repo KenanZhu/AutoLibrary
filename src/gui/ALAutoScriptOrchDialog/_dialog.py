@@ -46,7 +46,7 @@ class ALAutoScriptOrchDialog(QDialog):
             self.loadFromScript(existingScript)
         else:
             self.addBlock()
-        self._scrollLayout.addStretch()
+        self.scrollLayout.addStretch()
 
 
     def setupUi(
@@ -61,8 +61,8 @@ class ALAutoScriptOrchDialog(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scrollContent = QWidget()
-        self._scrollLayout = QVBoxLayout(scrollContent)
-        self._scrollLayout.setSpacing(5)
+        self.scrollLayout = QVBoxLayout(scrollContent)
+        self.scrollLayout.setSpacing(5)
         scroll.setWidget(scrollContent)
         mainLayout.addWidget(scroll)
         self.addBlockBtn = QPushButton("+ 添加判断块")
@@ -108,16 +108,16 @@ class ALAutoScriptOrchDialog(QDialog):
         block.addActionStep()
         self._blocks.append(block)
         self._updateBlockTypeRestrictions()
-        if self._scrollLayout.count() > 0:
-            lastItem = self._scrollLayout.itemAt(
-                self._scrollLayout.count() - 1
+        if self.scrollLayout.count() > 0:
+            lastItem = self.scrollLayout.itemAt(
+                self.scrollLayout.count() - 1
             )
             if lastItem and lastItem.spacerItem():
-                self._scrollLayout.insertWidget(
-                    self._scrollLayout.count() - 1, block
+                self.scrollLayout.insertWidget(
+                    self.scrollLayout.count() - 1, block
                 )
                 return
-        self._scrollLayout.addWidget(block)
+        self.scrollLayout.addWidget(block)
 
 
     def removeBlock(
@@ -130,7 +130,7 @@ class ALAutoScriptOrchDialog(QDialog):
             return
         if block in self._blocks:
             self._blocks.remove(block)
-            self._scrollLayout.removeWidget(block)
+            self.scrollLayout.removeWidget(block)
             block.hide()
             block.deleteLater()
         for i, blk in enumerate(self._blocks):
@@ -200,8 +200,8 @@ class ALAutoScriptOrchDialog(QDialog):
         typeIdxMap = {"IF": 0, "ELSE IF": 1, "ELSE": 2}
         parsedBlocks = parseBlocks(script)
         self._blocks.clear()
-        while self._scrollLayout.count():
-            item = self._scrollLayout.takeAt(0)
+        while self.scrollLayout.count():
+            item = self.scrollLayout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
         try:
@@ -222,8 +222,8 @@ class ALAutoScriptOrchDialog(QDialog):
                     self._parseConditions(block, condition)
         except Exception:
             self._blocks.clear()
-            while self._scrollLayout.count():
-                item = self._scrollLayout.takeAt(0)
+            while self.scrollLayout.count():
+                item = self.scrollLayout.takeAt(0)
                 if item.widget():
                     item.widget().deleteLater()
         self._updateBlockTypeRestrictions()
@@ -255,7 +255,7 @@ class ALAutoScriptOrchDialog(QDialog):
                     allLogics.append(".AND.")
                 allSubConds.append(ap)
         for row in list(block._conditionRows):
-            block._condRowsLayout.removeWidget(row)
+            block.condRowsLayout.removeWidget(row)
             row.hide()
             row.deleteLater()
         block._conditionRows.clear()
@@ -278,7 +278,7 @@ class ALAutoScriptOrchDialog(QDialog):
                             row.logicCombo.setCurrentIndex(li)
                             break
             block._conditionRows.append(row)
-            block._condRowsLayout.addWidget(row)
+            block.condRowsLayout.addWidget(row)
             subUp = subCond.upper()
             if subUp in (".TRUE.", ".FALSE."):
                 row.loadFromParts(subUp, "", "")

@@ -79,9 +79,9 @@ class ConditionalBlock(QGroupBox):
         condLayout.setContentsMargins(4, 4, 4, 4)
         condLayout.setSpacing(6)
 
-        self._condRowsLayout = QVBoxLayout()
-        self._condRowsLayout.setSpacing(4)
-        condLayout.addLayout(self._condRowsLayout)
+        self.condRowsLayout = QVBoxLayout()
+        self.condRowsLayout.setSpacing(4)
+        condLayout.addLayout(self.condRowsLayout)
         self.addCondBtn = QPushButton("+ 添加条件", self.conditionWidget)
         self.addCondBtn.setFixedHeight(25)
         condLayout.addWidget(self.addCondBtn)
@@ -89,9 +89,9 @@ class ConditionalBlock(QGroupBox):
         self.actionLabel = QLabel("执行步骤:", self)
         self.actionLabel.setFixedHeight(25)
         mainLayout.addWidget(self.actionLabel)
-        self._actionsLayout = QVBoxLayout()
-        self._actionsLayout.setSpacing(4)
-        mainLayout.addLayout(self._actionsLayout)
+        self.actionsLayout = QVBoxLayout()
+        self.actionsLayout.setSpacing(4)
+        mainLayout.addLayout(self.actionsLayout)
         self.addActionBtn = QPushButton("+ 添加执行步骤", self)
         self.addActionBtn.setFixedHeight(25)
         mainLayout.addWidget(self.addActionBtn)
@@ -116,7 +116,7 @@ class ConditionalBlock(QGroupBox):
             isFirst=True, parent=self
         )
         self._conditionRows.append(row)
-        self._condRowsLayout.addWidget(row)
+        self.condRowsLayout.addWidget(row)
 
 
     def addConditionRow(
@@ -129,7 +129,7 @@ class ConditionalBlock(QGroupBox):
         )
         row.deleteBtn.clicked.connect(lambda: self.removeConditionRow(row))
         self._conditionRows.append(row)
-        self._condRowsLayout.addWidget(row)
+        self.condRowsLayout.addWidget(row)
 
 
     def removeConditionRow(
@@ -139,7 +139,7 @@ class ConditionalBlock(QGroupBox):
 
         if row in self._conditionRows and len(self._conditionRows) > 1:
             self._conditionRows.remove(row)
-            self._condRowsLayout.removeWidget(row)
+            self.condRowsLayout.removeWidget(row)
             row.hide()
             row.deleteLater()
 
@@ -151,7 +151,7 @@ class ConditionalBlock(QGroupBox):
         step = ActionStepFrame(self._varMgr, self.blockIndex, parent=self)
         step.deleteBtn.clicked.connect(lambda: self.removeActionStep(step))
         self._actionWidgets.append(step)
-        self._actionsLayout.addWidget(step)
+        self.actionsLayout.addWidget(step)
 
 
     def removeActionStep(
@@ -161,7 +161,7 @@ class ConditionalBlock(QGroupBox):
 
         if step in self._actionWidgets:
             self._actionWidgets.remove(step)
-            self._actionsLayout.removeWidget(step)
+            self.actionsLayout.removeWidget(step)
             step.hide()
             step.deleteLater()
 

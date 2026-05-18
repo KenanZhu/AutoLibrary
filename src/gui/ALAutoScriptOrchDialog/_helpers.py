@@ -3,7 +3,11 @@ Helper utilities and constants for the AutoScript orchestration dialog.
 """
 import re
 
-from PySide6.QtCore import QObject, QDate, QTime
+from PySide6.QtCore import (
+    QObject,
+    QDate,
+    QTime
+)
 from PySide6.QtWidgets import (
     QComboBox,
     QDateEdit,
@@ -18,7 +22,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from autoscript import ALL_VARIABLES
+from autoscript import (
+    ALL_VARIABLES,
+    splitTopLevel
+)
+from autoscript.ASOperator import (
+    ARITH_TYPES,
+    COMPARISON_OPERATORS
+)
 
 
 VAR_TYPE_ORDER = [
@@ -40,14 +51,19 @@ PRESET_VARIABLES = [
 PRESET_NAMES = {
     p["name"] for p in PRESET_VARIABLES
 }
-COMPARE_OPERATORS = sorted([
-    ("等于", ".EQ."),
-    ("不等于", ".NEQ."),
-    ("大于", ".BGT."),
-    ("小于", ".BLT."),
-    ("大于等于", ".BGE."),
-    ("小于等于", ".BLE."),
-], key=lambda x: len(x[1]), reverse=True)
+# Operator display names (UI-specific), symbols derived from engine
+_COMPARE_DISPLAY_MAP = {
+    ".EQ.": "等于",
+    ".NEQ.": "不等于",
+    ".BGT.": "大于",
+    ".BLT.": "小于",
+    ".BGE.": "大于等于",
+    ".BLE.": "小于等于",
+}
+COMPARE_OPERATORS = sorted(
+    [(name, op) for op, name in _COMPARE_DISPLAY_MAP.items() if op in COMPARISON_OPERATORS],
+    key=lambda x: len(x[1]), reverse=True
+)
 LOGIC_OPERATORS = [
     ("并且 (.AND.)", ".AND."),
     ("或者 (.OR.)", ".OR."),
@@ -57,12 +73,6 @@ ACTION_TYPES = [
     ("增加", "add"),
     ("减少", "sub"),
 ]
-ARITH_TYPES = {
-    "Date",
-    "Time",
-    "Int",
-    "Float"
-}
 DATE_RELATIVE_OPTIONS = [
     ("前天", "day_before_yesterday"),
     ("昨天", "yesterday"),
@@ -310,21 +320,17 @@ class _DateInputContainer(QWidget):
     ):
 
         s = expr.strip().upper()
-        if s == "CURRENT_DATE - 2":
+        _RELATIVE_MAP = {
+            "CURRENT_DATE": 0, "TODAY": 0,
+            "CURRENT_DATE + 1": 1, "TOMORROW": 1,
+            "CURRENT_DATE + 2": 2,
+            "CURRENT_DATE - 1": 3,
+            "CURRENT_DATE - 2": 4,
+        }
+        idx = _RELATIVE_MAP.get(s)
+        if idx is not None:
             self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(4)
-        elif s == "CURRENT_DATE - 1":
-            self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(3)
-        elif s in ("CURRENT_DATE", "TODAY"):
-            self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(0)
-        elif s == "CURRENT_DATE + 1" or s == "TOMORROW":
-            self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(1)
-        elif s == "CURRENT_DATE + 2":
-            self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(2)
+            self._relCombo.setCurrentIndex(idx)
         elif s.startswith("DATE("):
             self._modeCombo.setCurrentIndex(1)
             m = re.match(r"DATE\((\d{4}-\d{2}-\d{2})\)", s)
@@ -583,38 +589,6 @@ def encodeValueStr(
         escaped = raw_value.replace("'", "''")
         return f"'{escaped}'"
     return raw_value
-
-
-def splitTopLevel(
-    text: str,
-    delimiter: str
-) -> list:
-
-    parts = []
-    depth = 0
-    buf = ""
-    i = 0
-    textUpper = text.upper()
-    delimUpper = delimiter.upper()
-    dlen = len(delimUpper)
-    while i < len(text):
-        if text[i] == "(":
-            depth += 1
-            buf += text[i]
-        elif text[i] == ")":
-            depth -= 1
-            buf += text[i]
-        elif depth == 0 and textUpper[i:i + dlen] == delimUpper:
-            parts.append(buf)
-            buf = ""
-            i += dlen
-            continue
-        else:
-            buf += text[i]
-        i += 1
-    if buf.strip():
-        parts.append(buf)
-    return parts
 
 
 def stripOuterParens(
