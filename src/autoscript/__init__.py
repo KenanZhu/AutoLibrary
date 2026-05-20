@@ -28,6 +28,8 @@ __all__ = [
     "buildMockTargetData",
     "META_VARS",
     "ALL_VARIABLES",
+    "_TARGET_VAR_DEFS",
+    "_MOCK_TYPE_VALUES",
     "ASTokenizer",
     "Stmt",
     "Script",

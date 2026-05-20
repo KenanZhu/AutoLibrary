@@ -17,7 +17,6 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout, QDateTimeEdit, QGroupBox, QPushButton
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
-from gui.ALAutoScriptOrchDialog import ALAutoScriptOrchDialog
 from utils.TimerUtils import TimerUtils
 
 
@@ -102,10 +101,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptLayout.setContentsMargins(3, 3, 3, 3)
         self.AutoScriptLayout.setSpacing(3)
         autoScriptBtnLayout = QHBoxLayout()
-        self.AutoScriptSetButton = QPushButton("设置指令")
-        self.AutoScriptSetButton.setMinimumHeight(25)
-        self.AutoScriptSetButton.setFixedWidth(130)
-        autoScriptBtnLayout.addWidget(self.AutoScriptSetButton)
         self.AutoScriptPreviewButton = QPushButton("编辑")
         self.AutoScriptPreviewButton.setMinimumHeight(25)
         self.AutoScriptPreviewButton.setFixedWidth(60)
@@ -136,6 +131,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         )
         self.AutoScriptGroupBox.setVisible(False)
         self.__auto_script = ""
+        self.__mock_target_data = None
 
 
     def loadTask(
@@ -173,6 +169,9 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 self.__auto_script = auto_script
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
+            mock_data = task.get("mock_target_data")
+            if mock_data:
+                self.__mock_target_data = mock_data
         self.ConfirmButton.setText("保存")
 
 
@@ -184,7 +183,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
         self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
-        self.AutoScriptSetButton.clicked.connect(self.onSetAutoScript)
         self.AutoScriptPreviewButton.clicked.connect(self.onPreviewAutoScript)
         self.AutoScriptHelpButton.clicked.connect(self.onAutoScriptHelp)
 
@@ -220,6 +218,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             task_data["status"] = ALTimerTaskStatus.PENDING
             task_data["executed"] = False
             task_data["repeat_auto_script"] = self.__auto_script
+            task_data["mock_target_data"] = self.__mock_target_data
         else:
             task_data = {
                 "name": name,
@@ -232,6 +231,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 "executed": False,
                 "repeat": self.RepeatCheckBox.isChecked(),
                 "repeat_auto_script": self.__auto_script,
+                "mock_target_data": self.__mock_target_data,
             }
 
         repeat = self.RepeatCheckBox.isChecked()
@@ -293,26 +293,13 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptGroupBox.setVisible(checked)
 
     @Slot()
-    def onSetAutoScript(self):
-        dlg = ALAutoScriptOrchDialog(self, existingScript=self.__auto_script)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            script = dlg.getScript()
-            self.__auto_script = script
-            if script:
-                self.AutoScriptStatusLabel.setText("已设置")
-                self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
-            else:
-                self.AutoScriptStatusLabel.setText("未设置")
-                self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
-        dlg.deleteLater()
-
-    @Slot()
     def onPreviewAutoScript(self):
         from gui.ALAutoScriptEditDialog import ALAutoScriptEditDialog
-        dlg = ALAutoScriptEditDialog(self, self.__auto_script)
+        dlg = ALAutoScriptEditDialog(self, self.__auto_script, self.__mock_target_data)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             script = dlg.getScript()
             self.__auto_script = script
+            self.__mock_target_data = dlg.getMockData()
             if script:
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")

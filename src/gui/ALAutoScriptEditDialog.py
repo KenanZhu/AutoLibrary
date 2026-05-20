@@ -7,7 +7,9 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from PySide6.QtCore import Qt, Slot
+from copy import deepcopy
+
+from PySide6.QtCore import QDate, Qt, QTime, QTimer, Slot
 from PySide6.QtGui import (
     QColor,
     QFont,
@@ -16,21 +18,40 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
+    QDateEdit,
     QDialog,
     QDialogButtonBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QFrame,
     QGridLayout,
+    QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
+    QLineEdit,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
-
+    QSpinBox,
+    QSplitter,
     QStyle,
     QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QTimeEdit,
     QVBoxLayout,
     QWidget,
 )
 
-from autoscript import ALL_VARIABLES
+from autoscript import (
+    ALL_VARIABLES,
+    _MOCK_TYPE_VALUES,
+    _TARGET_VAR_DEFS,
+    execute,
+    registerDefaultTargetVars,
+)
 
 
 class ALScriptHighlighter(QSyntaxHighlighter):
@@ -99,16 +120,47 @@ class ALScriptHighlighter(QSyntaxHighlighter):
                 self.setFormat(start, length, fmt)
 
 
+class _DebugResultDialog(QDialog):
+
+    def __init__(
+        self,
+        changes: list,
+        parent = None
+    ):
+
+        super().__init__(parent)
+        self.setWindowTitle("调试运行结果 - AutoLibrary")
+        self.setMinimumSize(600, 200)
+        layout = QVBoxLayout(self)
+        table = QTableWidget(len(changes), 3)
+        table.setHorizontalHeaderLabels(["目标变量", "原始数据", "运行后数据"])
+        table.horizontalHeader().setStretchLastSection(True)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        for row, (display_name, name, var_type, before_val, after_val) in enumerate(changes):
+            label = f"{display_name}: {name}({var_type})"
+            table.setItem(row, 0, QTableWidgetItem(label))
+            table.setItem(row, 1, QTableWidgetItem(str(before_val)))
+            table.setItem(row, 2, QTableWidgetItem(str(after_val)))
+        layout.addWidget(table)
+        btnBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        btnBox.button(QDialogButtonBox.StandardButton.Ok).setText("确定")
+        btnBox.accepted.connect(self.accept)
+        layout.addWidget(btnBox)
+
+
 class ALAutoScriptEditDialog(QDialog):
 
     def __init__(
         self,
         parent = None,
-        script: str = ""
+        script: str = "",
+        mockData: dict = None
     ):
 
         super().__init__(parent)
         self._fontSize = 19
+        self._mockWidgets = {}
 
         self.setupUi()
         self.connectSignals()
@@ -116,6 +168,8 @@ class ALAutoScriptEditDialog(QDialog):
         self._highlighter = ALScriptHighlighter(
             self.textEdit.document()
         )
+        if mockData:
+            self.setMockData(mockData)
 
 
     def setupUi(
@@ -123,10 +177,10 @@ class ALAutoScriptEditDialog(QDialog):
     ):
 
         self.setWindowTitle("AutoScript 编辑 - AutoLibrary")
-        self.setMinimumSize(640, 600)
+        self.setMinimumSize(660, 600)
         layout = QVBoxLayout(self)
-        layout.setSpacing(4)
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(3)
+        layout.setContentsMargins(3, 3, 3, 3)
         toolbarLayout = QHBoxLayout()
         self.zoomInBtn = QPushButton("＋")
         self.zoomInBtn.setFixedSize(25, 25)
@@ -141,6 +195,19 @@ class ALAutoScriptEditDialog(QDialog):
         self.zoomResetBtn.setToolTip("重置缩放")
         self.zoomLabel = QLabel(f"{self._fontSize}px")
         self.zoomLabel.setFixedHeight(25)
+        self.orchBtn = QPushButton("编排")
+        self.orchBtn.setFixedHeight(25)
+        self.orchBtn.setToolTip("可视化生成 AutoScript 代码并插入到光标位置")
+        toolbarLayout.addWidget(self.orchBtn)
+        self.debugBtn = QPushButton("▶ 调试运行")
+        self.debugBtn.setFixedHeight(25)
+        self.debugBtn.setToolTip("使用右侧模拟数据执行脚本，查看目标变量变化")
+        toolbarLayout.addWidget(self.debugBtn)
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.VLine)
+        sep.setFrameShadow(QFrame.Shadow.Sunken)
+        sep.setFixedWidth(1)
+        toolbarLayout.addWidget(sep)
         toolbarLayout.addWidget(self.zoomInBtn)
         toolbarLayout.addWidget(self.zoomOutBtn)
         toolbarLayout.addWidget(self.zoomResetBtn)
@@ -181,46 +248,38 @@ class ALAutoScriptEditDialog(QDialog):
         parent_layout
     ):
 
-
-        tab_widget = QTabWidget()
-        tab_widget.setMaximumHeight(200)
-        basic_widget = QWidget()
-        basic_layout = QGridLayout(basic_widget)
-        basic_layout.setSpacing(4)
-        basic_layout.setContentsMargins(4, 4, 4, 4)
-        basic_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        control_buttons = [
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        tabWidget = QTabWidget()
+        tabWidget.setMaximumHeight(150)
+        basicWidget = QWidget()
+        basicLayout = QGridLayout(basicWidget)
+        basicLayout.setSpacing(4)
+        basicLayout.setContentsMargins(4, 4, 4, 4)
+        basicLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        controlButtons = [
             ("IF", "IF()\n    \nEND IF"),
             ("ELSE IF", "ELSE IF()\n    "),
             ("ELSE", "ELSE"),
             ("END IF", "END IF"),
             ("PASS", "PASS"),
         ]
-        self._addButtonsToGrid(basic_layout, control_buttons, 0, 0, 5)
-
-        assign_buttons = [
+        self._addButtonsToGrid(basicLayout, controlButtons, 0, 0, 5)
+        assignButtons = [
             ("SET", "SET  = "),
         ]
-        self._addButtonsToGrid(basic_layout, assign_buttons, 0, 5, 1)
-
-        func_buttons = [
-            ("DATE()", "DATE()"),
-            ("TIME()", "TIME()"),
-        ]
-        self._addButtonsToGrid(basic_layout, func_buttons, 1, 0, 2)
-
-        tab_widget.addTab(basic_widget, "基本语法")
-        operator_widget = QWidget()
-        operator_layout = QGridLayout(operator_widget)
-        operator_layout.setSpacing(4)
-        operator_layout.setContentsMargins(4, 4, 4, 4)
-        operator_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        arithmetic_buttons = [
+        self._addButtonsToGrid(basicLayout, assignButtons, 0, 5, 1)
+        tabWidget.addTab(basicWidget, "基本语法")
+        operatorWidget = QWidget()
+        operatorLayout = QGridLayout(operatorWidget)
+        operatorLayout.setSpacing(4)
+        operatorLayout.setContentsMargins(4, 4, 4, 4)
+        operatorLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        arithmeticButtons = [
             (".ADD.", ".ADD."),
             (".SUB.", ".SUB."),
         ]
-        self._addButtonsToGrid(operator_layout, arithmetic_buttons, 0, 0, 2)
-        compare_buttons = [
+        self._addButtonsToGrid(operatorLayout, arithmeticButtons, 0, 0, 2)
+        compareButtons = [
             (".EQ.", ".EQ."),
             (".NEQ.", ".NEQ."),
             (".BGT.", ".BGT."),
@@ -228,42 +287,54 @@ class ALAutoScriptEditDialog(QDialog):
             (".BGE.", ".BGE."),
             (".BLE.", ".BLE."),
         ]
-        self._addButtonsToGrid(operator_layout, compare_buttons, 1, 0, 6)
+        self._addButtonsToGrid(operatorLayout, compareButtons, 1, 0, 6)
         logic_buttons = [
             (".AND.", ".AND."),
             (".OR.", ".OR."),
         ]
-        self._addButtonsToGrid(operator_layout, logic_buttons, 2, 0, 2)
-        tab_widget.addTab(operator_widget, "运算符")
-        literal_widget = QWidget()
-        literal_layout = QGridLayout(literal_widget)
-        literal_layout.setSpacing(4)
-        literal_layout.setContentsMargins(4, 4, 4, 4)
-        literal_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self._addButtonsToGrid(operatorLayout, logic_buttons, 2, 0, 2)
+        tabWidget.addTab(operatorWidget, "运算符")
+        literalWidget = QWidget()
+        literalLayout = QGridLayout(literalWidget)
+        literalLayout.setSpacing(4)
+        literalLayout.setContentsMargins(4, 4, 4, 4)
+        literalLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         bool_buttons = [
             (".TRUE.", ".TRUE."),
             (".FALSE.", ".FALSE."),
         ]
-        self._addButtonsToGrid(literal_layout, bool_buttons, 0, 0, 2)
-        hint_buttons = [
-            ("字符串", "'文本'"),
-            ("数字", "123"),
-            ("注释", "// 注释"),
+        self._addButtonsToGrid(literalLayout, bool_buttons, 0, 0, 2)
+        dateTimeButtons = [
+            ("DATE()", "DATE(2025-01-01)"),
+            ("TIME()", "TIME(00:00)"),
         ]
-        self._addButtonsToGrid(literal_layout, hint_buttons, 1, 0, 3)
-        tab_widget.addTab(literal_widget, "字面量")
-        var_widget = QWidget()
-        var_layout = QGridLayout(var_widget)
-        var_layout.setSpacing(4)
-        var_layout.setContentsMargins(4, 4, 4, 4)
-        var_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        var_buttons = [
+        self._addButtonsToGrid(literalLayout, dateTimeButtons, 1, 0, 2)
+        hintButtons = [
+            ("字符串", "'请输入文本'"),
+            ("数字", "123"),
+            ("注释", "// 请输入注释"),
+        ]
+        self._addButtonsToGrid(literalLayout, hintButtons, 2, 0, 3)
+        tabWidget.addTab(literalWidget, "字面量")
+        varWidget = QWidget()
+        varLayout = QGridLayout(varWidget)
+        varLayout.setSpacing(4)
+        varLayout.setContentsMargins(4, 4, 4, 4)
+        varLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        varButtons = [
             (display_name, name) for display_name, (name, _) in ALL_VARIABLES.items()
         ]
 
-        self._addButtonsToGrid(var_layout, var_buttons, 0, 0, 5)
-        tab_widget.addTab(var_widget, "变量")
-        parent_layout.addWidget(tab_widget)
+        self._addButtonsToGrid(varLayout, varButtons, 0, 0, 5)
+        tabWidget.addTab(varWidget, "变量")
+        mockPanel = self._createMockPanel()
+        mockPanel.setMinimumWidth(260)
+        splitter.addWidget(tabWidget)
+        splitter.addWidget(mockPanel)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 0)
+        splitter.setSizes([660, 400])
+        parent_layout.addWidget(splitter)
 
 
     def _addButtonsToGrid(
@@ -283,7 +354,7 @@ class ALAutoScriptEditDialog(QDialog):
             btn.setProperty("template", template)
             btn.clicked.connect(self._insertTemplate)
             btn.setFixedWidth(100)
-            btn.setFixedHeight(30)
+            btn.setFixedHeight(25)
             btn.setToolTip(f"插入: {template}")
             grid_layout.addWidget(btn, row, col)
 
@@ -307,12 +378,186 @@ class ALAutoScriptEditDialog(QDialog):
         cursor.insertText(template)
 
 
+    def _createMockPanel(
+        self
+    ) -> QGroupBox:
+
+        group = QGroupBox("模拟目标数据")
+        form = QFormLayout(group)
+        form.setSpacing(4)
+        form.setContentsMargins(5, 10, 5, 5)
+        self._mockWidgets = {}
+        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+            default = _MOCK_TYPE_VALUES.get(var_type, "")
+            widget = self._makeMockInput(var_type, default)
+            label = QLabel(f"{display_name}: {name}({var_type})")
+            form.addRow(label, widget)
+            self._mockWidgets[name] = (widget, var_type, key_path)
+        return group
+
+
+    def _makeMockInput(
+        self,
+        var_type: str,
+        default
+    ) -> QWidget:
+
+        if var_type == "String":
+            w = QLineEdit()
+            w.setText(str(default))
+            return w
+        if var_type == "Boolean":
+            w = QComboBox()
+            w.addItems(["是", "否"])
+            w.setCurrentIndex(0 if default else 1)
+            return w
+        if var_type == "Date":
+            w = QDateEdit()
+            w.setCalendarPopup(True)
+            w.setDisplayFormat("yyyy-MM-dd")
+            w.setDate(QDate.fromString(str(default), "yyyy-MM-dd"))
+            return w
+        if var_type == "Time":
+            w = QTimeEdit()
+            w.setDisplayFormat("HH:mm")
+            w.setTime(QTime.fromString(str(default), "HH:mm"))
+            return w
+        if var_type == "Int":
+            w = QSpinBox()
+            w.setMinimum(-999999)
+            w.setMaximum(999999)
+            w.setValue(int(default) if default else 0)
+            return w
+        if var_type == "Float":
+            w = QDoubleSpinBox()
+            w.setMinimum(-999999.0)
+            w.setMaximum(999999.0)
+            w.setDecimals(2)
+            w.setValue(float(default) if default else 0.0)
+            return w
+        w = QLineEdit()
+        w.setText(str(default))
+        return w
+
+
+    def getMockData(
+        self
+    ) -> dict:
+
+        data = {}
+        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+            widget, _, _ = self._mockWidgets[name]
+            value = self._getMockValue(widget, var_type)
+            d = data
+            for key in key_path[:-1]:
+                d = d.setdefault(key, {})
+            d[key_path[-1]] = value
+        return data
+
+
+    def setMockData(
+        self,
+        data: dict
+    ):
+
+        if not data:
+            return
+        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+            d = data
+            try:
+                for key in key_path:
+                    d = d[key]
+            except (KeyError, TypeError):
+                continue
+            widget, _, _ = self._mockWidgets[name]
+            self._setMockValue(widget, var_type, d)
+
+
+    def _getMockValue(
+        self,
+        widget: QWidget,
+        var_type: str
+    ):
+
+        if var_type == "Boolean":
+            return widget.currentIndex() == 0
+        if var_type == "Date":
+            return widget.date().toString("yyyy-MM-dd")
+        if var_type == "Time":
+            return widget.time().toString("HH:mm")
+        if var_type == "Int":
+            return widget.value()
+        if var_type == "Float":
+            return widget.value()
+        return widget.text()
+
+
+    def _setMockValue(
+        self,
+        widget: QWidget,
+        var_type: str,
+        value
+    ):
+
+        if var_type == "Boolean":
+            widget.setCurrentIndex(0 if value else 1)
+        elif var_type == "Date":
+            widget.setDate(QDate.fromString(str(value), "yyyy-MM-dd"))
+        elif var_type == "Time":
+            widget.setTime(QTime.fromString(str(value), "HH:mm"))
+        elif var_type == "Int":
+            widget.setValue(int(value))
+        elif var_type == "Float":
+            widget.setValue(float(value))
+        else:
+            widget.setText(str(value))
+
+
+    @Slot()
+    def onDebugRun(
+        self
+    ):
+
+        script = self.textEdit.toPlainText().strip()
+        if not script:
+            QMessageBox.warning(self, "提示", "脚本内容为空。")
+            return
+        target_data = self.getMockData()
+        before = deepcopy(target_data)
+        try:
+            registerDefaultTargetVars()
+            execute(script, target_data)
+        except ValueError as e:
+            QMessageBox.warning(self, "运行错误", str(e))
+            return
+        changes = []
+        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+            before_val = before
+            after_val = target_data
+            try:
+                for key in key_path:
+                    before_val = before_val[key]
+                    after_val = after_val[key]
+            except (KeyError, TypeError):
+                continue
+            if before_val != after_val:
+                changes.append((display_name, name, var_type, before_val, after_val))
+        if not changes:
+            QMessageBox.information(self, "调试运行", "目标变量未发生变化。")
+            return
+        dlg = _DebugResultDialog(changes, self)
+        dlg.exec()
+        dlg.deleteLater()
+
+
     def connectSignals(
         self
     ):
 
         self.btnBox.accepted.connect(self.accept)
         self.btnBox.rejected.connect(self.reject)
+        self.orchBtn.clicked.connect(self.onOpenOrchDialog)
+        self.debugBtn.clicked.connect(self.onDebugRun)
         self.zoomInBtn.clicked.connect(self.onZoomIn)
         self.zoomOutBtn.clicked.connect(self.onZoomOut)
         self.zoomResetBtn.clicked.connect(self.onZoomReset)
@@ -375,8 +620,21 @@ class ALAutoScriptEditDialog(QDialog):
         original = self.copyBtn.text()
         self.copyBtn.setText("已复制")
         self.copyBtn.setEnabled(False)
-        from PySide6.QtCore import QTimer
         QTimer.singleShot(2000, lambda: (
             self.copyBtn.setText(original),
             self.copyBtn.setEnabled(True)
         ))
+
+    @Slot()
+    def onOpenOrchDialog(
+        self
+    ):
+
+        from gui.ALAutoScriptOrchDialog import ALAutoScriptOrchDialog
+        dlg = ALAutoScriptOrchDialog(self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            script = dlg.getScript()
+            if script:
+                cursor = self.textEdit.textCursor()
+                cursor.insertText(script)
+        dlg.deleteLater()
