@@ -32,6 +32,21 @@ _TYPE_DEFAULTS = {
     "String": ""
 }
 
+# Mapping from Python type to AutoScript type name for error messages
+_PYTHON_TO_AS_TYPE = {
+    bool: "Boolean",
+    int: "Int",
+    float: "Float",
+    str: "String",
+    date: "Date",
+    time: "Time",
+}
+
+def _asTypeName(
+    value
+) -> str:
+    return _PYTHON_TO_AS_TYPE.get(type(value), "UnknowType")
+
 
 class ASObject:
     """
@@ -174,34 +189,29 @@ class ASObject:
         target_data: dict = None
     ):
         """
-            Assign a new value to this variable, with type coercion.
+            Assign a new value to this variable, with strict type checking.
 
-            Performs coercion for Boolean (string -> bool), Int, and Float types.
-            For config variables, dates/times are converted back to strings before
-            writing into target_data.
+            AutoScript is strongly typed: only values whose Python type matches the
+            declared variable type are accepted.  Int->Float widening is allowed;
+            all other cross-type assignments raise ValueError.
 
             Args:
                 value: The value to assign.
                 target_data (dict): The application data dict (required for config vars).
 
             Raises:
-                ValueError: If the variable is read-only or value cannot be coerced.
+                ValueError: If the variable is read-only or value type mismatches the variable type.
         """
 
         if self.read_only:
             raise ValueError(f"不能修改只读变量 '{self.name}'")
-        if self.var_type == "Boolean" and not isinstance(value, bool):
-            value = (str(value).upper() == "TRUE")
-        if self.var_type == "Int" and not isinstance(value, int):
-            try:
-                value = int(value)
-            except (ValueError, TypeError):
-                raise ValueError(f"无法将值 '{value}' 转换为 Int 类型")
-        if self.var_type == "Float" and not isinstance(value, float):
-            try:
-                value = float(value)
-            except (ValueError, TypeError):
-                raise ValueError(f"无法将值 '{value}' 转换为 Float 类型")
+        vt = self.var_type
+        value_type = _asTypeName(value)
+        if vt != value_type and not (vt == "Float" and value_type == "Int"):
+            raise ValueError(
+                f"{vt} 类型变量 '{self.name}' 不能接受 {value_type} 类型的值"
+            )
+
         if self.is_config:
             if self.var_type == "Date" and isinstance(value, date):
                 value = value.strftime("%Y-%m-%d")
