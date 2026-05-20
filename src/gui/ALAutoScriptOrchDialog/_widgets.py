@@ -1,6 +1,8 @@
 """
 Widget components for the AutoScript orchestration dialog.
 """
+import re
+
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
     QComboBox,
@@ -21,6 +23,7 @@ from gui.ALAutoScriptOrchDialog._helpers import (
     VAR_TYPE_ORDER,
     encodeValueStr,
     getValueFromWidget,
+    isArithExpr,
     isVarReference,
     makeComboWidget,
     makeLabel,
@@ -46,6 +49,7 @@ class ConditionRowFrame(QFrame):
         self._blockIndex = parentBlockIndex
         self._isFirst = isFirst
         self._isBoolMode = False
+        self._rawRhsExpr = ""
 
         self.setupUi()
         self.connectSignals()
@@ -133,6 +137,7 @@ class ConditionRowFrame(QFrame):
         idx
     ):
 
+        self._rawRhsExpr = ""
         if idx < 0:
             return
         data = self.leftVarCombo.itemData(idx)
@@ -157,6 +162,7 @@ class ConditionRowFrame(QFrame):
         idx
     ):
 
+        self._rawRhsExpr = ""
         isVar = (self._compTypeCombo.currentData() == "variable")
         self.rhsStack.setCurrentIndex(1 if isVar else 0)
         if isVar:
@@ -179,6 +185,8 @@ class ConditionRowFrame(QFrame):
             return ""
         name, vartype = data
         opSym = self.opCombo.currentData()
+        if self._rawRhsExpr:
+            return f"{name} {opSym} {self._rawRhsExpr}"
         isVarRef = (self._compTypeCombo.currentData() == "variable")
         if isVarRef:
             rd = self.rhsVarCombo.currentData()
@@ -204,21 +212,31 @@ class ConditionRowFrame(QFrame):
         valueExpr: str
     ):
 
-        for ci in range(self.leftVarCombo.count()):
-            d = self.leftVarCombo.itemData(ci)
-            if d and d[0] == operandName:
-                self.leftVarCombo.setCurrentIndex(ci)
-                break
-        if opSym:
-            for oi in range(self.opCombo.count()):
-                if self.opCombo.itemData(oi) == opSym:
-                    self.opCombo.setCurrentIndex(oi)
+        self._rawRhsExpr = ""
+        self.leftVarCombo.blockSignals(True)
+        self.opCombo.blockSignals(True)
+        self._compTypeCombo.blockSignals(True)
+        try:
+            for ci in range(self.leftVarCombo.count()):
+                d = self.leftVarCombo.itemData(ci)
+                if d and d[0] == operandName:
+                    self.leftVarCombo.setCurrentIndex(ci)
                     break
+            if opSym:
+                for oi in range(self.opCombo.count()):
+                    if self.opCombo.itemData(oi) == opSym:
+                        self.opCombo.setCurrentIndex(oi)
+                        break
+        finally:
+            self.leftVarCombo.blockSignals(False)
+            self.opCombo.blockSignals(False)
+            self._compTypeCombo.blockSignals(False)
+        data = self.leftVarCombo.currentData()
+        vartype = data[1] if data else "String"
+        self.updateRhsLiteralWidget(vartype)
         if not valueExpr:
             return
         up = valueExpr.strip().upper()
-        data = self.leftVarCombo.currentData()
-        vartype = data[1] if data else "String"
         if isVarReference(valueExpr) or self._isKnownVar(up):
             self._compTypeCombo.setCurrentIndex(1)
             self.populateRhsVarCombo()
@@ -228,11 +246,44 @@ class ConditionRowFrame(QFrame):
             else:
                 self.rhsVarCombo.addItem(up, (up, "String"))
                 self.rhsVarCombo.setCurrentIndex(self.rhsVarCombo.count() - 1)
+        elif isArithExpr(valueExpr):
+            self._tryLoadCondArithExpr(valueExpr, vartype)
         else:
             self._compTypeCombo.setCurrentIndex(0)
             w = self.literalWidgets.get(vartype)
             if w:
                 setWidgetValue(w, vartype, valueExpr)
+
+    def _tryLoadCondArithExpr(
+        self,
+        expr: str,
+        vartype: str
+    ):
+        """Try to decompose a condition RHS arithmetic expression into UI state."""
+
+        s = expr.strip()
+        m = re.match(r'^(.+?)\s+([+-])\s+(.+)$', s)
+        if not m:
+            self._rawRhsExpr = s
+            return
+        left = m.group(1).strip()
+        op = m.group(2).strip()
+        right = m.group(3).strip()
+        left_up = left.upper()
+
+        if vartype == "Date" and left_up == "CURRENT_DATE":
+            try:
+                n = int(right)
+                offset = n if op == "+" else -n
+                if offset in (-2, -1, 0, 1, 2):
+                    self._compTypeCombo.setCurrentIndex(0)
+                    w = self.literalWidgets.get("Date")
+                    if w and hasattr(w, "setValue"):
+                        w.setValue(s)
+                        return
+            except ValueError:
+                pass
+        self._rawRhsExpr = s
 
 
     def _isKnownVar(
@@ -426,12 +477,9 @@ class ActionStepFrame(QFrame):
         rawVal = self._getValueRaw()
         if op == "set":
             vartype = self._currentTargetType
+            if isArithExpr(rawVal):
+                return f"    SET {target} = {rawVal}"
             encoded = encodeValueStr(rawVal, vartype)
-            if vartype == "Time":
-                if rawVal.startswith("+"):
-                    return f"    {target} .ADD. {rawVal[1:]}"
-                if rawVal.startswith("-"):
-                    return f"    {target} .SUB. {rawVal[1:]}"
             return f"    SET {target} = {encoded}"
         elif op == "add":
             vartype = self._currentTargetType
@@ -500,6 +548,12 @@ class ActionStepFrame(QFrame):
         s = expr.strip()
         if not s:
             return
+        op = self.opTypeCombo.currentData()
+        if op in ("add", "sub") and s.startswith("-"):
+            s = s[1:]
+            self.opTypeCombo.setCurrentIndex(
+                2 if op == "add" else 1
+            )
         up = s.upper()
         if isVarReference(s):
             self.valueSrcCombo.setCurrentIndex(1)
@@ -510,11 +564,80 @@ class ActionStepFrame(QFrame):
             else:
                 self.existingVarCombo.addItem(up, (up, "String"))
                 self.existingVarCombo.setCurrentIndex(self.existingVarCombo.count() - 1)
+        elif isArithExpr(s):
+            self._tryLoadArithExpr(s)
         else:
             self.valueSrcCombo.setCurrentIndex(0)
             w = self.valueStack.currentWidget()
             if w:
                 setWidgetValue(w, self._currentTargetType, expr)
+
+    def _tryLoadArithExpr(
+        self,
+        expr: str
+    ):
+        """Try to decompose an arithmetic expression into UI state."""
+
+        s = expr.strip()
+        m = re.match(r'^(.+?)\s+([+-])\s+(.+)$', s)
+        if not m:
+            self._storeAsCustomExpr(s)
+            return
+        left = m.group(1).strip()
+        op = m.group(2).strip()
+        right = m.group(3).strip()
+        left_up = left.upper()
+
+        # CURRENT_DATE ± N for Date targets — try relative combo for ±0/1/2,
+        # otherwise store as custom expression to preserve relative semantics
+        if self._currentTargetType == "Date" and left_up == "CURRENT_DATE":
+            try:
+                n = int(right)
+                offset = n if op == "+" else -n
+                if offset in (-2, -1, 0, 1, 2):
+                    w = self._literalWidgets.get("Date")
+                    if w and hasattr(w, "setValue"):
+                        w.setValue(s)
+                        self.valueSrcCombo.setCurrentIndex(0)
+                        return
+            except ValueError:
+                pass
+            self._storeAsCustomExpr(s)
+            return
+
+        # CURRENT_TIME ± N for Time targets — map to add/sub with offset
+        if self._currentTargetType == "Time" and left_up == "CURRENT_TIME":
+            try:
+                hours = int(right)
+                if op == "-":
+                    hours = -hours
+                self.opTypeCombo.setCurrentIndex(
+                    1 if hours >= 0 else 2
+                )
+                self.valueSrcCombo.setCurrentIndex(0)
+                w = self._offsetWidgets.get("Time")
+                if w and hasattr(w, "setValue"):
+                    w.setValue(str(abs(hours)))
+                return
+            except ValueError:
+                pass
+
+        self._storeAsCustomExpr(s)
+
+    def _storeAsCustomExpr(
+        self,
+        expr: str
+    ):
+        """Store a raw expression in the variable combo when it can't be decomposed."""
+
+        self.valueSrcCombo.setCurrentIndex(1)
+        self._varMgr.populateCombo(self.existingVarCombo)
+        found = self._varMgr.findExactNameEntry(self.existingVarCombo, expr)
+        if found < 0:
+            self.existingVarCombo.addItem(expr, (expr, self._currentTargetType))
+            self.existingVarCombo.setCurrentIndex(self.existingVarCombo.count() - 1)
+        else:
+            self.existingVarCombo.setCurrentIndex(found)
 
 
     def refreshVarCombos(

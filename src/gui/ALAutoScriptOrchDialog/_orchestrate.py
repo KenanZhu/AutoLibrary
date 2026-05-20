@@ -57,9 +57,11 @@ class ScriptOrchObserver(ParsingObserver):
             if kind == K_SET:
                 self._current_actions.append((target, value, "set"))
             elif kind == K_ADD:
-                self._current_actions.append((target, f"+{value}", "add"))
+                prefixed = value if value.startswith("-") else f"+{value}"
+                self._current_actions.append((target, prefixed, "add"))
             else:
-                self._current_actions.append((target, f"-{value}", "sub"))
+                prefixed = value if value.startswith("-") else f"-{value}"
+                self._current_actions.append((target, prefixed, "sub"))
         elif kind == K_ENDIF:
             self._flushCurrentBlock()
             self._current_type = None

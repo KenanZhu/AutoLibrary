@@ -560,6 +560,8 @@ def encodeValueStr(
     var_type: str
 ) -> str:
 
+    if isArithExpr(raw_value):
+        return raw_value
     if var_type == "Time":
         if raw_value.startswith("+") or raw_value.startswith("-"):
             return raw_value
@@ -609,6 +611,20 @@ def stripOuterParens(
     return s
 
 
+# Pre-compiled pattern for detecting arithmetic expressions like "A + B" / "C - D"
+_RE_ARITH_EXPR = re.compile(r'^.+?\s+[+-]\s+.+$')
+
+
+def isArithExpr(
+    expr: str
+) -> bool:
+    """
+        Return True if expr looks like a two-operand arithmetic expression (A ± B).
+    """
+
+    return bool(_RE_ARITH_EXPR.match(expr.strip()))
+
+
 def isVarReference(
     expr: str
 ) -> bool:
@@ -622,6 +638,8 @@ def isVarReference(
     if up.startswith("'") or up.startswith('"'):
         return False
     if re.match(r"^[+-]?\d", s):
+        return False
+    if isArithExpr(s):
         return False
     return bool(re.match(r"^[A-Z_][A-Z0-9_]*$", up))
 
