@@ -13,27 +13,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from gui.ALAutoScriptOrchDialog._precheck import precheck
-from gui.ALAutoScriptOrchDialog._orchestrate import parseBlocks
-
-from gui.ALAutoScriptOrchDialog._helpers import (
-    COMPARE_OPERATORS,
-    PRESET_NAMES,
-    VariableManager,
-    findOperatorIn,
-    splitTopLevel,
-    stripOuterParens,
-)
+from gui.ALAutoScriptOrchDialog._helpers import VariableManager
 from gui.ALAutoScriptOrchDialog._blocks import ConditionalBlock
-from gui.ALAutoScriptOrchDialog._widgets import ConditionRowFrame
 
 
 class ALAutoScriptOrchDialog(QDialog):
 
     def __init__(
         self,
-        parent = None,
-        existingScript: str = ""
+        parent = None
     ):
 
         super().__init__(parent)
@@ -42,10 +30,7 @@ class ALAutoScriptOrchDialog(QDialog):
 
         self.setupUi()
         self.connectSignals()
-        if existingScript and existingScript.strip():
-            self.loadFromScript(existingScript)
-        else:
-            self.addBlock()
+        self.addBlock()
         self.scrollLayout.addStretch()
 
 
@@ -171,126 +156,3 @@ class ALAutoScriptOrchDialog(QDialog):
             QMessageBox.warning(self, "提示", "脚本内容为空，请添加至少一个操作步骤。")
             return
         self.accept()
-
-    @staticmethod
-    def precheckScriptForOrchestration(
-        script: str
-    ) -> tuple[bool, str]:
-
-        return precheck(script, allowed_vars=PRESET_NAMES)
-
-    def loadFromScript(
-        self,
-        script: str
-    ):
-
-        if not script.strip():
-            self.addBlock()
-            return
-        ok, err = self.precheckScriptForOrchestration(script)
-        if not ok:
-            QMessageBox.warning(
-                self, "无法编排",
-                f"脚本检查失败:\n{err}\n\n"
-                "请通过\"编辑\"按钮打开脚本编辑窗口进行修改。"
-            )
-            self.addBlock()
-            return
-        # Structured block data via observer-based parsing — no duplicate logic
-        typeIdxMap = {"IF": 0, "ELSE IF": 1, "ELSE": 2}
-        parsedBlocks = parseBlocks(script)
-        self._blocks.clear()
-        while self.scrollLayout.count():
-            item = self.scrollLayout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        try:
-            for blockType, condition, actions in parsedBlocks:
-                self.addBlock()
-                block = self._blocks[-1]
-                idx = typeIdxMap.get(blockType, 0)
-                block.typeCombo.setCurrentIndex(idx)
-                block.onTypeChanged(idx)
-                for oldStep in list(block._actionWidgets):
-                    block.removeActionStep(oldStep)
-                for target, valueExpr, opType in actions:
-                    block.addActionStep()
-                    step = block.getActionSteps()[-1]
-                    step.setOpType(opType)
-                    step.loadFromScript(target, valueExpr)
-                if blockType in ("IF", "ELSE IF") and condition:
-                    self._parseConditions(block, condition)
-        except Exception:
-            self._blocks.clear()
-            while self.scrollLayout.count():
-                item = self.scrollLayout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
-        self._updateBlockTypeRestrictions()
-        if not self._blocks:
-            self.addBlock()
-
-
-    def _parseConditions(
-        self,
-        block: ConditionalBlock,
-        condStr: str
-    ):
-
-        s = condStr.strip()
-        if not s:
-            return
-        s = stripOuterParens(s)
-        orParts = splitTopLevel(s, ".OR.")
-        allSubConds = []
-        allLogics = []
-        for pi, part in enumerate(orParts):
-            part = part.strip()
-            if pi > 0:
-                allLogics.append(".OR.")
-            andParts = splitTopLevel(part, ".AND.")
-            for ai, ap in enumerate(andParts):
-                ap = ap.strip()
-                if ai > 0:
-                    allLogics.append(".AND.")
-                allSubConds.append(ap)
-        for row in list(block._conditionRows):
-            block.condRowsLayout.removeWidget(row)
-            row.hide()
-            row.deleteLater()
-        block._conditionRows.clear()
-        for i, subCond in enumerate(allSubConds):
-            subCond = subCond.strip()
-            subCond = stripOuterParens(subCond)
-            isFirst = (i == 0)
-            row = ConditionRowFrame(
-                self._varMgr, block.blockIndex,
-                isFirst=isFirst, parent=block
-            )
-            if not isFirst:
-                row.deleteBtn.clicked.connect(
-                    lambda _checked=False, r=row: block.removeConditionRow(r)
-                )
-                if i - 1 < len(allLogics):
-                    logic = allLogics[i - 1]
-                    for li in range(row.logicCombo.count()):
-                        if row.logicCombo.itemData(li) == logic:
-                            row.logicCombo.setCurrentIndex(li)
-                            break
-            block._conditionRows.append(row)
-            block.condRowsLayout.addWidget(row)
-            subUp = subCond.upper()
-            if subUp in (".TRUE.", ".FALSE."):
-                row.loadFromParts(subUp, "", "")
-            else:
-                opSyms = [op for _, op in COMPARE_OPERATORS]
-                result = findOperatorIn(subCond, opSyms)
-                if result:
-                    idx, op = result
-                    leftPart = subCond[:idx].strip()
-                    rightPart = subCond[idx + len(op):].strip()
-                    row.loadFromParts(leftPart, op, rightPart)
-                else:
-                    row.loadFromParts(subCond, "", "")
-        if not block._conditionRows:
-            block.addInitialConditionRow()

@@ -271,6 +271,7 @@ class _DateInputContainer(QWidget):
     ):
 
         super().__init__(parent)
+        self._dynamicItems = {}  # index -> raw expression, for one-way parsed items
         self.setupUi()
 
 
@@ -303,6 +304,9 @@ class _DateInputContainer(QWidget):
         layout.addWidget(self._stack)
         layout.addStretch()
 
+    _RE_CURRENT_DATE_OFFSET = re.compile(
+        r'^CURRENT_DATE\s*([+-])\s*(\d+)$', re.IGNORECASE
+    )
 
     def getValue(
         self
@@ -310,6 +314,9 @@ class _DateInputContainer(QWidget):
 
         mode = self._modeCombo.currentData()
         if mode == "relative":
+            idx = self._relCombo.currentIndex()
+            if idx in self._dynamicItems:
+                return self._dynamicItems[idx]
             return self._relCombo.currentText()
         return self._dateEdit.date().toString("yyyy-MM-dd")
 
@@ -330,6 +337,23 @@ class _DateInputContainer(QWidget):
         idx = _RELATIVE_MAP.get(s)
         if idx is not None:
             self._modeCombo.setCurrentIndex(0)
+            self._relCombo.setCurrentIndex(idx)
+        elif self._RE_CURRENT_DATE_OFFSET.match(s):
+            m = self._RE_CURRENT_DATE_OFFSET.match(s)
+            sign = m.group(1)
+            n = int(m.group(2))
+            offset = n if sign == "+" else -n
+            label = f"{n}天后" if offset >= 0 else f"{n}天前"
+            raw = f"CURRENT_DATE {'+' if sign == '+' else '-'} {n}"
+            self._modeCombo.setCurrentIndex(0)
+            # Add dynamic item if not already present
+            for ci in range(self._relCombo.count()):
+                if ci in self._dynamicItems and self._dynamicItems[ci] == raw:
+                    self._relCombo.setCurrentIndex(ci)
+                    return
+            idx = self._relCombo.count()
+            self._relCombo.addItem(label)
+            self._dynamicItems[idx] = raw
             self._relCombo.setCurrentIndex(idx)
         elif s.startswith("DATE("):
             self._modeCombo.setCurrentIndex(1)
@@ -565,13 +589,14 @@ def encodeValueStr(
     if var_type == "Time":
         if raw_value.startswith("+") or raw_value.startswith("-"):
             return raw_value
-        if raw_value.startswith("TIME_OFFSET"):
-            m = re.match(r"TIME_OFFSET\(([+-]\d+),(\w+)\)", raw_value)
-            if m:
-                return m.group(1)
+        if raw_value.upper().startswith("TIME("):
             return raw_value
         return f"TIME({raw_value})"
     if var_type == "Date":
+        if raw_value.upper().startswith("DATE("):
+            return raw_value
+        if raw_value.upper().startswith("CURRENT_DATE"):
+            return raw_value
         relMap = {
             "前天": "CURRENT_DATE - 2",
             "昨天": "CURRENT_DATE - 1",
@@ -611,8 +636,11 @@ def stripOuterParens(
     return s
 
 
-# Pre-compiled pattern for detecting arithmetic expressions like "A + B" / "C - D"
-_RE_ARITH_EXPR = re.compile(r'^.+?\s+[+-]\s+.+$')
+# Pre-compiled patterns for detecting arithmetic expressions (A + B / A - B)
+# Must match both spaced form (CURRENT_DATE + 1) and no-space form (RESERVE_DATE+1),
+# consistent with ASEngine._resolveArithExpr.
+_RE_ARITH_SPACED = re.compile(r'^(.+?)\s+([+-])\s+(.+)$')
+_RE_ARITH_NOSPACE = re.compile(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$')
 
 
 def isArithExpr(
@@ -622,7 +650,56 @@ def isArithExpr(
         Return True if expr looks like a two-operand arithmetic expression (A ± B).
     """
 
-    return bool(_RE_ARITH_EXPR.match(expr.strip()))
+    s = expr.strip()
+    return bool(_RE_ARITH_SPACED.match(s) or _RE_ARITH_NOSPACE.match(s))
+
+
+# Pre-compiled patterns for SET value whitelist validation,
+# matching the priority order of ASEngine._resolveValue.
+_RE_VAL_TIME = re.compile(r'^TIME\(\d{1,2}:\d{2}\)$', re.IGNORECASE)
+_RE_VAL_DATE = re.compile(r'^DATE\(\d{4}-\d{2}-\d{2}\)$', re.IGNORECASE)
+_RE_VAL_ARITH_SPACED = _RE_ARITH_SPACED
+_RE_VAL_ARITH_NOSPACE = _RE_ARITH_NOSPACE
+_RE_VAL_VAR_REF = re.compile(r'^[A-Z_][A-Z0-9_]*$', re.IGNORECASE)
+
+
+def _isValidSetValue(
+    value: str
+) -> bool:
+    """
+        Whitelist validation: return True if value matches one of the
+        legal SET-value patterns recognised by ASEngine._resolveValue.
+
+        Order matches _resolveValue priority: TIME → DATE → bool →
+        quoted string → int → float → arith expr → variable reference.
+    """
+
+    s = value.strip()
+    if not s:
+        return False
+    if _RE_VAL_TIME.match(s):
+        return True
+    if _RE_VAL_DATE.match(s):
+        return True
+    if s.upper() in (".TRUE.", ".FALSE."):
+        return True
+    if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
+        return True
+    try:
+        int(s)
+        return True
+    except ValueError:
+        pass
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+    if _RE_VAL_ARITH_SPACED.match(s) or _RE_VAL_ARITH_NOSPACE.match(s):
+        return True
+    if _RE_VAL_VAR_REF.match(s):
+        return True
+    return False
 
 
 def isVarReference(
