@@ -65,8 +65,6 @@ def _errPos(
 # Pre-compiled regex patterns for value resolution
 _RE_TIME = re.compile(r"^TIME\((\d{1,2}):(\d{2})\)$", re.IGNORECASE)
 _RE_DATE = re.compile(r"^DATE\((\d{4})-(\d{2})-(\d{2})\)$", re.IGNORECASE)
-_RE_CUR_DATE_OFFSET = re.compile(r"^CURRENT_DATE\s*\+\s*(\d+)$", re.IGNORECASE)
-_RE_CUR_TIME_OFFSET = re.compile(r"^CURRENT_TIME\s*\+\s*(\d+)$", re.IGNORECASE)
 
 
 def splitTopLevel(
@@ -169,7 +167,7 @@ def _resolveValue(
           - DATE(yyyy-mm-dd)
           - .TRUE. / .FALSE.
           - Single/double quoted strings (with escaped single quotes)
-          - CURRENT_DATE + N / CURRENT_TIME + N (relative offsets)
+          - Arithmetic expressions: operand (+|-) operand (Date ± Int, Int ± Int, etc.)
           - Numeric literals (int / float)
           - Field references (resolved via _resolveFieldObj)
 
@@ -197,14 +195,6 @@ def _resolveValue(
         return s[1:-1].replace("''", "'")
     if s.startswith('"') and s.endswith('"'):
         return s[1:-1]
-    m = _RE_CUR_DATE_OFFSET.match(s)
-    if m:
-        days = int(m.group(1))
-        return datetime.now().date() + timedelta(days=days)
-    m = _RE_CUR_TIME_OFFSET.match(s)
-    if m:
-        hours = int(m.group(1))
-        return (datetime.now() + timedelta(hours=hours)).time()
     try:
         return int(s)
     except ValueError:
@@ -213,6 +203,9 @@ def _resolveValue(
         return float(s)
     except ValueError:
         pass
+    arith_result = _resolveArithExpr(s, target_data)
+    if arith_result is not None:
+        return arith_result
     obj = _resolveFieldObj(s)
     if obj:
         return obj.getValue(target_data)
@@ -248,6 +241,55 @@ def _resolveAsObject(
     value = _resolveValue(s, target_data)
     inferred = _inferType(value, s)
     return ASObject._makeTemp(value, inferred)
+
+
+def _resolveArithExpr(
+    expr: str,
+    target_data: dict,
+    line: int = 0
+):
+    """
+        Try to evaluate expr as a two-operand arithmetic expression: left (+|-) right.
+
+        Each operand is resolved via _resolveAsObject, reusing the full literal /
+        field / script-variable resolution stack.  The left operand's value is
+        copied into a temporary ASObject and ASOperator.apply() performs the
+        type-safe calculation on the copy, so the original variable is never
+        mutated.
+
+        Returns the computed Python value, or None if expr is not a recognised
+        arithmetic pattern.
+    """
+
+    s = expr.strip()
+    m = re.match(r'^(.+?)\s+([+-])\s+(.+)$', s)
+    if not m:
+        # Fallback for no-space expressions like RESERVE_DATE+1
+        # (e.g. when extracted from IF(RESERVE_DATE.EQ.CURRENT_DATE+1)).
+        # Left operand must be an identifier (letter/underscore start) to
+        # avoid false-matching date strings like 2026-05-20.
+        m = re.match(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$', s)
+    if not m:
+        return None
+    left_expr = m.group(1).strip()
+    op_symbol = m.group(2).strip()
+    right_expr = m.group(3).strip()
+    if " + " in left_expr or " - " in left_expr:
+        return None
+    if " + " in right_expr or " - " in right_expr:
+        return None
+    left_obj = _resolveAsObject(left_expr, target_data)
+    right_obj = _resolveAsObject(right_expr, target_data)
+    op = ".ADD." if op_symbol == "+" else ".SUB."
+    left_val = left_obj.getValue(target_data)
+    result_type = left_obj.var_type
+    if left_obj.var_type == "Int" and right_obj.var_type == "Float":
+        result_type = "Float"
+    elif left_obj.var_type == "Float" and right_obj.var_type == "Int":
+        result_type = "Float"
+    temp = ASObject._makeTemp(left_val, result_type)
+    ASOperator.apply(temp, right_obj, op, target_data)
+    return temp.getValue(target_data)
 
 
 def _evaluateCondition(
@@ -349,7 +391,12 @@ def _executeSet(
     resolved = _resolveValue(value_str, target_data)
     stripped = value_str.strip()
     if resolved == "" and stripped not in ("''", '""') and len(stripped.split()) > 1:
-        raise ValueError(_errPos(line, f"SET 值中存在多余内容 '{stripped}'"))
+        try:
+            resolved = _resolveArithExpr(stripped, target_data, line)
+        except ValueError as e:
+            raise ValueError(_errPos(line, str(e)))
+        if resolved is None:
+            raise ValueError(_errPos(line, f"SET 值中存在多余内容 '{stripped}'"))
     upper_name = field_name.upper().strip()
     obj = _FIELD_MAP.get(upper_name)
     if not obj:
@@ -567,7 +614,7 @@ class _EngineExecutor(NodeVisitor):
             paren_open = upper.find("(")
             if paren_open < 0:
                 raise ValueError(_errPos(self._line, "ELSE IF 缺少左括号"))
-        _executeOperation(_node.raw_line, self._target_data, self._line)
+        raise ValueError(_errPos(self._line, f"无法识别的语法 '{_node.raw_line}'"))
 
 
 def execute(

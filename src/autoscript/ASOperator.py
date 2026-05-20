@@ -115,7 +115,7 @@ class ASOperator:
         """Apply arithmetic per type."""
 
         tp = target.var_type
-        raw_op = operand._value
+        raw_op = operand.getValue(target_data)
 
         if tp == "Date":
             if not isinstance(target_val, date):

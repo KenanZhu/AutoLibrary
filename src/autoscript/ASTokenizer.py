@@ -46,8 +46,8 @@ _RE_ELSE_IF = re.compile(r"^ELSE\s+IF\((.+)\)(?:\s+THEN\s*)?$", re.IGNORECASE)
 _RE_ELSE    = re.compile(r"^ELSE\s*$", re.IGNORECASE)
 _RE_ENDIF   = re.compile(r"^(ENDIF|END IF)$", re.IGNORECASE)
 _RE_SET     = re.compile(r"^SET\s+(\w+)\s*=\s*(.+)$", re.IGNORECASE)
-_RE_ADD     = re.compile(r"^(\w+)\s+\.ADD\.\s+(\d+)$", re.IGNORECASE)
-_RE_SUB     = re.compile(r"^(\w+)\s+\.SUB\.\s+(\d+)$", re.IGNORECASE)
+_RE_ADD     = re.compile(r"^(\w+)\s+\.ADD\.\s+(-?\d+(?:\.\d+)?|\w+)$", re.IGNORECASE)
+_RE_SUB     = re.compile(r"^(\w+)\s+\.SUB\.\s+(-?\d+(?:\.\d+)?|\w+)$", re.IGNORECASE)
 _RE_PASS    = re.compile(r"^\s*PASS\s*$", re.IGNORECASE)
 
 
@@ -388,11 +388,20 @@ class ASTokenizer:
     ) -> str:
 
         in_single = False
-        for i, ch in enumerate(line):
-            if ch == "'":
+        in_double = False
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            if ch == "'" and not in_double:
+                if i + 1 < len(line) and line[i + 1] == "'":
+                    i += 2
+                    continue
                 in_single = not in_single
-            elif ch == "/" and i + 1 < len(line) and line[i + 1] == "/" and not in_single:
+            elif ch == '"' and not in_single:
+                in_double = not in_double
+            elif ch == "/" and i + 1 < len(line) and line[i + 1] == "/" and not in_single and not in_double:
                 return line[:i].rstrip()
+            i += 1
         return line
 
     @classmethod
