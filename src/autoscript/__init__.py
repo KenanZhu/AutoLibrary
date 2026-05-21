@@ -1,43 +1,30 @@
+# -*- coding: utf-8 -*-
 """
-    AutoScript module for the AutoLibrary project.
-    A lightweight scripting DSL for preprocessing user reservation data.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
+
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
 """
-from autoscript.ASTokenizer import (
-    ASTokenizer,
-    Stmt,
-    ElifNode,
-    Script,
-    IfNode,
-    SetNode,
-    OpNode,
-)
 from autoscript.ASEngine import (
     execute,
     addTargetVar,
-    splitTopLevel,
+    resetEngine,
+    META_VARS,
 )
-from autoscript.ASObject import _META_VARS as META_VARS
-from autoscript.ASObserver import ParsingObserver
 
 
 __all__ = [
     "execute",
     "addTargetVar",
-    "splitTopLevel",
+    "resetEngine",
     "registerDefaultTargetVars",
     "buildMockTargetData",
     "META_VARS",
     "ALL_VARIABLES",
     "_TARGET_VAR_DEFS",
     "_MOCK_TYPE_VALUES",
-    "ASTokenizer",
-    "Stmt",
-    "Script",
-    "IfNode",
-    "SetNode",
-    "OpNode",
-    "ElifNode",
-    "ParsingObserver",
 ]
 
 
@@ -56,8 +43,8 @@ ALL_VARIABLES = {
     display_name: (name, var_type)
     for name, var_type, _, display_name in _TARGET_VAR_DEFS
 } | {
-    obj.display_name: (obj.name, obj.var_type)
-    for obj in META_VARS.values()
+    v["display"]: (v["name"], v["type"])
+    for v in META_VARS.values()
 }
 _MOCK_TYPE_VALUES = {
     "String": "__mock__",
