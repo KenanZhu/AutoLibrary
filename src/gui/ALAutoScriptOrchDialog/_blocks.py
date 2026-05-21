@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
 """
-Conditional block widget for the AutoScript orchestration dialog.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
+
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
+"""
+"""
+    Conditional block widget for the AutoScript orchestration dialog.
 """
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
@@ -52,7 +61,6 @@ class ConditionalBlock(QGroupBox):
         mainLayout = QVBoxLayout(self)
         mainLayout.setSpacing(6)
         mainLayout.setContentsMargins(8, 8, 8, 8)
-
         headerLayout = QHBoxLayout()
         headerLayout.setSpacing(8)
         self.typeCombo = QComboBox(self)
@@ -70,7 +78,6 @@ class ConditionalBlock(QGroupBox):
         self.deleteBlockBtn.setFixedHeight(25)
         headerLayout.addWidget(self.deleteBlockBtn)
         mainLayout.addLayout(headerLayout)
-
         self.conditionWidget = QWidget(self)
         self.conditionWidget.setSizePolicy(
             QSizePolicy.Preferred, QSizePolicy.Preferred
@@ -78,7 +85,6 @@ class ConditionalBlock(QGroupBox):
         condLayout = QVBoxLayout(self.conditionWidget)
         condLayout.setContentsMargins(4, 4, 4, 4)
         condLayout.setSpacing(6)
-
         self.condRowsLayout = QVBoxLayout()
         self.condRowsLayout.setSpacing(4)
         condLayout.addLayout(self.condRowsLayout)
@@ -209,16 +215,18 @@ class ConditionalBlock(QGroupBox):
     def toScriptLines(
         self
     ) -> list:
+        """
+            Generate Lua script lines for this conditional block.
+        """
 
         blockType = self.getBlockType()
         lines = []
-
         if blockType in ("IF", "ELSE IF"):
             condTexts = [
                 r.toConditionText() for r in self._conditionRows if r.toConditionText()
             ]
             if not condTexts:
-                condTexts = [".TRUE."]
+                condTexts = ["true"]
 
             if len(condTexts) == 1:
                 combined = condTexts[0]
@@ -226,16 +234,16 @@ class ConditionalBlock(QGroupBox):
                 parts = []
                 for i, ct in enumerate(condTexts):
                     if i > 0:
-                        logic = self._conditionRows[i].getLogic() or ".AND."
+                        logic = self._conditionRows[i].getLogic() or "and"
                         parts.append(f" {logic} ")
                     parts.append(f"({ct})")
                 combined = "".join(parts)
             if blockType == "IF":
-                lines.append(f"IF({combined}) THEN")
+                lines.append(f"if {combined} then")
             else:
-                lines.append(f"ELSE IF({combined}) THEN")
+                lines.append(f"elseif {combined} then")
         else:
-            lines.append("ELSE")
+            lines.append("else")
         for step in self._actionWidgets:
             scriptLine = step.toScriptLine()
             if scriptLine:

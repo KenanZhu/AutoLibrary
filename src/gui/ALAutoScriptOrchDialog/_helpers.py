@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
 """
-Helper utilities and constants for the AutoScript orchestration dialog.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
+
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
+"""
+"""
+    Helper utilities and constants for the AutoScript orchestration dialog.
 """
 import re
 
@@ -24,14 +33,10 @@ from PySide6.QtWidgets import (
 
 from autoscript import (
     ALL_VARIABLES,
-    splitTopLevel
-)
-from autoscript.ASOperator import (
-    ARITH_TYPES,
-    COMPARISON_OPERATORS
 )
 
-
+# Types that support arithmetic operations (add/sub)
+ARITH_TYPES = {"Date", "Time", "Int", "Float"}
 VAR_TYPE_ORDER = [
     "String",
     "Int",
@@ -51,22 +56,22 @@ PRESET_VARIABLES = [
 PRESET_NAMES = {
     p["name"] for p in PRESET_VARIABLES
 }
-# Operator display names (UI-specific), symbols derived from engine
+# Operator display names (UI-specific), using Lua operator symbols
 _COMPARE_DISPLAY_MAP = {
-    ".EQ.": "等于",
-    ".NEQ.": "不等于",
-    ".BGT.": "大于",
-    ".BLT.": "小于",
-    ".BGE.": "大于等于",
-    ".BLE.": "小于等于",
+    "==": "等于",
+    "~=": "不等于",
+    ">": "大于",
+    "<": "小于",
+    ">=": "大于等于",
+    "<=": "小于等于",
 }
 COMPARE_OPERATORS = sorted(
-    [(name, op) for op, name in _COMPARE_DISPLAY_MAP.items() if op in COMPARISON_OPERATORS],
+    [(name, op) for op, name in _COMPARE_DISPLAY_MAP.items()],
     key=lambda x: len(x[1]), reverse=True
 )
 LOGIC_OPERATORS = [
-    ("并且 (.AND.)", ".AND."),
-    ("或者 (.OR.)", ".OR."),
+    ("并且 (and)", "and"),
+    ("或者 (or)", "or"),
 ]
 ACTION_TYPES = [
     ("设置为", "set"),
@@ -182,8 +187,8 @@ def makeValueWidget(
         return w
     if var_type == "Boolean":
         w = QComboBox(parent)
-        w.addItem("是 (.TRUE.)", ".TRUE.")
-        w.addItem("否 (.FALSE.)", ".FALSE.")
+        w.addItem("是 (true)", "true")
+        w.addItem("否 (false)", "false")
         w.setFixedHeight(25)
         w.setMinimumWidth(100)
         return w
@@ -304,8 +309,8 @@ class _DateInputContainer(QWidget):
         layout.addWidget(self._stack)
         layout.addStretch()
 
-    _RE_CURRENT_DATE_OFFSET = re.compile(
-        r'^CURRENT_DATE\s*([+-])\s*(\d+)$', re.IGNORECASE
+    _RE_DATE_ADD_CURRENT = re.compile(
+        r'^date_add\(CURRENT_DATE\(\),\s*(-?\d+)\)$', re.IGNORECASE
     )
 
     def getValue(
@@ -326,27 +331,24 @@ class _DateInputContainer(QWidget):
         expr: str
     ):
 
-        s = expr.strip().upper()
-        _RELATIVE_MAP = {
-            "CURRENT_DATE": 2, "TODAY": 2,
-            "CURRENT_DATE + 1": 3, "TOMORROW": 3,
-            "CURRENT_DATE + 2": 4,
-            "CURRENT_DATE - 1": 1,
-            "CURRENT_DATE - 2": 0,
-        }
-        idx = _RELATIVE_MAP.get(s)
-        if idx is not None:
+        s = expr.strip()
+        up = s.upper()
+        if up == "CURRENT_DATE()":
             self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(idx)
-        elif self._RE_CURRENT_DATE_OFFSET.match(s):
-            m = self._RE_CURRENT_DATE_OFFSET.match(s)
-            sign = m.group(1)
-            n = int(m.group(2))
-            offset = n if sign == "+" else -n
-            label = f"{n}天后" if offset >= 0 else f"{n}天前"
-            raw = f"CURRENT_DATE {'+' if sign == '+' else '-'} {n}"
+            self._relCombo.setCurrentIndex(2)
+            return
+        m_add = self._RE_DATE_ADD_CURRENT.match(up)
+        if m_add:
+            n = int(m_add.group(1))
+            _OFFSET_IDX = {-2: 0, -1: 1, 0: 2, 1: 3, 2: 4}
+            idx = _OFFSET_IDX.get(n)
+            if idx is not None:
+                self._modeCombo.setCurrentIndex(0)
+                self._relCombo.setCurrentIndex(idx)
+                return
+            label = f"{n}天后" if n >= 0 else f"{-n}天前"
+            raw = f"CURRENT_DATE {'+' if n >= 0 else '-'} {abs(n)}"
             self._modeCombo.setCurrentIndex(0)
-            # Add dynamic item if not already present
             for ci in range(self._relCombo.count()):
                 if ci in self._dynamicItems and self._dynamicItems[ci] == raw:
                     self._relCombo.setCurrentIndex(ci)
@@ -355,12 +357,21 @@ class _DateInputContainer(QWidget):
             self._relCombo.addItem(label)
             self._dynamicItems[idx] = raw
             self._relCombo.setCurrentIndex(idx)
-        elif s.startswith("DATE("):
+            return
+        m_date_ctor = re.match(r"^DATE\((\d+),\s*(\d+),\s*(\d+)\)$", up)
+        if m_date_ctor:
             self._modeCombo.setCurrentIndex(1)
-            m = re.match(r"DATE\((\d{4}-\d{2}-\d{2})\)", s)
-            if m:
-                parts = m.group(1).split("-")
-                self._dateEdit.setDate(QDate(int(parts[0]), int(parts[1]), int(parts[2])))
+            self._dateEdit.setDate(QDate(
+                int(m_date_ctor.group(1)),
+                int(m_date_ctor.group(2)),
+                int(m_date_ctor.group(3)),
+            ))
+            return
+        m_date = re.match(r'^"(\d{4}-\d{2}-\d{2})"$', s)
+        if m_date:
+            self._modeCombo.setCurrentIndex(1)
+            parts = m_date.group(1).split("-")
+            self._dateEdit.setDate(QDate(int(parts[0]), int(parts[1]), int(parts[2])))
 
 
 class _TimeInputContainer(QWidget):
@@ -392,8 +403,16 @@ class _TimeInputContainer(QWidget):
         expr: str
     ):
 
-        s = expr.strip().upper()
-        m = re.match(r"TIME\((\d{1,2}:\d{2})\)", s)
+        s = expr.strip()
+        up = s.upper()
+        m_time_ctor = re.match(r"^TIME\((\d+),\s*(\d+)\)$", up)
+        if m_time_ctor:
+            self._timeEdit.setTime(QTime(
+                int(m_time_ctor.group(1)),
+                int(m_time_ctor.group(2)),
+            ))
+            return
+        m = re.match(r'^"(\d{1,2}:\d{2})"$', s)
         if m:
             parts = m.group(1).split(":")
             self._timeEdit.setTime(QTime(int(parts[0]), int(parts[1])))
@@ -541,24 +560,45 @@ def setWidgetValue(
     var_type: str,
     expr: str
 ):
+    """
+        Set a widget's value from a Lua script expression.
+    """
 
     if hasattr(w, "setValue"):
         w.setValue(expr)
         return
-    s = expr.strip().upper()
+    s = expr.strip()
+    up = s.upper()
     if isinstance(w, QTimeEdit):
-        m = re.match(r"TIME\((\d{1,2}:\d{2})\)", s)
-        if m:
-            parts = m.group(1).split(":")
-            w.setTime(QTime(int(parts[0]), int(parts[1])))
+        m_time_ctor = re.match(r"^TIME\((\d+),\s*(\d+)\)$", up)
+        if m_time_ctor:
+            w.setTime(QTime(int(m_time_ctor.group(1)), int(m_time_ctor.group(2))))
+        else:
+            m = re.match(r'^"(\d{1,2}:\d{2})"$', s)
+            if m:
+                parts = m.group(1).split(":")
+                w.setTime(QTime(int(parts[0]), int(parts[1])))
     elif isinstance(w, QDateEdit):
-        m = re.match(r"DATE\((\d{4}-\d{2}-\d{2})\)", s)
-        if m:
-            parts = m.group(1).split("-")
-            w.setDate(QDate(int(parts[0]), int(parts[1]), int(parts[2])))
+        m_date_ctor = re.match(r"^DATE\((\d+),\s*(\d+),\s*(\d+)\)$", up)
+        if m_date_ctor:
+            w.setDate(QDate(
+                int(m_date_ctor.group(1)),
+                int(m_date_ctor.group(2)),
+                int(m_date_ctor.group(3)),
+            ))
+        else:
+            m = re.match(r'^"(\d{4}-\d{2}-\d{2})"$', s)
+            if m:
+                parts = m.group(1).split("-")
+                w.setDate(QDate(int(parts[0]), int(parts[1]), int(parts[2])))
     elif isinstance(w, QComboBox):
         for i in range(w.count()):
-            if w.itemData(i) == s or w.itemText(i).upper() == s:
+            d = w.itemData(i)
+            if d is not None:
+                if str(d).upper() == up:
+                    w.setCurrentIndex(i)
+                    return
+            if w.itemText(i).upper() == up:
                 w.setCurrentIndex(i)
                 return
     elif isinstance(w, QSpinBox):
@@ -573,9 +613,8 @@ def setWidgetValue(
             pass
     elif isinstance(w, QLineEdit):
         inner = expr.strip()
-        if (inner.startswith("'") and inner.endswith("'")) or \
-           (inner.startswith('"') and inner.endswith('"')):
-            inner = inner[1:-1].replace("''", "'")
+        if inner.startswith('"') and inner.endswith('"'):
+            inner = inner[1:-1].replace('\\"', '"')
         w.setText(inner)
 
 
@@ -583,39 +622,86 @@ def encodeValueStr(
     raw_value: str,
     var_type: str
 ) -> str:
+    """
+        Encode a raw widget value as a Lua expression.
 
-    if isArithExpr(raw_value):
-        return raw_value
-    if var_type == "Time":
-        if raw_value.startswith("+") or raw_value.startswith("-"):
-            return raw_value
-        if raw_value.upper().startswith("TIME("):
-            return raw_value
-        return f"TIME({raw_value})"
-    if var_type == "Date":
-        if raw_value.upper().startswith("DATE("):
-            return raw_value
-        if raw_value.upper().startswith("CURRENT_DATE"):
-            return raw_value
-        relMap = {
-            "前天": "CURRENT_DATE - 2",
-            "昨天": "CURRENT_DATE - 1",
-            "今天": "CURRENT_DATE",
-            "明天": "CURRENT_DATE + 1",
-            "后天": "CURRENT_DATE + 2"
-        }
-        if raw_value in relMap:
-            return relMap[raw_value]
-        return f"DATE({raw_value})"
+        Arithmetic expressions (A + B) are passed through for numeric types;
+        Date/Time arithmetic is translated to ``date_add()`` / ``time_add()`` calls.
+    """
+
+    if var_type in ("Date", "Time"):
+        return _encodeDateOrTime(str(raw_value), var_type)
+    if isinstance(raw_value, bool):
+        return "true" if raw_value else "false"
+    s = str(raw_value)
+    if isArithExpr(s):
+        return s
     if var_type == "Boolean":
-        up = raw_value.upper().strip()
-        if up in (".TRUE.", ".FALSE."):
-            return up
-        return ".TRUE." if raw_value else ".FALSE."
+        up = s.upper().strip()
+        if up in ("TRUE", "FALSE"):
+            return up.lower()
+        return "true" if raw_value else "false"
     if var_type == "String":
-        escaped = raw_value.replace("'", "''")
-        return f"'{escaped}'"
-    return raw_value
+        escaped = s.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
+    return s
+
+
+def _encodeDateOrTime(
+    raw_value: str,
+    var_type: str
+) -> str:
+    """
+        Translate a date/time widget value into a Lua expression.
+    """
+
+    s = raw_value.strip()
+    up = s.upper()
+    m_arith_spaced = re.match(r'^(.+?)\s+([+-])\s+(.+)$', s)
+    m_arith_nospace = re.match(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$', s)
+    m_arith = m_arith_spaced or m_arith_nospace
+    if m_arith:
+        left = m_arith.group(1).strip().upper()
+        sign = m_arith.group(2)
+        right = m_arith.group(3).strip()
+        operand = right if sign == "+" else f"-{right}"
+        if left == "CURRENT_DATE":
+            return f"date_add(CURRENT_DATE(), {operand})"
+        if left == "CURRENT_TIME":
+            return f"time_add(CURRENT_TIME(), {operand})"
+        if var_type == "Date":
+            return f"date_add({left}, {operand})"
+        if var_type == "Time":
+            return f"time_add({left}, {operand})"
+        return f"{left} {sign} {right}"
+    if up == "CURRENT_DATE":
+        return "CURRENT_DATE()"
+    if up == "CURRENT_TIME":
+        return "CURRENT_TIME()"
+    _REL_MAP = {
+        "前天": "date_add(CURRENT_DATE(), -2)",
+        "昨天": "date_add(CURRENT_DATE(), -1)",
+        "今天": "CURRENT_DATE()",
+        "明天": "date_add(CURRENT_DATE(), 1)",
+        "后天": "date_add(CURRENT_DATE(), 2)",
+    }
+    if s in _REL_MAP:
+        return _REL_MAP[s]
+    if var_type == "Date":
+        m_date = re.match(r"^(\d{4})-(\d{2})-(\d{2})$", s)
+        if m_date:
+            y, m, d = int(m_date.group(1)), int(m_date.group(2)), int(m_date.group(3))
+            return f"date({y}, {m}, {d})"
+    if var_type == "Time":
+        m_time = re.match(r"^(\d{1,2}):(\d{2})$", s)
+        if m_time:
+            h, m = int(m_time.group(1)), int(m_time.group(2))
+            return f"time({h}, {m})"
+    if re.match(r"^[+-]?\d+$", s):
+        return s
+    if re.match(r"^[A-Za-z_]\w*$", s):
+        return s
+    return f'"{s}"'
 
 
 def stripOuterParens(
@@ -637,8 +723,6 @@ def stripOuterParens(
 
 
 # Pre-compiled patterns for detecting arithmetic expressions (A + B / A - B)
-# Must match both spaced form (CURRENT_DATE + 1) and no-space form (RESERVE_DATE+1),
-# consistent with ASEngine._resolveArithExpr.
 _RE_ARITH_SPACED = re.compile(r'^(.+?)\s+([+-])\s+(.+)$')
 _RE_ARITH_NOSPACE = re.compile(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$')
 
@@ -654,65 +738,21 @@ def isArithExpr(
     return bool(_RE_ARITH_SPACED.match(s) or _RE_ARITH_NOSPACE.match(s))
 
 
-# Pre-compiled patterns for SET value whitelist validation,
-# matching the priority order of ASEngine._resolveValue.
-_RE_VAL_TIME = re.compile(r'^TIME\(\d{1,2}:\d{2}\)$', re.IGNORECASE)
-_RE_VAL_DATE = re.compile(r'^DATE\(\d{4}-\d{2}-\d{2}\)$', re.IGNORECASE)
-_RE_VAL_ARITH_SPACED = _RE_ARITH_SPACED
-_RE_VAL_ARITH_NOSPACE = _RE_ARITH_NOSPACE
-_RE_VAL_VAR_REF = re.compile(r'^[A-Z_][A-Z0-9_]*$', re.IGNORECASE)
-
-
-def _isValidSetValue(
-    value: str
-) -> bool:
-    """
-        Whitelist validation: return True if value matches one of the
-        legal SET-value patterns recognised by ASEngine._resolveValue.
-
-        Order matches _resolveValue priority: TIME → DATE → bool →
-        quoted string → int → float → arith expr → variable reference.
-    """
-
-    s = value.strip()
-    if not s:
-        return False
-    if _RE_VAL_TIME.match(s):
-        return True
-    if _RE_VAL_DATE.match(s):
-        return True
-    if s.upper() in (".TRUE.", ".FALSE."):
-        return True
-    if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
-        return True
-    try:
-        int(s)
-        return True
-    except ValueError:
-        pass
-    try:
-        float(s)
-        return True
-    except ValueError:
-        pass
-    if _RE_VAL_ARITH_SPACED.match(s) or _RE_VAL_ARITH_NOSPACE.match(s):
-        return True
-    if _RE_VAL_VAR_REF.match(s):
-        return True
-    return False
-
-
 def isVarReference(
     expr: str
 ) -> bool:
+    """
+        Return True if *expr* looks like a variable name reference
+        (as opposed to a literal value or function call).
+    """
 
     s = expr.strip()
     up = s.upper()
-    if up in (".TRUE.", ".FALSE."):
+    if up in ("TRUE", "FALSE"):
         return False
-    if re.match(r"^TIME\(|^DATE\(|^CURRENT_", up):
+    if re.match(r"^DATE\(|^TIME\(|^DATE_ADD\(|^TIME_ADD\(|^CURRENT_DATE\(|^CURRENT_TIME\(|^CURRENT_", up):
         return False
-    if up.startswith("'") or up.startswith('"'):
+    if up.startswith('"') or up.startswith("'"):
         return False
     if re.match(r"^[+-]?\d", s):
         return False

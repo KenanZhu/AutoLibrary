@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
 """
-Orchestration dialog for visually composing AutoScript scripts.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
+
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
+"""
+"""
+    Orchestration dialog for visually composing AutoScript scripts.
 """
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
@@ -132,18 +141,21 @@ class ALAutoScriptOrchDialog(QDialog):
     def getScript(
         self
     ) -> str:
+        """
+            Generate the complete Lua script from all blocks.
+        """
 
         parts = []
         prevType = None
         for block in self._blocks:
             blockType = block.getBlockType()
             if blockType == "IF" and prevType is not None:
-                parts.append("END IF")
+                parts.append("end")
             lines = block.toScriptLines()
             parts.extend(lines)
             prevType = blockType
         if self._blocks and self._blocks[0].getBlockType() == "IF":
-            parts.append("END IF")
+            parts.append("end")
         return "\n".join(parts)
 
     @Slot()

@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
 """
-Widget components for the AutoScript orchestration dialog.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
+
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
+"""
+"""
+    Widget components for the AutoScript orchestration dialog.
 """
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
@@ -21,7 +30,6 @@ from gui.ALAutoScriptOrchDialog._helpers import (
     VAR_TYPE_ORDER,
     encodeValueStr,
     getValueFromWidget,
-    isArithExpr,
     makeComboWidget,
     makeLabel,
     makeOffsetWidget,
@@ -119,8 +127,8 @@ class ConditionRowFrame(QFrame):
         self._varMgr.populateCombo(self.leftVarCombo)
         # Append boolean literal sentinels at the end
         self.leftVarCombo.insertSeparator(self.leftVarCombo.count())
-        self.leftVarCombo.addItem(".TRUE.", (".TRUE.", "Boolean"))
-        self.leftVarCombo.addItem(".FALSE.", (".FALSE.", "Boolean"))
+        self.leftVarCombo.addItem("true", ("true", "Boolean"))
+        self.leftVarCombo.addItem("false", ("false", "Boolean"))
         if wasBool and boolName:
             for ci in range(self.leftVarCombo.count()):
                 d = self.leftVarCombo.itemData(ci)
@@ -156,7 +164,7 @@ class ConditionRowFrame(QFrame):
         if not data:
             return
         name, vartype = data
-        isBool = name in (".TRUE.", ".FALSE.")
+        isBool = name in ("true", "false")
         self._isBoolMode = isBool
         self.opCombo.setVisible(not isBool)
         self._compTypeCombo.setVisible(not isBool)
@@ -204,6 +212,9 @@ class ConditionRowFrame(QFrame):
         if not data:
             return ""
         name, vartype = data
+        # CURRENT_DATE / CURRENT_TIME are Lua functions — call them, not reference them
+        if name in ("CURRENT_DATE", "CURRENT_TIME"):
+            name = f"{name}()"
         opSym = self.opCombo.currentData()
         if self._rawRhsExpr:
             return f"{name} {opSym} {self._rawRhsExpr}"
@@ -212,6 +223,8 @@ class ConditionRowFrame(QFrame):
             rd = self.rhsVarCombo.currentData()
             if rd:
                 rhsName = rd[0]
+                if rhsName in ("CURRENT_DATE", "CURRENT_TIME"):
+                    rhsName = f"{rhsName}()"
                 return f"{name} {opSym} {rhsName}"
             rhsText = self.rhsVarCombo.currentText().strip()
             if rhsText:
@@ -399,38 +412,37 @@ class ActionStepFrame(QFrame):
     def toScriptLine(
         self
     ) -> str:
+        """
+            Generate a single line of Lua script from the current widget state.
+        """
 
         target = self.getTargetName()
         op = self.opTypeCombo.currentData()
         if op == "pass":
-            return "    PASS"
+            return "    -- pass"
         if not target:
             return ""
         rawVal = self._getValueRaw()
+        vartype = self._currentTargetType
         if op == "set":
-            vartype = self._currentTargetType
-            if isArithExpr(rawVal):
-                return f"    SET {target} = {rawVal}"
             encoded = encodeValueStr(rawVal, vartype)
-            return f"    SET {target} = {encoded}"
+            return f"    {target} = {encoded}"
         elif op == "add":
-            vartype = self._currentTargetType
             if vartype == "Date" and hasattr(self.valueStack.currentWidget(), "getOffsetDays"):
                 days = self.valueStack.currentWidget().getOffsetDays()
-                return f"    {target} .ADD. {days}"
+                return f"    {target} = date_add({target}, {days})"
             if vartype == "Time" and hasattr(self.valueStack.currentWidget(), "getOffsetHours"):
                 hours = self.valueStack.currentWidget().getOffsetHours()
-                return f"    {target} .ADD. {hours}"
-            return f"    {target} .ADD. {rawVal}"
+                return f"    {target} = time_add({target}, {hours})"
+            return f"    {target} = {target} + {rawVal}"
         elif op == "sub":
-            vartype = self._currentTargetType
             if vartype == "Date" and hasattr(self.valueStack.currentWidget(), "getOffsetDays"):
                 days = self.valueStack.currentWidget().getOffsetDays()
-                return f"    {target} .SUB. {days}"
+                return f"    {target} = date_add({target}, -{days})"
             if vartype == "Time" and hasattr(self.valueStack.currentWidget(), "getOffsetHours"):
                 hours = self.valueStack.currentWidget().getOffsetHours()
-                return f"    {target} .SUB. {hours}"
-            return f"    {target} .SUB. {rawVal}"
+                return f"    {target} = time_add({target}, -{hours})"
+            return f"    {target} = {target} - {rawVal}"
         return ""
 
 
@@ -439,7 +451,8 @@ class ActionStepFrame(QFrame):
     ) -> str:
 
         if self.valueSrcCombo.currentData() == "variable":
-            return self.existingVarCombo.currentText().strip()
+            data = self.existingVarCombo.currentData()
+            return data[0] if data else ""
         w = self.valueStack.currentWidget()
         if w:
             return getValueFromWidget(w)

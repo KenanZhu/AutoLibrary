@@ -55,6 +55,9 @@ from autoscript import (
 
 
 class ALScriptHighlighter(QSyntaxHighlighter):
+    """
+        Syntax highlighter for Lua-based AutoScript.
+    """
 
     def __init__(
         self,
@@ -67,26 +70,32 @@ class ALScriptHighlighter(QSyntaxHighlighter):
         keywordFmt = QTextCharFormat()
         keywordFmt.setForeground(QColor("#569CD6"))
         keywordFmt.setFontWeight(QFont.Weight.Bold)
-        for kw in ["IF", "ELSE IF", "ELSE", "ENDIF", "END IF",
-                    "SET", "PASS", "THEN"]:
-            pattern = r"\b" + kw.replace(" ", r"\s+") + r"\b"
-            self._rules.append((pattern, keywordFmt))
-        opFmt = QTextCharFormat()
-        opFmt.setForeground(QColor("#C586C0"))
-        opFmt.setFontWeight(QFont.Weight.Normal)
-        for op in [r"\.EQ\.", r"\.NEQ\.", r"\.BGT\.", r"\.BLT\.",
-                   r"\.BGE\.", r"\.BLE\.", r"\.ADD\.", r"\.SUB\.",
-                   r"\.AND\.", r"\.OR\."]:
-            self._rules.append((op, opFmt))
+        for kw in [
+            "if", "elseif", "else", "end", "then",
+            "and", "or", "not",
+            "local", "function", "return", "nil",
+        ]:
+            self._rules.append((r"\b" + kw + r"\b", keywordFmt))
         boolFmt = QTextCharFormat()
         boolFmt.setForeground(QColor("#4FC1FF"))
         boolFmt.setFontWeight(QFont.Weight.Bold)
-        self._rules.append((r"\.TRUE\.", boolFmt))
-        self._rules.append((r"\.FALSE\.", boolFmt))
+        self._rules.append((r"\btrue\b", boolFmt))
+        self._rules.append((r"\bfalse\b", boolFmt))
+        cmpFmt = QTextCharFormat()
+        cmpFmt.setForeground(QColor("#C586C0"))
+        cmpFmt.setFontWeight(QFont.Weight.Normal)
+        for op in [r"==", r"~=", r">=", r"<=", r">", r"<"]:
+            self._rules.append((op, cmpFmt))
+        arithFmt = QTextCharFormat()
+        arithFmt.setForeground(QColor("#C586C0"))
+        arithFmt.setFontWeight(QFont.Weight.Normal)
+        for op in [r"\+", r"-", r"\*", r"/", r"\.\."]:
+            self._rules.append((op, arithFmt))
         funcFmt = QTextCharFormat()
         funcFmt.setForeground(QColor("#DCDCAA"))
         funcFmt.setFontWeight(QFont.Weight.Normal)
-        self._rules.append((r"\b(?:DATE|TIME)\b", funcFmt))
+        for fn in ["CURRENT_DATE", "CURRENT_TIME", "date_add", "time_add"]:
+            self._rules.append((r"\b" + fn + r"\b", funcFmt))
         varFmt = QTextCharFormat()
         varFmt.setForeground(QColor("#9CDCFE"))
         varFmt.setFontWeight(QFont.Weight.Normal)
@@ -96,15 +105,16 @@ class ALScriptHighlighter(QSyntaxHighlighter):
         strFmt = QTextCharFormat()
         strFmt.setForeground(QColor("#CE9178"))
         strFmt.setFontWeight(QFont.Weight.Normal)
+        self._rules.append((r'"[^"]*"', strFmt))
         self._rules.append((r"'[^']*'", strFmt))
         numFmt = QTextCharFormat()
         numFmt.setForeground(QColor("#B5CEA8"))
         numFmt.setFontWeight(QFont.Weight.Normal)
-        self._rules.append((r"\b\d+\b", numFmt))
+        self._rules.append((r"\b\d+(?:\.\d+)?\b", numFmt))
         commentFmt = QTextCharFormat()
         commentFmt.setForeground(QColor("#6A9955"))
         commentFmt.setFontItalic(True)
-        self._rules.append((r"//[^\n]*", commentFmt))
+        self._rules.append((r"--[^\n]*", commentFmt))
 
 
     def highlightBlock(
@@ -257,15 +267,15 @@ class ALAutoScriptEditDialog(QDialog):
         basicLayout.setContentsMargins(4, 4, 4, 4)
         basicLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         controlButtons = [
-            ("IF", "IF()\n    \nEND IF"),
-            ("ELSE IF", "ELSE IF()\n    "),
-            ("ELSE", "ELSE"),
-            ("END IF", "END IF"),
-            ("PASS", "PASS"),
+            ("if", "if  then\n    \nend"),
+            ("elseif", "elseif  then\n    "),
+            ("else", "else"),
+            ("end", "end"),
+            ("-- pass", "-- pass"),
         ]
         self._addButtonsToGrid(basicLayout, controlButtons, 0, 0, 5)
         assignButtons = [
-            ("SET", "SET  = "),
+            ("=", " = "),
         ]
         self._addButtonsToGrid(basicLayout, assignButtons, 0, 5, 1)
         tabWidget.addTab(basicWidget, "基本语法")
@@ -275,22 +285,22 @@ class ALAutoScriptEditDialog(QDialog):
         operatorLayout.setContentsMargins(4, 4, 4, 4)
         operatorLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         arithmeticButtons = [
-            (".ADD.", ".ADD."),
-            (".SUB.", ".SUB."),
+            ("+", " + "),
+            ("-", " - "),
         ]
         self._addButtonsToGrid(operatorLayout, arithmeticButtons, 0, 0, 2)
         compareButtons = [
-            (".EQ.", ".EQ."),
-            (".NEQ.", ".NEQ."),
-            (".BGT.", ".BGT."),
-            (".BLT.", ".BLT."),
-            (".BGE.", ".BGE."),
-            (".BLE.", ".BLE."),
+            ("==", " == "),
+            ("~=", " ~= "),
+            (">", " > "),
+            ("<", " < "),
+            (">=", " >= "),
+            ("<=", " <= "),
         ]
         self._addButtonsToGrid(operatorLayout, compareButtons, 1, 0, 6)
         logic_buttons = [
-            (".AND.", ".AND."),
-            (".OR.", ".OR."),
+            ("and", " and "),
+            ("or", " or "),
         ]
         self._addButtonsToGrid(operatorLayout, logic_buttons, 2, 0, 2)
         tabWidget.addTab(operatorWidget, "运算符")
@@ -300,19 +310,19 @@ class ALAutoScriptEditDialog(QDialog):
         literalLayout.setContentsMargins(4, 4, 4, 4)
         literalLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         bool_buttons = [
-            (".TRUE.", ".TRUE."),
-            (".FALSE.", ".FALSE."),
+            ("true", "true"),
+            ("false", "false"),
         ]
         self._addButtonsToGrid(literalLayout, bool_buttons, 0, 0, 2)
         dateTimeButtons = [
-            ("DATE()", "DATE(2025-01-01)"),
-            ("TIME()", "TIME(00:00)"),
+            ("日期", '"2099-01-01"'),
+            ("时间", '"00:00"'),
         ]
         self._addButtonsToGrid(literalLayout, dateTimeButtons, 1, 0, 2)
         hintButtons = [
-            ("字符串", "'请输入文本'"),
+            ("字符串", '"请输入文本"'),
             ("数字", "123"),
-            ("注释", "// 请输入注释"),
+            ("注释", "-- 请输入注释"),
         ]
         self._addButtonsToGrid(literalLayout, hintButtons, 2, 0, 3)
         tabWidget.addTab(literalWidget, "字面量")
