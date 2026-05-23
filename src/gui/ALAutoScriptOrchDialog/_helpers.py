@@ -88,6 +88,8 @@ DATE_RELATIVE_OPTIONS = [
 DATE_OFFSET_UNITS = [
     ("天", "days"),
     ("周", "weeks"),
+    # NOTE: "月" and "年" use fixed day counts (30 / 365), not calendar months/years,
+    # because date_add() works with second-level offsets (n * 86400).
     ("月", "months"),
     ("年", "years"),
 ]
@@ -657,6 +659,8 @@ def _encodeDateOrTime(
 
     s = raw_value.strip()
     up = s.upper()
+    # Input comes from widget values — single binary expressions only (e.g. "A + 3",
+    # "CURRENT_DATE + 5"). Multi-operator expressions are not produced by the UI.
     m_arith_spaced = re.match(r'^(.+?)\s+([+-])\s+(.+)$', s)
     m_arith_nospace = re.match(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$', s)
     m_arith = m_arith_spaced or m_arith_nospace

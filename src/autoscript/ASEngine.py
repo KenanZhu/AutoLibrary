@@ -14,6 +14,15 @@ from datetime import (
 
 from lupa import LuaRuntime as _LuaRuntime
 
+try:
+    from lupa.lua55 import LuaError as _LuaError, LuaSyntaxError as _LuaSyntaxError
+except ImportError:
+    try:
+        from lupa.lua54 import LuaError as _LuaError, LuaSyntaxError as _LuaSyntaxError
+    except ImportError:
+        _LuaError = Exception
+        _LuaSyntaxError = Exception
+
 
 __all__ = ["execute", "addTargetVar", "resetEngine"]
 
@@ -23,9 +32,17 @@ _TARGET_VARS: dict[str, dict] = {}
 _lua = None
 
 # Built-in meta variable definitions (name / type / display-name)
-META_VARS = {
+META_VARS: dict[str, dict[str, str]] = {
     "CURRENT_DATE": {"name": "CURRENT_DATE", "type": "Date", "display": "当前日期"},
     "CURRENT_TIME": {"name": "CURRENT_TIME", "type": "Time", "display": "当前时间"},
+}
+
+# Per-type fallback value when target_data entry is missing.
+_DEFAULT_BY_TYPE: dict[str, str | int | float | bool] = {
+    "String": "",
+    "Int": 0,
+    "Float": 0.0,
+    "Boolean": False,
 }
 
 
@@ -170,6 +187,62 @@ def _assignPath(
     d[key_path[-1]] = value
 
 
+def _pyTypeToASType(
+    value
+) -> str:
+    """
+        Map a Python runtime value to its AutoScript type name.
+    """
+
+    if isinstance(value, bool):
+        return "Boolean"
+    if isinstance(value, int):
+        return "Int"
+    if isinstance(value, float):
+        return "Float"
+    if isinstance(value, str):
+        return "String"
+    return "Unknown"
+
+
+def _checkDateFormat(
+    date_str: str,
+    var_name: str = "",
+) -> None:
+    """
+        Validate that *date_str* is in YYYY-MM-DD format.
+        Raises ValueError with a descriptive message on failure.
+    """
+
+    prefix = f"Date 类型变量 '{var_name}' 的" if var_name else ""
+    try:
+        date.fromisoformat(date_str)
+    except ValueError:
+        raise ValueError(
+            f"{prefix}值 '{date_str}' 不是合法的日期格式，"
+            f"应为 YYYY-MM-DD"
+        )
+
+
+def _checkTimeFormat(
+    time_str: str,
+    var_name: str = "",
+) -> None:
+    """
+        Validate that *time_str* is in HH:MM format.
+        Raises ValueError with a descriptive message on failure.
+    """
+
+    prefix = f"Time 类型变量 '{var_name}' 的" if var_name else ""
+    try:
+        datetime.strptime(time_str, "%H:%M")
+    except ValueError:
+        raise ValueError(
+            f"{prefix}值 '{time_str}' 不是合法的时间格式，"
+            f"应为 HH:MM"
+        )
+
+
 def _checkType(
     var_name: str,
     var_type: str,
@@ -188,17 +261,17 @@ def _checkType(
         if not isinstance(value, str):
             raise ValueError(
                 f"Date 类型变量 '{var_name}' 只能接受日期字符串，"
-                f"不能接受 {type(value).__name__} 类型"
+                f"不能接受 {_pyTypeToASType(value)} 类型"
             )
-        date.fromisoformat(value)
+        _checkDateFormat(value, var_name)
         return
     if var_type == "Time":
         if not isinstance(value, str):
             raise ValueError(
                 f"Time 类型变量 '{var_name}' 只能接受时间字符串，"
-                f"不能接受 {type(value).__name__} 类型"
+                f"不能接受 {_pyTypeToASType(value)} 类型"
             )
-        datetime.strptime(value, "%H:%M")
+        _checkTimeFormat(value, var_name)
         return
     if var_type == "Int":
         if isinstance(value, bool):
@@ -207,7 +280,7 @@ def _checkType(
             )
         if not isinstance(value, int) and not (isinstance(value, float) and value == int(value)):
             raise ValueError(
-                f"Int 类型变量 '{var_name}' 不能接受 {type(value).__name__} 类型的值"
+                f"Int 类型变量 '{var_name}' 不能接受 {_pyTypeToASType(value)} 类型的值"
             )
         return
     if var_type == "Float":
@@ -217,19 +290,19 @@ def _checkType(
             )
         if not isinstance(value, (int, float)):
             raise ValueError(
-                f"Float 类型变量 '{var_name}' 不能接受 {type(value).__name__} 类型的值"
+                f"Float 类型变量 '{var_name}' 不能接受 {_pyTypeToASType(value)} 类型的值"
             )
         return
     if var_type == "Boolean":
         if not isinstance(value, bool):
             raise ValueError(
-                f"Boolean 类型变量 '{var_name}' 不能接受 {type(value).__name__} 类型的值"
+                f"Boolean 类型变量 '{var_name}' 不能接受 {_pyTypeToASType(value)} 类型的值"
             )
         return
     if var_type == "String":
         if not isinstance(value, str):
             raise ValueError(
-                f"String 类型变量 '{var_name}' 不能接受 {type(value).__name__} 类型的值"
+                f"String 类型变量 '{var_name}' 不能接受 {_pyTypeToASType(value)} 类型的值"
             )
         return
 
@@ -238,7 +311,7 @@ def addTargetVar(
     name: str,
     var_type: str,
     key_path: list,
-    display_name: str = None,
+    _display_name: str = None,
 ) -> None:
     """
         Register a new target variable bound to a path in the application data dict.
@@ -247,7 +320,6 @@ def addTargetVar(
             name (str): The canonical variable name (e.g. "RESERVE_DATE").
             var_type (str): "Int" | "Float" | "Boolean" | "Date" | "Time" | "String".
             key_path (list): Nested path into target_data, e.g. ["reserve_info", "date"].
-            display_name (str): Optional Chinese alias (unused by the engine).
     """
 
     upper_name = name.upper().strip()
@@ -263,6 +335,7 @@ def resetEngine(
         Reset the engine to its initial state: clear all target variables
         and release the Lua runtime.
     """
+
     global _TARGET_VARS, _lua
     _TARGET_VARS = {}
     _lua = None
@@ -274,6 +347,9 @@ def _push(
     """
         Push target_data values into Lua globals.
         Date / Time strings are converted to native Lua types (timestamp / minutes).
+
+        Raises ValueError for missing / malformed Date or Time values so that
+        execute() can surface them as user-visible AutoScript execution errors.
     """
 
     lua = _getLua()
@@ -285,28 +361,27 @@ def _push(
         key_path = info["key_path"]
         vt = info["type"]
         raw = _navigatePath(target_data, key_path)
-
         if vt == "Date":
-            if raw and isinstance(raw, str):
-                try:
-                    date.fromisoformat(raw.strip())
-                except (ValueError, AttributeError):
-                    raw = "2099-01-01"
-            else:
-                raw = "2099-01-01"
+            if not isinstance(raw, str) or not raw.strip():
+                raise ValueError(
+                    f"Date 类型变量 '{var_name}' 对应的数据为空或不是字符串类型，"
+                    f"请检查路径 {key_path} 的值是否为合法的日期字符串 (YYYY-MM-DD)"
+                )
+            raw = raw.strip()
+            _checkDateFormat(raw, var_name)
             g[var_name] = _toDate(raw)
         elif vt == "Time":
-            if raw and isinstance(raw, str):
-                try:
-                    datetime.strptime(raw.strip(), "%H:%M")
-                except (ValueError, AttributeError):
-                    raw = "00:00"
-            else:
-                raw = "00:00"
+            if not isinstance(raw, str) or not raw.strip():
+                raise ValueError(
+                    f"Time 类型变量 '{var_name}' 对应的数据为空或不是字符串类型，"
+                    f"请检查路径 {key_path} 的值是否为合法的时间字符串 (HH:MM)"
+                )
+            raw = raw.strip()
+            _checkTimeFormat(raw, var_name)
             g[var_name] = _toTime(raw)
         else:
             if raw is None:
-                raw = "" if vt == "String" else 0 if vt == "Int" else 0.0 if vt == "Float" else False
+                raw = _DEFAULT_BY_TYPE.get(vt, False)
             g[var_name] = raw
 
 
@@ -326,7 +401,7 @@ def _pull(
     for var_name, info in _TARGET_VARS.items():
         try:
             lua_val = g[var_name]
-        except (KeyError, AttributeError):
+        except KeyError:
             continue
         vt = info["type"]
         if vt == "Date":
@@ -337,6 +412,20 @@ def _pull(
             lua_val = float(lua_val)
         _checkType(var_name, vt, lua_val)
         _assignPath(target_data, info["key_path"], lua_val)
+
+
+def _cleanLuaError(
+    raw_msg: str
+) -> str:
+    """
+        Strip internal source prefix and stack traceback from a Lua error message.
+    """
+
+    msg = raw_msg.replace('[string "<python>"]:', "").strip()
+    stack_idx = msg.find("stack traceback:")
+    if stack_idx != -1:
+        msg = msg[:stack_idx].strip()
+    return msg
 
 
 def execute(
@@ -366,9 +455,19 @@ def execute(
 
     if not script_text or not script_text.strip():
         return
-    _push(target_data)
     try:
+        _push(target_data)
         _getLua().execute(script_text)
         _pull(target_data)
+    except _LuaSyntaxError as e:
+        raise ValueError(
+            f"AutoScript 语法错误: {_cleanLuaError(str(e))}"
+        )
+    except _LuaError as e:
+        raise ValueError(
+            f"AutoScript 运行时错误: {_cleanLuaError(str(e))}"
+        )
+    except ValueError as e:
+        raise ValueError(f"AutoScript 数据错误: {e}")
     except Exception as e:
-        raise ValueError(f"AutoScript 执行错误: {e}")
+        raise ValueError(f"AutoScript 未知错误: {e}")

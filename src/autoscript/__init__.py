@@ -31,11 +31,11 @@ __all__ = [
 # Key paths into target_data dict for each target variable.
 # (name, type, key_path, display_name)
 _TARGET_VAR_DEFS = [
-    ("USERNAME",           "String",["username"],                           "用户名"),
-    ("USER_ENABLE",        "Boolean",["enabled"],                           "用户启用"),
-    ("RESERVE_DATE",       "Date",  ["reserve_info", "date"],               "预约日期"),
-    ("RESERVE_BEGIN_TIME", "Time",  ["reserve_info", "begin_time", "time"], "预约开始时间"),
-    ("RESERVE_END_TIME",   "Time",  ["reserve_info", "end_time",   "time"], "预约结束时间"),
+    ("USERNAME",           "String", ["username"],                           "用户名"),
+    ("USER_ENABLE",        "Boolean",["enabled"],                            "用户启用"),
+    ("RESERVE_DATE",       "Date",   ["reserve_info", "date"],               "预约日期"),
+    ("RESERVE_BEGIN_TIME", "Time",   ["reserve_info", "begin_time", "time"], "预约开始时间"),
+    ("RESERVE_END_TIME",   "Time",   ["reserve_info", "end_time",   "time"], "预约结束时间"),
 ]
 
 # All variables (display_name -> (name, type)), derived from target vars + meta vars.

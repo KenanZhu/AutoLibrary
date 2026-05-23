@@ -169,7 +169,7 @@ class ALAutoScriptEditDialog(QDialog):
     ):
 
         super().__init__(parent)
-        self._fontSize = 19
+        self._fontSize = 13
         self._mockWidgets = {}
 
         self.setupUi()
@@ -267,17 +267,17 @@ class ALAutoScriptEditDialog(QDialog):
         basicLayout.setContentsMargins(4, 4, 4, 4)
         basicLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         controlButtons = [
-            ("if", "if  then\n    \nend"),
-            ("elseif", "elseif  then\n    "),
-            ("else", "else"),
-            ("end", "end"),
-            ("-- pass", "-- pass"),
+            ("如果 (if...)", "if  then\n    \nend"),
+            ("再如果 (elseif...)", "elseif  then\n    "),
+            ("否则 (else)", "else"),
+            ("结束 (end)", "end"),
+            ("跳过 (pass)", "-- pass"),
         ]
-        self._addButtonsToGrid(basicLayout, controlButtons, 0, 0, 5)
+        self._addButtonsToGrid(basicLayout, controlButtons, 0, 0, 3)
         assignButtons = [
-            ("=", " = "),
+            ("赋值 (=)", " = "),
         ]
-        self._addButtonsToGrid(basicLayout, assignButtons, 0, 5, 1)
+        self._addButtonsToGrid(basicLayout, assignButtons, 1, 2, 3)
         tabWidget.addTab(basicWidget, "基本语法")
         operatorWidget = QWidget()
         operatorLayout = QGridLayout(operatorWidget)
@@ -285,24 +285,24 @@ class ALAutoScriptEditDialog(QDialog):
         operatorLayout.setContentsMargins(4, 4, 4, 4)
         operatorLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         arithmeticButtons = [
-            ("+", " + "),
-            ("-", " - "),
+            ("加 (+)", " + "),
+            ("减 (-)", " - "),
         ]
-        self._addButtonsToGrid(operatorLayout, arithmeticButtons, 0, 0, 2)
+        self._addButtonsToGrid(operatorLayout, arithmeticButtons, 0, 0, 3)
         compareButtons = [
-            ("==", " == "),
-            ("~=", " ~= "),
-            (">", " > "),
-            ("<", " < "),
-            (">=", " >= "),
-            ("<=", " <= "),
+            ("等于 (==)", " == "),
+            ("不等于 (~=)", " ~= "),
+            ("大于 (>)", " > "),
+            ("小于 (<)", " < "),
+            ("大于等于 (>=)", " >= "),
+            ("小于等于 (<=)", " <= "),
         ]
-        self._addButtonsToGrid(operatorLayout, compareButtons, 1, 0, 6)
+        self._addButtonsToGrid(operatorLayout, compareButtons, 1, 0, 3)
         logic_buttons = [
-            ("and", " and "),
-            ("or", " or "),
+            ("且 (and)", " and "),
+            ("或 (or)", " or "),
         ]
-        self._addButtonsToGrid(operatorLayout, logic_buttons, 2, 0, 2)
+        self._addButtonsToGrid(operatorLayout, logic_buttons, 2, 0, 3)
         tabWidget.addTab(operatorWidget, "运算符")
         literalWidget = QWidget()
         literalLayout = QGridLayout(literalWidget)
@@ -310,15 +310,15 @@ class ALAutoScriptEditDialog(QDialog):
         literalLayout.setContentsMargins(4, 4, 4, 4)
         literalLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         bool_buttons = [
-            ("true", "true"),
-            ("false", "false"),
+            ("真 (true)", "true"),
+            ("假 (false)", "false"),
         ]
-        self._addButtonsToGrid(literalLayout, bool_buttons, 0, 0, 2)
+        self._addButtonsToGrid(literalLayout, bool_buttons, 0, 0, 3)
         dateTimeButtons = [
             ("日期", '"2099-01-01"'),
             ("时间", '"00:00"'),
         ]
-        self._addButtonsToGrid(literalLayout, dateTimeButtons, 1, 0, 2)
+        self._addButtonsToGrid(literalLayout, dateTimeButtons, 1, 0, 3)
         hintButtons = [
             ("字符串", '"请输入文本"'),
             ("数字", "123"),
@@ -334,16 +334,15 @@ class ALAutoScriptEditDialog(QDialog):
         varButtons = [
             (display_name, name) for display_name, (name, _) in ALL_VARIABLES.items()
         ]
-
-        self._addButtonsToGrid(varLayout, varButtons, 0, 0, 5)
+        self._addButtonsToGrid(varLayout, varButtons, 0, 0, 3)
         tabWidget.addTab(varWidget, "变量")
         mockPanel = self._createMockPanel()
         mockPanel.setMinimumWidth(260)
         splitter.addWidget(tabWidget)
         splitter.addWidget(mockPanel)
         splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 0)
-        splitter.setSizes([660, 400])
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([530, 530])
         parent_layout.addWidget(splitter)
 
 
@@ -367,7 +366,6 @@ class ALAutoScriptEditDialog(QDialog):
             btn.setFixedHeight(25)
             btn.setToolTip(f"插入: {template}")
             grid_layout.addWidget(btn, row, col)
-
             col += 1
             if col >= start_col + max_columns:
                 col = start_col
@@ -585,9 +583,6 @@ class ALAutoScriptEditDialog(QDialog):
         self
     ):
 
-        font = self.textEdit.font()
-        font.setPointSize(self._fontSize)
-        self.textEdit.setFont(font)
         self.textEdit.setStyleSheet(
             "QPlainTextEdit {"
             "  font-family: 'Courier New', 'Consolas', monospace;"
