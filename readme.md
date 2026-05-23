@@ -2,7 +2,7 @@
 # AutoLibrary
 ---
 
-![AutoLibrary Logo](./src/gui/resources/icons/AutoLibrary_128x128.ico)
+![AutoLibrary Logo](./src/gui/resources/icons/AutoLibrary_Logo_128.svg)
 
 [![GitHub stars](https://img.shields.io/github/stars/KenanZhu/AutoLibrary.svg?style=social&label=Star)](https://github.com/KenanZhu/AutoLibrary)
 ![License](https://img.shields.io/github/license/KenanZhu/AutoLibrary?label=license)

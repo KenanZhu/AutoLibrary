@@ -43,7 +43,7 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
         self
     ):
 
-        self.LogoIconLabel.setPixmap(QIcon(":/res/icon/icons/AutoLibrary_Logo.svg").pixmap(48, 48))
+        self.LogoIconLabel.setPixmap(QIcon(":/res/icons/AutoLibrary_Logo_64.svg").pixmap(48, 48))
         info_text = self.generateAboutText()
         self.AboutInfoBrowser.setHtml(info_text)
         browser_font = self.AboutInfoBrowser.font()
