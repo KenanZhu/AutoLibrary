@@ -64,7 +64,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.icon = QIcon(":/res/icon/icons/AutoLibrary_32x32.ico")
+        self.icon = QIcon(":/res/icon/icons/AutoLibrary_Logo.svg")
         self.setWindowIcon(self.icon)
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
