@@ -47,7 +47,6 @@ class ConditionalBlock(QGroupBox):
         self.connectSignals()
         self.addInitialConditionRow()
 
-
     def setupUi(
         self
     ):
@@ -103,7 +102,6 @@ class ConditionalBlock(QGroupBox):
         mainLayout.addWidget(self.addActionBtn)
         self.setUpdatesEnabled(True)
 
-
     def connectSignals(
         self
     ):
@@ -111,7 +109,6 @@ class ConditionalBlock(QGroupBox):
         self.typeCombo.currentIndexChanged.connect(self.onTypeChanged)
         self.addCondBtn.clicked.connect(self.addConditionRow)
         self.addActionBtn.clicked.connect(self.addActionStep)
-
 
     def addInitialConditionRow(
         self
@@ -123,7 +120,6 @@ class ConditionalBlock(QGroupBox):
         )
         self._conditionRows.append(row)
         self.condRowsLayout.addWidget(row)
-
 
     def addConditionRow(
         self
@@ -137,7 +133,6 @@ class ConditionalBlock(QGroupBox):
         self._conditionRows.append(row)
         self.condRowsLayout.addWidget(row)
 
-
     def removeConditionRow(
         self,
         row: ConditionRowFrame
@@ -149,7 +144,6 @@ class ConditionalBlock(QGroupBox):
             row.hide()
             row.deleteLater()
 
-
     def addActionStep(
         self
     ):
@@ -158,7 +152,6 @@ class ConditionalBlock(QGroupBox):
         step.deleteBtn.clicked.connect(lambda: self.removeActionStep(step))
         self._actionWidgets.append(step)
         self.actionsLayout.addWidget(step)
-
 
     def removeActionStep(
         self,
@@ -171,25 +164,11 @@ class ConditionalBlock(QGroupBox):
             step.hide()
             step.deleteLater()
 
-    @Slot(int)
-    def onTypeChanged(
-        self,
-        _idx
-    ):
-
-        isCond = self.typeCombo.currentData() in ("IF", "ELSE IF")
-        self.conditionWidget.setVisible(isCond)
-        self.actionLabel.setText(
-            "执行步骤:" if isCond else "ELSE 执行步骤:"
-        )
-
-
     def getBlockType(
         self
     ) -> str:
 
         return self.typeCombo.currentData()
-
 
     def getConditionRows(
         self
@@ -197,13 +176,11 @@ class ConditionalBlock(QGroupBox):
 
         return list(self._conditionRows)
 
-
     def getActionSteps(
         self
     ):
 
         return list(self._actionWidgets)
-
 
     def countActionSteps(
         self
@@ -211,8 +188,7 @@ class ConditionalBlock(QGroupBox):
 
         return len(self._actionWidgets)
 
-
-    def toScriptLines(
+    def toScript(
         self
     ) -> list:
         """
@@ -223,7 +199,7 @@ class ConditionalBlock(QGroupBox):
         lines = []
         if blockType in ("IF", "ELSE IF"):
             condTexts = [
-                r.toConditionText() for r in self._conditionRows if r.toConditionText()
+                r.toScript() for r in self._conditionRows if r.toScript()
             ]
             if not condTexts:
                 condTexts = ["true"]
@@ -245,11 +221,10 @@ class ConditionalBlock(QGroupBox):
         else:
             lines.append("else")
         for step in self._actionWidgets:
-            scriptLine = step.toScriptLine()
+            scriptLine = step.toScript()
             if scriptLine:
                 lines.append(scriptLine)
         return lines
-
 
     def refreshVarCombos(
         self
@@ -259,7 +234,6 @@ class ConditionalBlock(QGroupBox):
             row.refreshVarCombos()
         for step in self._actionWidgets:
             step.refreshVarCombos()
-
 
     def setPrevBlockType(
         self,
@@ -278,3 +252,15 @@ class ConditionalBlock(QGroupBox):
             item.setEnabled(shouldEnable)
         if prevType == "ELSE" and self.typeCombo.currentData() in ("ELSE IF", "ELSE"):
             self.typeCombo.setCurrentIndex(0)
+
+    @Slot(int)
+    def onTypeChanged(
+        self,
+        _idx
+    ):
+
+        isCond = self.typeCombo.currentData() in ("IF", "ELSE IF")
+        self.conditionWidget.setVisible(isCond)
+        self.actionLabel.setText(
+            "执行步骤:" if isCond else "ELSE 执行步骤:"
+        )

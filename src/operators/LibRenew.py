@@ -14,7 +14,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from base.LibTimeSelector import LibTimeSelector
+from operators.abs.LibTimeSelector import LibTimeSelector
 
 
 class LibRenew(LibTimeSelector):
@@ -30,14 +30,12 @@ class LibRenew(LibTimeSelector):
 
         self.__driver = driver
 
-
     def _waitResponseLoad(
         self
     ) -> bool:
 
         self.__driver.refresh()
         return True
-
 
     def __waitRenewDialog(
         self
@@ -77,7 +75,6 @@ class LibRenew(LibTimeSelector):
             return False
         return True
 
-
     def __selectNearestTime(
         self,
         record: dict,
@@ -116,7 +113,6 @@ class LibRenew(LibTimeSelector):
         self._showTrace(f"当前可供续约的时间有: {free_times}")
         return False
 
-
     def __validateAndAdjustRenewTime(
         self,
         end_time: str,
@@ -138,7 +134,6 @@ class LibRenew(LibTimeSelector):
             )
             return True
         return True
-
 
     def __confirmRenewal(
         self,
@@ -166,7 +161,6 @@ class LibRenew(LibTimeSelector):
         except:
             self._showTrace("确认续约时发生错误 !", self.TraceLevel.ERROR)
             return False
-
 
     def renew(
         self,

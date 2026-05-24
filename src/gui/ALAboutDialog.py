@@ -9,14 +9,17 @@ See the LICENSE file for details.
 """
 import platform
 
+from PySide6.QtCore import (
+    Qt,
+    QTimer
+)
 from PySide6.QtGui import (
-    QIcon, QFont
+    QFont,
+    QIcon
 )
 from PySide6.QtWidgets import (
-    QDialog, QApplication
-)
-from PySide6.QtCore import (
-    QTimer, Qt
+    QApplication,
+    QDialog
 )
 
 from gui.ALVersionInfo import (
@@ -38,7 +41,6 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
         self.modifyUi()
         self.connectSignals()
 
-
     def modifyUi(
         self
     ):
@@ -51,13 +53,11 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
         self.AboutInfoBrowser.setFont(browser_font)
         self.AboutInfoBrowser.setTextInteractionFlags(Qt.TextBrowserInteraction)
 
-
     def connectSignals(
         self
     ):
 
         self.CopyButton.clicked.connect(self.copyAboutInfo)
-
 
     def generateAboutText(
         self
@@ -91,7 +91,6 @@ GitHub: <a href="https://www.github.com/KenanZhu" style="text-decoration: none;"
 """
         return about_text
 
-
     def getOSInfo(
         self
     ):
@@ -123,7 +122,6 @@ GitHub: <a href="https://www.github.com/KenanZhu" style="text-decoration: none;"
             'architecture': architecture
         }
 
-
     def getQtVersion(
         self
     ):
@@ -133,7 +131,6 @@ GitHub: <a href="https://www.github.com/KenanZhu" style="text-decoration: none;"
             return qVersion()
         except:
             return "Unknown"
-
 
     def copyAboutInfo(
         self

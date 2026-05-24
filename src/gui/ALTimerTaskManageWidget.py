@@ -15,24 +15,40 @@ from enum import Enum
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTimer
-)
-from PySide6.QtWidgets import (
-    QDialog, QWidget, QListWidgetItem, QMessageBox,
-    QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QMenu
+    QTimer,
+    Qt,
+    Signal,
+    Slot
 )
 from PySide6.QtGui import (
-    QCloseEvent, QAction
+    QAction,
+    QCloseEvent
+)
+from PySide6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QListWidgetItem,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget
 )
 
 import managers.config.ConfigManager as ConfigManager
 
-from utils.TimerUtils import TimerUtils
-from interfaces.ConfigProvider import ConfigProvider, CfgKey
-
-from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
-from gui.ALTimerTaskAddDialog import ALTimerTaskAddDialog, ALTimerTaskStatus
+from gui.ALTimerTaskAddDialog import (
+    ALTimerTaskAddDialog,
+    ALTimerTaskStatus
+)
 from gui.ALTimerTaskHistoryDialog import ALTimerTaskHistoryDialog
+from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
+from interfaces.ConfigProvider import (
+    CfgKey,
+    ConfigProvider
+)
+from utils.TimerUtils import TimerUtils
 
 
 class ALTimerTaskItemWidget(QWidget):
@@ -52,7 +68,6 @@ class ALTimerTaskItemWidget(QWidget):
         self.modifyUi()
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showContextMenu)
-
 
     def modifyUi(
         self
@@ -204,7 +219,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         if not self.initializeTimerTasks():
             raise Exception("定时任务配置文件初始化失败 !")
 
-
     def connectSignals(
         self
     ):
@@ -215,7 +229,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.TimerTaskSortOrderToggleButton.clicked.connect(self.onSortOrderToggleButtonClicked)
         self.timerTasksChanged.connect(self.onTimerTasksChanged)
 
-
     def setupTimer(
         self
     ):
@@ -223,7 +236,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.__check_timer = QTimer(self)
         self.__check_timer.timeout.connect(self.checkTasks)
         self.__check_timer.start(500)
-
 
     def initializeTimerTasks(
         self
@@ -239,7 +251,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             self.__timer_tasks = timer_tasks
             return True
         return False
-
 
     def getTimerTasks(
         self
@@ -265,7 +276,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             )
             return None
 
-
     def setTimerTasks(
         self,
         timer_tasks: list
@@ -288,7 +298,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 f"保存定时任务配置发生错误 ! : \n{e}"
             )
             return False
-
 
     def showEvent(
         self,
@@ -313,7 +322,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
 
         return result
 
-
     def closeEvent(
         self,
         event: QCloseEvent
@@ -322,7 +330,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.hide()
         self.timerTaskManageWidgetIsClosed.emit()
         event.ignore()
-
 
     def sortTimerTasks(
         self,
@@ -345,7 +352,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 key = lambda x: x["execute_time"],
                 reverse = order is Qt.SortOrder.DescendingOrder
             )
-
 
     def updateStat(
         self
@@ -373,7 +379,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.ExecutedTaskLabel.setText(f"已执行：{executed}")
         self.InvalidTaskLabel.setText(f"无效的：{invalid}")
 
-
     def updateTimerTaskList(
         self
     ):
@@ -396,7 +401,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             self.TimerTasksListWidget.addItem(item)
             self.TimerTasksListWidget.setItemWidget(item, widget)
 
-
     def addTask(
         self
     ):
@@ -406,7 +410,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             timer_task = dialog.getTimerTask()
             self.__timer_tasks.append(timer_task)
             self.timerTasksChanged.emit()
-
 
     def editTask(
         self,
@@ -440,7 +443,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             f"已记录次数：{history_count}"
         )
 
-
     def deleteTask(
         self,
         timer_task: dict
@@ -468,7 +470,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             if x["uuid"] != task_uuid
         ]
         self.timerTasksChanged.emit()
-
 
     def clearAllTasks(
         self
@@ -531,7 +532,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.__timer_tasks.clear()
         self.timerTasksChanged.emit()
 
-
     def showTaskHistory(
         self,
         task: dict
@@ -540,7 +540,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         dialog = ALTimerTaskHistoryDialog(self, task)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.timerTasksChanged.emit()
-
 
     def checkTasks(
         self
@@ -614,7 +613,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 task["status"] = ALTimerTaskStatus.RUNNING
                 break
         self.timerTasksChanged.emit()
-
 
     def onRepeatTimerTaskIs(
         self,

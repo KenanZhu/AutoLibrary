@@ -33,7 +33,6 @@ class LibCheckout(LibOperator):
 
         self.__driver = driver
 
-
     def _waitResponseLoad(
         self
     ) -> bool:

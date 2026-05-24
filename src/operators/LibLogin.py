@@ -34,7 +34,6 @@ class LibLogin(LibOperator):
         self.__driver = driver
         self.__ddddocr = ddddocr.DdddOcr()
 
-
     def _waitResponseLoad(
         self
     ) -> bool:
@@ -58,7 +57,6 @@ class LibLogin(LibOperator):
             )
             return False
 
-
     def __fillLogInElements(
         self,
         username: str,
@@ -77,7 +75,6 @@ class LibLogin(LibOperator):
             self._showTrace(f"用户名或密码填写失败 ! : {e}", self.TraceLevel.ERROR)
             return False
         return True
-
 
     def __autoRecognizeCaptcha(
         self
@@ -100,7 +97,6 @@ class LibLogin(LibOperator):
             self._showTrace(f"验证码识别失败 ! : {e}", self.TraceLevel.ERROR)
             return ""
 
-
     def __manualRecognizeCaptcha(
         self
     ) -> str:
@@ -118,7 +114,6 @@ class LibLogin(LibOperator):
             self._showTrace(f"输入验证码失败 ! : {e}", self.TraceLevel.ERROR)
             return ""
 
-
     def __refreshCaptcha(
         self
     ):
@@ -133,7 +128,6 @@ class LibLogin(LibOperator):
         except Exception as e:
             self._showTrace(f"刷新验证码失败 ! : {e}", self.TraceLevel.ERROR)
             return False
-
 
     def __solveCaptcha(
         self,
@@ -158,7 +152,6 @@ class LibLogin(LibOperator):
         )
         return ""
 
-
     def __fillCaptchaElement(
         self,
         captcha_text: str
@@ -172,7 +165,6 @@ class LibLogin(LibOperator):
         except Exception as e:
             self._showTrace(f"验证码填写失败 ! : {e}", self.TraceLevel.ERROR)
             return False
-
 
     def login(
         self,

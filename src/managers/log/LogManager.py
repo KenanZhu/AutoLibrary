@@ -89,7 +89,6 @@ class LogManager:
 
         self.initialize()
 
-
     def initialize(
         self
     ):
@@ -139,7 +138,6 @@ class LogManager:
 
         self.__initialized = True
 
-
     def getLogger(
         self,
         name: Optional[str] = None
@@ -149,7 +147,6 @@ class LogManager:
             return self.__logger.getChild(name)
         return self.__logger
 
-
     def setLevel(
         self,
         level: int
@@ -157,7 +154,6 @@ class LogManager:
 
         if self.__logger:
             self.__logger.setLevel(level)
-
 
     def logDir(
         self
@@ -171,6 +167,7 @@ _log_manager_instance = None
 
 # Singleton instance lock.
 _instance_lock = threading.Lock()
+
 def instance(
     log_dir: str = ""
 ) -> LogManager:

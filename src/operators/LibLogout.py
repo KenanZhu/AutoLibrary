@@ -28,13 +28,11 @@ class LibLogout(LibOperator):
 
         self.__driver = driver
 
-
     def _waitResponseLoad(
         self
     ) -> bool:
 
         return True
-
 
     def logout(
         self,

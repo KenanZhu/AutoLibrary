@@ -33,7 +33,6 @@ class ConfigTemplate:
 
         self.__config_type = config_type
 
-
     def template(
         self
     ) -> dict:
@@ -83,14 +82,12 @@ class ConfigManager:
 
         self.initialize()
 
-
     def initialize(
         self
     ):
 
         for config_type in ConfigType:
             self.load(config_type)
-
 
     def load(
         self,
@@ -108,7 +105,6 @@ class ConfigManager:
         self.__config_data[config_type.value] = ConfigTemplate(config_type).template()
         JSONWriter(config_path, self.__config_data[config_type.value])
 
-
     def get(
         self,
         key: ConfigPath,
@@ -125,7 +121,6 @@ class ConfigManager:
                 if config_data is None:
                     return default
             return config_data.get(keys[-1], default)
-
 
     def set(
         self,
@@ -147,7 +142,6 @@ class ConfigManager:
                 config_data[keys[-1]] = value
         self.save(key.config_type)
 
-
     def save(
         self,
         config_type: ConfigType
@@ -155,7 +149,6 @@ class ConfigManager:
 
         config_path = os.path.join(self.__config_dir, config_type.value)
         JSONWriter(config_path, self.__config_data[config_type.value])
-
 
     def configDir(
         self
@@ -169,6 +162,7 @@ _config_manager_instance : ConfigManager | None = None
 
 # Singleton instance of ConfigManager.
 _instance_lock = threading.Lock()
+
 def instance(
     config_dir: str = ""
 ) -> ConfigManager:

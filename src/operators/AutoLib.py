@@ -49,7 +49,6 @@ class AutoLib(MsgBase):
                 raise Exception("浏览器驱动URL初始化失败 !")
             self.__initLibOperators()
 
-
     def __initBrowserDriver(
         self
     ) -> bool:
@@ -142,7 +141,6 @@ class AutoLib(MsgBase):
         self._showTrace(f"浏览器驱动已初始化, 类型: {self.__driver_type}, 路径: {self.__driver_path}")
         return True
 
-
     def __initLibOperators(
         self
     ):
@@ -156,7 +154,6 @@ class AutoLib(MsgBase):
         self.__lib_reserve = LibReserve(self._input_queue, self._output_queue, self.__driver)
         self.__lib_checkin = LibCheckin(self._input_queue, self._output_queue, self.__driver)
         self.__lib_renew = LibRenew(self._input_queue, self._output_queue, self.__driver)
-
 
     def __waitResponseLoad(
         self
@@ -184,7 +181,6 @@ class AutoLib(MsgBase):
             self._showTrace(f"登录页面加载失败 !", self.TraceLevel.ERROR)
             return False
 
-
     def __initDriverUrl(
         self,
     ) -> bool:
@@ -206,7 +202,6 @@ class AutoLib(MsgBase):
         if not self.__waitResponseLoad():
             return False
         return True
-
 
     def __run(
         self,
@@ -292,7 +287,6 @@ class AutoLib(MsgBase):
                 return -1
         return result
 
-
     def run(
         self,
         user_config: dict
@@ -338,7 +332,6 @@ class AutoLib(MsgBase):
             f"跳过 {user_counter["passed"]} 个用户"
         )
         return
-
 
     def close(
         self

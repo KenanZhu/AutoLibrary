@@ -15,7 +15,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from base.LibTimeSelector import LibTimeSelector
+from operators.abs.LibTimeSelector import LibTimeSelector
 
 
 class LibReserve(LibTimeSelector):
@@ -47,7 +47,6 @@ class LibReserve(LibTimeSelector):
             "7": "四层期刊",
             "8": "五层考研"
         }
-
 
     def _waitResponseLoad(
         self,
@@ -99,7 +98,6 @@ class LibReserve(LibTimeSelector):
             self._showTrace(f"预约结果加载失败 !", self.TraceLevel.ERROR)
             return False
 
-
     def __containRequiredInfo(
         self,
         reserve_info: dict
@@ -135,7 +133,6 @@ class LibReserve(LibTimeSelector):
             )
             return False
 
-
     def __isValidDate(
         self,
         reserve_info: dict
@@ -157,7 +154,6 @@ class LibReserve(LibTimeSelector):
                 reserve_info["date"] = cur_date_str
         return True
 
-
     def __isValidBeginTime(
         self,
         reserve_info: dict
@@ -177,7 +173,6 @@ class LibReserve(LibTimeSelector):
             self._showTrace(f"是否优先选择更早开始时间未指定, 自动设置为 True")
         return True
 
-
     def __isValidExpectDuration(
         self,
         reserve_info: dict
@@ -191,7 +186,6 @@ class LibReserve(LibTimeSelector):
                 reserve_info["expect_duration"] = 4
                 self._showTrace("需要满足预约持续时间, 但未指定, 使用默认时长为 4 小时")
         return True
-
 
     def __isValidEndTime(
         self,
@@ -221,7 +215,6 @@ class LibReserve(LibTimeSelector):
             reserve_info["end_time"]["prefer_early"] = False
             self._showTrace(f"是否优先选择较晚结束时间未指定, 自动设置为 True")
         return True
-
 
     def __finalCheck(
         self,
@@ -275,7 +268,6 @@ class LibReserve(LibTimeSelector):
                 reserve_info["end_time"]["time"] = self._minsToTimeStr(begin_mins + 8*60)
         return True
 
-
     def __checkReserveInfo(
         self,
         reserve_info: dict
@@ -305,7 +297,6 @@ class LibReserve(LibTimeSelector):
         )
         return True
 
-
     def __clickElement(
         self,
         trigger_locator: tuple,
@@ -329,7 +320,6 @@ class LibReserve(LibTimeSelector):
         except:
             self._showTrace(fail_msg)
             return False
-
 
     def __clickElementByJS(
         self,
@@ -364,7 +354,6 @@ class LibReserve(LibTimeSelector):
             self._showTrace(fail_msg)
         return result
 
-
     def __selectDate(
         self,
         date_str: str
@@ -383,7 +372,6 @@ class LibReserve(LibTimeSelector):
             success_msg=f"日期 {date_str} 选择成功 !",
             fail_msg=f"选择日期失败 ! : {date_str} 不可用"
         )
-
 
     def __selectPlace(
         self,
@@ -406,7 +394,6 @@ class LibReserve(LibTimeSelector):
             fail_msg=f"选择预约场所失败 ! : {display_place} 不可用"
         )
 
-
     def __selectFloor(
         self,
         floor: str
@@ -426,7 +413,6 @@ class LibReserve(LibTimeSelector):
             success_msg=f"楼层 {display_floor} 选择成功 !",
             fail_msg=f"选择楼层失败 ! : {display_floor} 不可用"
         )
-
 
     def __selectRoom(
         self,
@@ -452,7 +438,6 @@ class LibReserve(LibTimeSelector):
         except:
             self._showTrace(f"选择房间失败 ! : {display_room} 不可用", self.TraceLevel.ERROR)
             return False
-
 
     def __selectSeat(
         self,
@@ -491,7 +476,6 @@ class LibReserve(LibTimeSelector):
         except:
             self._showTrace(f"座位选择失败 !", self.TraceLevel.ERROR)
             return False
-
 
     def __selectNearestTime(
         self,
@@ -547,7 +531,6 @@ class LibReserve(LibTimeSelector):
         self._showTrace(f"当前可供预约的 {time_type} 有: {free_times}")
         return -1
 
-
     def __selectSeatTime(
         self,
         begin_time: dict,
@@ -583,7 +566,7 @@ class LibReserve(LibTimeSelector):
 
         # If 'satisfy_duration' is True, select end time based on actual begin time
         if satisfy_duration:
-            exp_end_mins = int(self.validateAndAdjustEndTime(act_beg_mins, expect_duration))
+            exp_end_mins = int(self.__validateAndAdjustEndTime(act_beg_mins, expect_duration))
             exp_end_tm_str = self._minsToTimeStr(exp_end_mins)
             self._showTrace(
                 f"需要满足期望预约持续时间: {expect_duration} 小时, "
@@ -607,8 +590,7 @@ class LibReserve(LibTimeSelector):
         )
         return True
 
-
-    def validateAndAdjustEndTime(
+    def __validateAndAdjustEndTime(
         self,
         begin_mins: int,
         duration: int
@@ -626,7 +608,6 @@ class LibReserve(LibTimeSelector):
                 self.TraceLevel.WARNING
             )
         return expect_end_mins
-
 
     def reserve(
         self,

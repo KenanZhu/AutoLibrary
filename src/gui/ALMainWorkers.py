@@ -37,7 +37,6 @@ class AutoLibWorker(MsgBase, QThread):
         QThread.__init__(self)
         self.__config_paths = config_paths
 
-
     def checkTimeAvailable(
         self,
     ) -> bool:
@@ -51,7 +50,6 @@ class AutoLibWorker(MsgBase, QThread):
             return False
         self._showLog(f"时间检查通过, 当前时间: {current_time}", self.TraceLevel.INFO)
         return True
-
 
     def checkConfigPaths(
         self,
@@ -67,7 +65,6 @@ class AutoLibWorker(MsgBase, QThread):
             return False
         self._showLog(f"配置文件路径检查通过, 路径: {self.__config_paths}", self.TraceLevel.INFO)
         return True
-
 
     def loadConfigs(
         self
@@ -100,7 +97,6 @@ class AutoLibWorker(MsgBase, QThread):
             self.TraceLevel.INFO
         )
         return True
-
 
     def run(
         self
@@ -161,7 +157,6 @@ class TimerTaskWorker(AutoLibWorker):
         self.autoLibWorkerIsFinished.connect(self.onTimerTaskIsFinished)
         self.autoLibWorkerFinishedWithError.connect(self.onTimerTaskFinishedWithError)
 
-
     def run(
         self
     ):
@@ -205,7 +200,6 @@ class TimerTaskWorker(AutoLibWorker):
             return
         self._showTrace(f"定时任务 {self.__timer_task['name']} 运行结束")
         self.timerTaskWorkerIsFinished.emit(False, self.__timer_task)
-
 
     def applyRepeatAutoScript(
         self

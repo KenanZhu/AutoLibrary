@@ -55,7 +55,6 @@ _MOCK_TYPE_VALUES = {
     "Float": 0.0,
 }
 
-
 def buildMockTargetData(
 ) -> dict:
     """
@@ -69,7 +68,6 @@ def buildMockTargetData(
             d = d.setdefault(key, {})
         d[key_path[-1]] = _MOCK_TYPE_VALUES.get(var_type, "")
     return data
-
 
 def registerDefaultTargetVars(
 ) -> None:

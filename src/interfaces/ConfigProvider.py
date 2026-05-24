@@ -16,6 +16,7 @@ class ConfigType(Enum):
     """
         Config type enum. Values represent the default filename.
     """
+
     GLOBAL = "autolibrary.json"
     BULLETIN = "bulletin.json"
     TIMERTASK = "timer_task.json"
@@ -30,6 +31,7 @@ class ConfigPath:
         Consumers pass this directly to ConfigProvider.get/set,
         eliminating the need to import ConfigType separately.
     """
+
     config_type: ConfigType
     key: str = ""
 

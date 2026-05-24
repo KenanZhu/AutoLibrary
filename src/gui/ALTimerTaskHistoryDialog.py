@@ -34,7 +34,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         self.setupUi()
         self.connectSignals()
 
-
     def setupUi(
         self
     ):
@@ -82,14 +81,12 @@ class ALTimerTaskHistoryDialog(QDialog):
         ButtonLayout.addWidget(self.CloseButton)
         MainLayout.addLayout(ButtonLayout)
 
-
     def connectSignals(
         self
     ):
 
         self.CloseButton.clicked.connect(self.accept)
         self.ClearHistoryButton.clicked.connect(self.onClearHistoryButtonClicked)
-
 
     def loadHistory(
         self
@@ -99,6 +96,11 @@ class ALTimerTaskHistoryDialog(QDialog):
         for row, record in enumerate(self.__history):
             self.addHistoryRow(row, record)
 
+    def getHistory(
+        self
+    ) -> list:
+
+        return self.__history
 
     def addHistoryRow(
         self,
@@ -128,13 +130,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         DurationItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.HistoryTableWidget.setItem(row, 2, DurationItem)
         self.HistoryTableWidget.setRowHeight(row, 25)
-
-
-    def getHistory(
-        self
-    ) -> list:
-
-        return self.__history
 
     @Slot()
     def onClearHistoryButtonClicked(

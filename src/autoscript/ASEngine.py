@@ -45,7 +45,6 @@ _DEFAULT_BY_TYPE: dict[str, str | int | float | bool] = {
     "Boolean": False,
 }
 
-
 def _getLua(
 ):
     """
@@ -58,7 +57,6 @@ def _getLua(
         _sandbox(_lua)
         _registerHelpers(_lua)
     return _lua
-
 
 def _sandbox(
     lua,
@@ -91,7 +89,6 @@ def _sandbox(
             os.setlocale = nil
         end
     """)
-
 
 def _registerHelpers(
     lua,
@@ -154,7 +151,6 @@ def _registerHelpers(
         end
     """)
 
-
 def _navigatePath(
     data: dict,
     key_path: list,
@@ -171,7 +167,6 @@ def _navigatePath(
             return default
     return d.get(key_path[-1], default)
 
-
 def _assignPath(
     data: dict,
     key_path: list,
@@ -185,7 +180,6 @@ def _assignPath(
     for key in key_path[:-1]:
         d = d.setdefault(key, {})
     d[key_path[-1]] = value
-
 
 def _pyTypeToASType(
     value
@@ -203,7 +197,6 @@ def _pyTypeToASType(
     if isinstance(value, str):
         return "String"
     return "Unknown"
-
 
 def _checkDateFormat(
     date_str: str,
@@ -223,7 +216,6 @@ def _checkDateFormat(
             f"应为 YYYY-MM-DD"
         )
 
-
 def _checkTimeFormat(
     time_str: str,
     var_name: str = "",
@@ -241,7 +233,6 @@ def _checkTimeFormat(
             f"{prefix}值 '{time_str}' 不是合法的时间格式，"
             f"应为 HH:MM"
         )
-
 
 def _checkType(
     var_name: str,
@@ -306,7 +297,6 @@ def _checkType(
             )
         return
 
-
 def addTargetVar(
     name: str,
     var_type: str,
@@ -328,7 +318,6 @@ def addTargetVar(
         "key_path": key_path,
     }
 
-
 def resetEngine(
 ) -> None:
     """
@@ -339,7 +328,6 @@ def resetEngine(
     global _TARGET_VARS, _lua
     _TARGET_VARS = {}
     _lua = None
-
 
 def _push(
     target_data: dict,
@@ -384,7 +372,6 @@ def _push(
                 raw = _DEFAULT_BY_TYPE.get(vt, False)
             g[var_name] = raw
 
-
 def _pull(
     target_data: dict,
 ) -> None:
@@ -413,7 +400,6 @@ def _pull(
         _checkType(var_name, vt, lua_val)
         _assignPath(target_data, info["key_path"], lua_val)
 
-
 def _cleanLuaError(
     raw_msg: str
 ) -> str:
@@ -426,7 +412,6 @@ def _cleanLuaError(
     if stack_idx != -1:
         msg = msg[:stack_idx].strip()
     return msg
-
 
 def execute(
     script_text: str,

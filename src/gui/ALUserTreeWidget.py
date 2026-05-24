@@ -10,14 +10,22 @@ See the LICENSE file for details.
 from enum import Enum
 
 from PySide6.QtCore import (
-    Qt, QSize, QCoreApplication, QRect, QPoint
+    Qt,
+    QSize,
+    QCoreApplication,
+    QRect,
+    QPoint
 )
 from PySide6.QtWidgets import (
-    QAbstractScrollArea, QAbstractItemView,
-    QTreeWidget, QTreeWidgetItem
+    QAbstractScrollArea,
+    QAbstractItemView,
+    QTreeWidget,
+    QTreeWidgetItem
 )
 from PySide6.QtGui import (
-     QDragEnterEvent, QDragMoveEvent, QDropEvent
+     QDragEnterEvent,
+     QDragMoveEvent,
+     QDropEvent
 )
 
 
@@ -38,7 +46,6 @@ class ALUserTreeWidget(QTreeWidget):
 
         self.setupUi()
         self.translateUi()
-
 
     def setupUi(
         self
@@ -70,14 +77,12 @@ class ALUserTreeWidget(QTreeWidget):
         self.header().setHighlightSections(False)
         self.header().setProperty(u"showSortIndicator", True)
 
-
     def translateUi(
         self
     ):
 
         ___qtreewidgetitem = self.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("ALConfigWidget", u"\u72b6\u6001", None));
-
 
     @staticmethod
     def isDragPositionValid(
@@ -90,14 +95,12 @@ class ALUserTreeWidget(QTreeWidget):
             y_offset < target_rect.height()*0.8)
         return valid
 
-
     def dragEnterEvent(
         self,
         event: QDragEnterEvent
     ):
 
         super().dragEnterEvent(event)
-
 
     def dragMoveEvent(
         self,
@@ -135,7 +138,6 @@ class ALUserTreeWidget(QTreeWidget):
             event.ignore()
             return
         event.acceptProposedAction()
-
 
     def dropEvent(
         self,

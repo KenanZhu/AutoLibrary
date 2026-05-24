@@ -9,14 +9,20 @@ See the LICENSE file for details.
 """
 from enum import Enum
 
-from PySide6.QtWidgets import (
-    QLabel
-)
 from PySide6.QtCore import (
-    Qt, Property, QPropertyAnimation, QEasingCurve
+    Property,
+    QEasingCurve,
+    QPropertyAnimation,
+    Qt
 )
 from PySide6.QtGui import (
-    QPainter, QColor, QConicalGradient, QPalette
+    QColor,
+    QConicalGradient,
+    QPainter,
+    QPalette
+)
+from PySide6.QtWidgets import (
+    QLabel
 )
 
 
@@ -44,7 +50,6 @@ class ALStatusLabel(QLabel):
 
         self.setupUi()
 
-
     def setupUi(
         self
     ):
@@ -59,13 +64,11 @@ class ALStatusLabel(QLabel):
         self.RunningAnimation.setLoopCount(-1)
         self.RunningAnimation.setEasingCurve(QEasingCurve.Type.Linear)
 
-
     def isDarkMode(
         self
     ) -> bool:
 
         return self.palette().color(QPalette.ColorRole.Window).value() < 128
-
 
     def getMarkColor(
         self
@@ -110,7 +113,6 @@ class ALStatusLabel(QLabel):
 
         self.__icon_angle = value
         self.update()
-
 
     def paintEvent(
         self,

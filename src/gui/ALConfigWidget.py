@@ -10,28 +10,46 @@ See the LICENSE file for details.
 import os
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTime, QDate, QDir, QFileInfo
-)
-from PySide6.QtWidgets import (
-    QDialog, QWidget, QLineEdit, QMessageBox, QFileDialog,
-    QTreeWidgetItem, QMenu, QInputDialog
+    QDate,
+    QDir,
+    QFileInfo,
+    Qt,
+    QTime,
+    Signal,
+    Slot
 )
 from PySide6.QtGui import (
-     QCloseEvent, QAction
+    QAction,
+    QCloseEvent
+)
+from PySide6.QtWidgets import (
+    QDialog,
+    QFileDialog,
+    QInputDialog,
+    QLineEdit,
+    QMenu,
+    QMessageBox,
+    QTreeWidgetItem,
+    QWidget
 )
 
 import managers.config.ConfigManager as ConfigManager
 
-from utils.JSONReader import JSONReader
-from utils.JSONWriter import JSONWriter
-from interfaces.ConfigProvider import ConfigProvider, CfgKey
-from managers.config.ConfigUtils import ConfigUtils
-
-from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
 from gui.ALSeatMapTable import ALSeatMapTable
-from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType
+from gui.ALUserTreeWidget import (
+    ALUserTreeItemType,
+    ALUserTreeWidget
+)
 from gui.ALWebDriverDownloadDialog import ALWebDriverDownloadDialog
+from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
+from interfaces.ConfigProvider import (
+    CfgKey,
+    ConfigProvider
+)
+from managers.config.ConfigUtils import ConfigUtils
+from utils.JSONReader import JSONReader
+from utils.JSONWriter import JSONWriter
 
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):
@@ -54,7 +72,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if not self.initializeConfigs():
             self.close()
 
-
     def modifyUi(
         self
     ):
@@ -69,7 +86,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UserTreeWidget.customContextMenuRequested.connect(self.onUserTreeWidgetContextMenu)
         self.initializeFloorRoomMap()
         self.initializeUserInfoWidget()
-
 
     def connectSignals(
         self
@@ -94,7 +110,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
 
-
     def showEvent(
         self,
         event
@@ -118,7 +133,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         return result
 
-
     def closeEvent(
         self,
         event: QCloseEvent
@@ -126,7 +140,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         self.configWidgetIsClosed.emit()
         super().closeEvent(event)
-
 
     def initializeFloorRoomMap(
         self
@@ -161,7 +174,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             "五层": ["五层考研"]
         }
 
-
     def initializeConfigToWidget(
         self,
         which: str,
@@ -175,7 +187,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.initializeUserInfoWidget()
             self.setUsersToTreeWidget(config_data)
             self.CurrentUserConfigEdit.setText(self.__config_paths["user"])
-
 
     def initializeConfig(
         self,
@@ -210,7 +221,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                     is_success = False
         return is_success
 
-
     def initializeConfigs(
         self
     ) -> bool:
@@ -222,7 +232,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 break
             self.initializeConfigToWidget(which, self.__config_data[which])
         return is_success
-
 
     def defaultRunConfig(
         self
@@ -247,7 +256,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             }
         }
 
-
     def defaultUserConfig(
         self
     ) -> dict:
@@ -256,7 +264,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             "groups": [
             ]
         }
-
 
     def collectRunConfigFromWidget(
         self
@@ -278,7 +285,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             run_mode |= 0x04
         run_config["mode"]["run_mode"] = run_mode
         return run_config
-
 
     def setRunConfigToWidget(
         self,
@@ -318,7 +324,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "文件可能被意外修改或已经损坏\n"
             )
 
-
     def initializeUserInfoWidget(
         self
     ):
@@ -342,7 +347,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.ExpectRenewDurationSpinBox.setValue(1.0)
         self.MaxRenewTimeDiffSpinBox.setValue(30)
         self.PreferLateRenewTimeCheckBox.setChecked(False)
-
 
     def collectUserFromWidget(
         self
@@ -376,7 +380,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         user["reserve_info"]["renew_time"]["prefer_early"] = not self.PreferLateRenewTimeCheckBox.isChecked()
         return user
 
-
     def collectUsersFromTreeWidget(
         self
     ) -> dict:
@@ -398,7 +401,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 group_config["users"].append(user)
             user_config["groups"].append(group_config)
         return user_config
-
 
     def setUserToWidget(
         self,
@@ -441,7 +443,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "文件可能被意外修改或已经损坏\n"
             )
 
-
     def setUsersToTreeWidget(
         self,
         users: dict
@@ -483,7 +484,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         finally:
             self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
 
-
     def loadRunConfig(
         self,
         run_config_path: str
@@ -507,7 +507,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             )
             return None
 
-
     def saveRunConfig(
         self,
         run_config_path: str,
@@ -528,7 +527,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 f"配置文件写入发生错误 ! : \n{e}"
             )
             return False
-
 
     def loadUserConfig(
         self,
@@ -563,7 +561,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             )
             return None
 
-
     def saveUserConfig(
         self,
         user_config_path: str,
@@ -584,7 +581,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 f"用户配置文件写入发生错误 ! :\n{e}"
             )
             return False
-
 
     def saveConfigs(
         self,
@@ -607,7 +603,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             ):
                 return False
         return True
-
 
     def loadConfig(
         self,
@@ -637,7 +632,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         except:
             return False
 
-
     def addGroup(
         self,
         group_name: str = ""
@@ -654,7 +648,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
         return group_item
 
-
     def delGroup(
         self,
         group_item: QTreeWidgetItem = None
@@ -666,7 +659,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             return
         index = self.UserTreeWidget.indexOfTopLevelItem(group_item)
         self.UserTreeWidget.takeTopLevelItem(index)
-
 
     def addUser(
         self,
@@ -722,7 +714,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
         return user_item
 
-
     def delUser(
         self,
         user_item: QTreeWidgetItem = None
@@ -737,7 +728,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         parent_item.takeChild(index)
         if parent_item.childCount() == 0:
             self.UserTreeWidget.setCurrentItem(None)
-
 
     def renameItem(
         self,
@@ -862,7 +852,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             is_checked = item.checkState(1) == Qt.CheckState.Checked
             item.setText(1, "" if is_checked else "跳过")
 
-
     def showTreeMenu(
         self,
         menu: QMenu
@@ -871,7 +860,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         add_group_action = QAction("添加分组", menu)
         add_group_action.triggered.connect(self.addGroup)
         menu.addAction(add_group_action)
-
 
     def showGroupMenu(
         self,
@@ -891,7 +879,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         menu.addAction(del_group_action)
         if group_item.checkState(1) == Qt.CheckState.Unchecked:
             add_user_action.setEnabled(False)
-
 
     def showUserMenu(
         self,
@@ -952,7 +939,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if browser_driver_path:
             self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(browser_driver_path))
 
-
     @Slot()
     def onAutoDownloadWebDriverButtonClicked(
         self
@@ -965,7 +951,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if selected_driver_info and selected_driver_info.driver_path:
             self.BrowserTypeComboBox.setCurrentText(selected_driver_info.driver_type.value)
             self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(str(selected_driver_info.driver_path)))
-
 
     @Slot()
     def onBrowseCurrentRunConfigButtonClicked(

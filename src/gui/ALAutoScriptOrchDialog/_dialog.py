@@ -42,7 +42,6 @@ class ALAutoScriptOrchDialog(QDialog):
         self.addBlock()
         self.scrollLayout.addStretch()
 
-
     def setupUi(
         self
     ):
@@ -70,7 +69,6 @@ class ALAutoScriptOrchDialog(QDialog):
         self.btnBox.button(QDialogButtonBox.StandardButton.Cancel).setText("取消")
         mainLayout.addWidget(self.btnBox)
 
-
     def connectSignals(
         self
     ):
@@ -79,8 +77,7 @@ class ALAutoScriptOrchDialog(QDialog):
         self.btnBox.rejected.connect(self.reject)
         self.addBlockBtn.clicked.connect(self.addBlock)
 
-
-    def _updateBlockTypeRestrictions(
+    def updateBlockTypeRestrictions(
         self
     ):
 
@@ -88,7 +85,6 @@ class ALAutoScriptOrchDialog(QDialog):
         for block in self._blocks:
             block.setPrevBlockType(prevType)
             prevType = block.getBlockType()
-
 
     def addBlock(
         self
@@ -98,10 +94,10 @@ class ALAutoScriptOrchDialog(QDialog):
             len(self._blocks), self._varMgr, parent=self
         )
         block.deleteBlockBtn.clicked.connect(lambda: self.removeBlock(block))
-        block.typeCombo.currentIndexChanged.connect(self._updateBlockTypeRestrictions)
+        block.typeCombo.currentIndexChanged.connect(self.updateBlockTypeRestrictions)
         block.addActionStep()
         self._blocks.append(block)
-        self._updateBlockTypeRestrictions()
+        self.updateBlockTypeRestrictions()
         if self.scrollLayout.count() > 0:
             lastItem = self.scrollLayout.itemAt(
                 self.scrollLayout.count() - 1
@@ -112,7 +108,6 @@ class ALAutoScriptOrchDialog(QDialog):
                 )
                 return
         self.scrollLayout.addWidget(block)
-
 
     def removeBlock(
         self,
@@ -135,8 +130,7 @@ class ALAutoScriptOrchDialog(QDialog):
             else:
                 blk.typeCombo.setEnabled(True)
             blk.refreshVarCombos()
-        self._updateBlockTypeRestrictions()
-
+        self.updateBlockTypeRestrictions()
 
     def getScript(
         self
@@ -151,7 +145,7 @@ class ALAutoScriptOrchDialog(QDialog):
             blockType = block.getBlockType()
             if blockType == "IF" and prevType is not None:
                 parts.append("end")
-            lines = block.toScriptLines()
+            lines = block.toScript()
             parts.extend(lines)
             prevType = blockType
         if self._blocks and self._blocks[0].getBlockType() == "IF":

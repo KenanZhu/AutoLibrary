@@ -95,181 +95,6 @@ DATE_OFFSET_UNITS = [
 ]
 
 
-class VariableManager(QObject):
-
-    def __init__(
-        self,
-        parent = None
-    ):
-
-        super().__init__(parent)
-        self._vars = []
-        self._nameMap = {}
-
-        self._initPresetVars()
-
-
-    def _initPresetVars(
-        self
-    ):
-
-        for p in PRESET_VARIABLES:
-            entry = {"name": p["name"], "type": p["type"], "display": p["display"]}
-            self._vars.append(entry)
-            self._nameMap[p["name"]] = entry
-
-
-    def getInfoByName(
-        self,
-        name: str
-    ):
-
-        return self._nameMap.get(name.upper().strip())
-
-
-    def populateCombo(
-        self,
-        combo: QComboBox
-    ):
-
-        currentData = combo.currentData()
-        combo.blockSignals(True)
-        combo.clear()
-        for entry in self._vars:
-            combo.addItem(
-                entry["display"],
-                (entry["name"], entry["type"])
-            )
-        if currentData:
-            for i in range(combo.count()):
-                d = combo.itemData(i)
-                if d and d[0] == currentData[0]:
-                    combo.setCurrentIndex(i)
-                    break
-        combo.blockSignals(False)
-
-
-    def findExactNameEntry(
-        self,
-        combo: QComboBox,
-        name: str
-    ) -> int:
-
-        name = name.upper().strip()
-        for i in range(combo.count()):
-            d = combo.itemData(i)
-            if d and len(d) >= 1 and d[0].upper().strip() == name:
-                return i
-        return -1
-
-
-def makeValueWidget(
-    var_type: str,
-    parent: QWidget = None
-) -> QWidget:
-
-    if var_type == "Int":
-        w = QSpinBox(parent)
-        w.setRange(-999999, 999999)
-        w.setFixedHeight(25)
-        w.setMinimumWidth(100)
-        return w
-    if var_type == "Float":
-        w = QDoubleSpinBox(parent)
-        w.setRange(-999999.0, 999999.0)
-        w.setDecimals(2)
-        w.setFixedHeight(25)
-        w.setMinimumWidth(100)
-        return w
-    if var_type == "String":
-        w = QLineEdit(parent)
-        w.setPlaceholderText("输入值")
-        w.setFixedHeight(25)
-        w.setMinimumWidth(120)
-        return w
-    if var_type == "Boolean":
-        w = QComboBox(parent)
-        w.addItem("是 (true)", "true")
-        w.addItem("否 (false)", "false")
-        w.setFixedHeight(25)
-        w.setMinimumWidth(100)
-        return w
-    if var_type == "Date":
-        return _DateInputContainer(parent)
-    if var_type == "Time":
-        return _TimeInputContainer(parent)
-    w = QLineEdit(parent)
-    w.setPlaceholderText("输入值")
-    w.setFixedHeight(25)
-    w.setMinimumWidth(120)
-    return w
-
-
-def makeOffsetWidget(
-    var_type: str,
-    parent: QWidget = None
-) -> QWidget:
-
-    if var_type == "Int":
-        w = QSpinBox(parent)
-        w.setRange(-999999, 999999)
-        w.setFixedHeight(25)
-        w.setMinimumWidth(100)
-        return w
-    if var_type == "Float":
-        w = QDoubleSpinBox(parent)
-        w.setRange(-999999.0, 999999.0)
-        w.setDecimals(2)
-        w.setFixedHeight(25)
-        w.setMinimumWidth(100)
-        return w
-    if var_type == "Date":
-        return _DateOffsetContainer(parent)
-    if var_type == "Time":
-        return _TimeOffsetContainer(parent)
-    w = QLabel("(不支持该操作)", parent)
-    w.setFixedHeight(25)
-    return w
-
-
-def makeVarRefCombo(
-    parent: QWidget = None
-) -> QComboBox:
-
-    cb = QComboBox(parent)
-    cb.setFixedHeight(25)
-    cb.setMinimumWidth(120)
-    cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-    return cb
-
-
-def makeComboWidget(
-    items,
-    min_width: int = 80,
-    parent: QWidget = None
-) -> QComboBox:
-
-    cb = QComboBox(parent)
-    for display, data in items:
-        cb.addItem(display, data)
-    cb.setFixedHeight(25)
-    cb.setMinimumWidth(min_width)
-    return cb
-
-
-def makeLabel(
-    text: str,
-    parent: QWidget = None,
-    width: int = None
-) -> QLabel:
-
-    lbl = QLabel(text, parent)
-    lbl.setFixedHeight(25)
-    if width:
-        lbl.setFixedWidth(width)
-    return lbl
-
-
 class _DateInputContainer(QWidget):
 
     def __init__(
@@ -280,7 +105,6 @@ class _DateInputContainer(QWidget):
         super().__init__(parent)
         self._dynamicItems = {}  # index -> raw expression, for one-way parsed items
         self.setupUi()
-
 
     def setupUi(
         self
@@ -326,7 +150,6 @@ class _DateInputContainer(QWidget):
                 return self._dynamicItems[idx]
             return self._relCombo.currentText()
         return self._dateEdit.date().toString("yyyy-MM-dd")
-
 
     def setValue(
         self,
@@ -392,13 +215,11 @@ class _TimeInputContainer(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._timeEdit)
 
-
     def getValue(
         self
     ) -> str:
 
         return self._timeEdit.time().toString("HH:mm")
-
 
     def setValue(
         self,
@@ -443,13 +264,11 @@ class _DateOffsetContainer(QWidget):
         layout.addWidget(self._unitCombo)
         layout.addStretch()
 
-
     def getValue(
         self
     ) -> str:
 
         return str(self.getOffsetDays())
-
 
     def setValue(
         self,
@@ -461,7 +280,6 @@ class _DateOffsetContainer(QWidget):
             self._spinBox.setValue(int(s))
         except ValueError:
             pass
-
 
     def getOffsetDays(
         self
@@ -476,7 +294,6 @@ class _DateOffsetContainer(QWidget):
         if unit == "years":
             return val * 365
         return val
-
 
     def getRawValue(
         self
@@ -502,13 +319,11 @@ class _TimeOffsetContainer(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._spinBox)
 
-
     def getValue(
         self
     ) -> str:
 
         return str(self.getOffsetHours())
-
 
     def setValue(
         self,
@@ -521,13 +336,11 @@ class _TimeOffsetContainer(QWidget):
         except ValueError:
             pass
 
-
     def getOffsetHours(
         self
     ) -> int:
 
         return self._spinBox.value()
-
 
     def getRawValue(
         self
@@ -535,6 +348,172 @@ class _TimeOffsetContainer(QWidget):
 
         return str(self._spinBox.value())
 
+
+class VariableManager(QObject):
+
+    def __init__(
+        self,
+        parent = None
+    ):
+
+        super().__init__(parent)
+        self._vars = []
+        self._nameMap = {}
+
+        self._initPresetVars()
+
+    def _initPresetVars(
+        self
+    ):
+
+        for p in PRESET_VARIABLES:
+            entry = {"name": p["name"], "type": p["type"], "display": p["display"]}
+            self._vars.append(entry)
+            self._nameMap[p["name"]] = entry
+
+    def getInfoByName(
+        self,
+        name: str
+    ):
+
+        return self._nameMap.get(name.upper().strip())
+
+    def populateCombo(
+        self,
+        combo: QComboBox
+    ):
+
+        currentData = combo.currentData()
+        combo.blockSignals(True)
+        combo.clear()
+        for entry in self._vars:
+            combo.addItem(
+                entry["display"],
+                (entry["name"], entry["type"])
+            )
+        if currentData:
+            for i in range(combo.count()):
+                d = combo.itemData(i)
+                if d and d[0] == currentData[0]:
+                    combo.setCurrentIndex(i)
+                    break
+        combo.blockSignals(False)
+
+    def findExactNameEntry(
+        self,
+        combo: QComboBox,
+        name: str
+    ) -> int:
+
+        name = name.upper().strip()
+        for i in range(combo.count()):
+            d = combo.itemData(i)
+            if d and len(d) >= 1 and d[0].upper().strip() == name:
+                return i
+        return -1
+
+
+def makeValueWidget(
+    var_type: str,
+    parent: QWidget = None
+) -> QWidget:
+
+    if var_type == "Int":
+        w = QSpinBox(parent)
+        w.setRange(-999999, 999999)
+        w.setFixedHeight(25)
+        w.setMinimumWidth(100)
+        return w
+    if var_type == "Float":
+        w = QDoubleSpinBox(parent)
+        w.setRange(-999999.0, 999999.0)
+        w.setDecimals(2)
+        w.setFixedHeight(25)
+        w.setMinimumWidth(100)
+        return w
+    if var_type == "String":
+        w = QLineEdit(parent)
+        w.setPlaceholderText("输入值")
+        w.setFixedHeight(25)
+        w.setMinimumWidth(120)
+        return w
+    if var_type == "Boolean":
+        w = QComboBox(parent)
+        w.addItem("是 (true)", "true")
+        w.addItem("否 (false)", "false")
+        w.setFixedHeight(25)
+        w.setMinimumWidth(100)
+        return w
+    if var_type == "Date":
+        return _DateInputContainer(parent)
+    if var_type == "Time":
+        return _TimeInputContainer(parent)
+    w = QLineEdit(parent)
+    w.setPlaceholderText("输入值")
+    w.setFixedHeight(25)
+    w.setMinimumWidth(120)
+    return w
+
+def makeOffsetWidget(
+    var_type: str,
+    parent: QWidget = None
+) -> QWidget:
+
+    if var_type == "Int":
+        w = QSpinBox(parent)
+        w.setRange(-999999, 999999)
+        w.setFixedHeight(25)
+        w.setMinimumWidth(100)
+        return w
+    if var_type == "Float":
+        w = QDoubleSpinBox(parent)
+        w.setRange(-999999.0, 999999.0)
+        w.setDecimals(2)
+        w.setFixedHeight(25)
+        w.setMinimumWidth(100)
+        return w
+    if var_type == "Date":
+        return _DateOffsetContainer(parent)
+    if var_type == "Time":
+        return _TimeOffsetContainer(parent)
+    w = QLabel("(不支持该操作)", parent)
+    w.setFixedHeight(25)
+    return w
+
+def makeVarRefCombo(
+    parent: QWidget = None
+) -> QComboBox:
+
+    cb = QComboBox(parent)
+    cb.setFixedHeight(25)
+    cb.setMinimumWidth(120)
+    cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    return cb
+
+def makeComboWidget(
+    items,
+    min_width: int = 80,
+    parent: QWidget = None
+) -> QComboBox:
+
+    cb = QComboBox(parent)
+    for display, data in items:
+        cb.addItem(display, data)
+    cb.setFixedHeight(25)
+    cb.setMinimumWidth(min_width)
+    return cb
+
+def makeLabel(
+    text: str,
+    parent: QWidget = None,
+    width: int = None
+) -> QLabel:
+
+    lbl = QLabel(text, parent)
+    lbl.setFixedHeight(25)
+    if width:
+        lbl.setFixedWidth(width)
+    return lbl
 
 def getValueFromWidget(
     w: QWidget
@@ -556,8 +535,7 @@ def getValueFromWidget(
         return w.text()
     return ""
 
-
-def setWidgetValue(
+def setValueToWidget(
     w: QWidget,
     var_type: str,
     expr: str
@@ -619,7 +597,6 @@ def setWidgetValue(
             inner = inner[1:-1].replace('\\"', '"')
         w.setText(inner)
 
-
 def encodeValueStr(
     raw_value: str,
     var_type: str
@@ -632,7 +609,7 @@ def encodeValueStr(
     """
 
     if var_type in ("Date", "Time"):
-        return _encodeDateOrTime(str(raw_value), var_type)
+        return encodeDateOrTime(str(raw_value), var_type)
     if isinstance(raw_value, bool):
         return "true" if raw_value else "false"
     s = str(raw_value)
@@ -648,8 +625,7 @@ def encodeValueStr(
         return f'"{escaped}"'
     return s
 
-
-def _encodeDateOrTime(
+def encodeDateOrTime(
     raw_value: str,
     var_type: str
 ) -> str:
@@ -707,7 +683,6 @@ def _encodeDateOrTime(
         return s
     return f'"{s}"'
 
-
 def stripOuterParens(
     s: str
 ) -> str:
@@ -725,11 +700,9 @@ def stripOuterParens(
         return s[1:-1].strip()
     return s
 
-
 # Pre-compiled patterns for detecting arithmetic expressions (A + B / A - B)
 _RE_ARITH_SPACED = re.compile(r'^(.+?)\s+([+-])\s+(.+)$')
 _RE_ARITH_NOSPACE = re.compile(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$')
-
 
 def isArithExpr(
     expr: str
@@ -740,7 +713,6 @@ def isArithExpr(
 
     s = expr.strip()
     return bool(_RE_ARITH_SPACED.match(s) or _RE_ARITH_NOSPACE.match(s))
-
 
 def isVarReference(
     expr: str
@@ -764,27 +736,7 @@ def isVarReference(
         return False
     return bool(re.match(r"^[A-Z_][A-Z0-9_]*$", up))
 
-
-def findOperatorIn(
-    text: str,
-    operators: list
-) -> tuple[int, str] | None:
-
-    for op in operators:
-        op_upper = op.upper()
-        start = 0
-        while True:
-            idx = text.upper().find(op_upper, start)
-            if idx < 0:
-                break
-            if _isInsideLiteral(text, idx):
-                start = idx + 1
-                continue
-            return (idx, op)
-    return None
-
-
-def _isInsideLiteral(
+def isInsideLiteral(
     text: str,
     pos: int
 ) -> bool:
@@ -799,3 +751,21 @@ def _isInsideLiteral(
         elif ch == '"' and not in_single:
             in_double = not in_double
     return in_single or in_double
+
+def findOperatorIn(
+    text: str,
+    operators: list
+) -> tuple[int, str] | None:
+
+    for op in operators:
+        op_upper = op.upper()
+        start = 0
+        while True:
+            idx = text.upper().find(op_upper, start)
+            if idx < 0:
+                break
+            if isInsideLiteral(text, idx):
+                start = idx + 1
+                continue
+            return (idx, op)
+    return None

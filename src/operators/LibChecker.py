@@ -33,7 +33,6 @@ class LibChecker(LibOperator):
 
         self.__driver = driver
 
-
     def _waitResponseLoad(
         self
     ) -> bool:
@@ -50,7 +49,6 @@ class LibChecker(LibOperator):
         seconds = int(seconds%60)
         return f"{hours} 时 {minutes} 分 {seconds} 秒"
 
-
     def __navigateToReserveRecordPage(
         self
     ) -> bool:
@@ -66,7 +64,6 @@ class LibChecker(LibOperator):
             self._showTrace("加载预约记录页面失败 !", self.TraceLevel.ERROR)
             return False
         return True
-
 
     def __decodeReserveTime(
         self,
@@ -105,7 +102,6 @@ class LibChecker(LibOperator):
             }
         }
 
-
     def __decodeReserveInfo(
         self,
         info_elements
@@ -133,7 +129,6 @@ class LibChecker(LibOperator):
             "status": status,
         }
 
-
     def __decodeReserveRecord(
         self,
         reservation
@@ -160,7 +155,6 @@ class LibChecker(LibOperator):
             "info": info
         }
 
-
     def __loadReserveRecords(
         self
     ) -> list:
@@ -176,7 +170,6 @@ class LibChecker(LibOperator):
         except:
             self._showTrace("加载预约记录失败 !", self.TraceLevel.ERROR)
             return None
-
 
     def __showMoreReserveRecords(
         self
@@ -202,7 +195,6 @@ class LibChecker(LibOperator):
         except:
             self._showTrace("加载更多预约记录失败 !", self.TraceLevel.ERROR)
             return False
-
 
     def __getReserveRecord(
         self,
@@ -253,7 +245,6 @@ class LibChecker(LibOperator):
                 break
         return None
 
-
     def canReserve(
         self,
         date: str
@@ -269,7 +260,6 @@ class LibChecker(LibOperator):
             return False
         self._showTrace(f"用户在 {date} 已存在有效预约, 无法预约")
         return False
-
 
     def canCheckin(
         self
@@ -307,7 +297,6 @@ class LibChecker(LibOperator):
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法签到")
         return False
 
-
     def canRenew(
         self
     ) -> tuple[bool, dict]:
@@ -334,7 +323,6 @@ class LibChecker(LibOperator):
                 # time is not available for renewal, the record is not required
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
         return False, None
-
 
     def postRenewCheck(
         self,

@@ -11,11 +11,16 @@ from PySide6.QtCore import (
     Qt, Slot, QEvent
 )
 from PySide6.QtWidgets import (
-    QFrame, QWidget,
-    QGridLayout, QGraphicsView, QGraphicsScene, QGraphicsItem
+    QFrame,
+    QWidget,
+    QGridLayout,
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsItem
 )
 from PySide6.QtGui import (
-    QPainter, QWheelEvent
+    QPainter,
+    QWheelEvent
 )
 
 from gui.ALSeatFrame import ALSeatFrame
@@ -35,18 +40,6 @@ class ALSeatMapView(QGraphicsView):
 
         self.setupUi()
 
-    @staticmethod
-    def formatSeatNumber(
-        seat_number: str
-    ) -> str:
-
-        if seat_number and not seat_number[-1].isdigit():
-            digits = seat_number[:-1]
-            letter = seat_number[-1]
-            return digits.zfill(3) + letter
-        return seat_number.zfill(3)
-
-
     def eventFilter(
         self,
         watched,
@@ -60,7 +53,6 @@ class ALSeatMapView(QGraphicsView):
             self.zoomGraphicsView(event)
             return True
         return super().eventFilter(watched, event)
-
 
     def zoomGraphicsView(
         self,
@@ -80,7 +72,6 @@ class ALSeatMapView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scale(zoom_factor, zoom_factor)
 
-
     def setupUi(
         self
     ):
@@ -99,7 +90,6 @@ class ALSeatMapView(QGraphicsView):
 
         self.ContainerProxy = self.SeatMapGraphicsScene.addWidget(self.SeatsContainerWidget)
         self.ContainerProxy.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
-
 
     def setupSeatMap(
         self
@@ -125,7 +115,6 @@ class ALSeatMapView(QGraphicsView):
         self.SeatsContainerLayout.setContentsMargins(20, 20, 20, 20)
         self.SeatsContainerWidget.adjustSize()
 
-
     def selectSeat(
         self,
         seat_number: str
@@ -142,7 +131,6 @@ class ALSeatMapView(QGraphicsView):
         widget.toggleSelection()
         self.__selected_seats.append(seat_number)
 
-
     def selectSeats(
         self,
         selected_seats: list
@@ -152,13 +140,11 @@ class ALSeatMapView(QGraphicsView):
         for seat_number in selected_seats:
             self.selectSeat(seat_number)
 
-
     def getSelectedSeats(
         self
     ) -> list[str]:
 
         return self.__selected_seats
-
 
     def clearSelections(
         self
@@ -186,3 +172,14 @@ class ALSeatMapView(QGraphicsView):
                 self.__selected_seats.append(seat_number)
             else:
                 self.__seat_frames[seat_number].toggleSelection()
+
+    @staticmethod
+    def formatSeatNumber(
+        seat_number: str
+    ) -> str:
+
+        if seat_number and not seat_number[-1].isdigit():
+            digits = seat_number[:-1]
+            letter = seat_number[-1]
+            return digits.zfill(3) + letter
+        return seat_number.zfill(3)

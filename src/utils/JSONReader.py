@@ -42,7 +42,6 @@ class JSONReader:
         self.__json_data = None
         self.__read()
 
-
     def __read(
         self
     ):
@@ -59,7 +58,6 @@ class JSONReader:
         except Exception as e:
             raise Exception(f"读取文件时发生未知错误: {e}") from e
 
-
     def read(
         self
     ) -> bool:
@@ -70,13 +68,11 @@ class JSONReader:
             return False
         return True
 
-
     def data(
         self
     ) -> dict:
 
         return self.__json_data.copy()
-
 
     def path(
         self

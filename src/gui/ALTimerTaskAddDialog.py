@@ -49,7 +49,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         if self.__edit_timer_task:
             self.loadTask(self.__edit_timer_task)
 
-
     def modifyUi(
         self
     ):
@@ -101,10 +100,10 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptLayout.setContentsMargins(3, 3, 3, 3)
         self.AutoScriptLayout.setSpacing(3)
         autoScriptBtnLayout = QHBoxLayout()
-        self.AutoScriptPreviewButton = QPushButton("编辑")
-        self.AutoScriptPreviewButton.setMinimumHeight(25)
-        self.AutoScriptPreviewButton.setFixedWidth(60)
-        autoScriptBtnLayout.addWidget(self.AutoScriptPreviewButton)
+        self.AutoScriptEditButton = QPushButton("编辑")
+        self.AutoScriptEditButton.setMinimumHeight(25)
+        self.AutoScriptEditButton.setFixedWidth(80)
+        autoScriptBtnLayout.addWidget(self.AutoScriptEditButton)
         autoScriptBtnLayout.addStretch()
         self.AutoScriptHelpButton = QPushButton("?")
         self.AutoScriptHelpButton.setFixedSize(20, 20)
@@ -132,7 +131,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptGroupBox.setVisible(False)
         self.__auto_script = ""
         self.__mock_target_data = None
-
 
     def loadTask(
         self,
@@ -174,7 +172,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 self.__mock_target_data = mock_data
         self.ConfirmButton.setText("保存")
 
-
     def connectSignals(
         self
     ):
@@ -183,9 +180,8 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
         self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
-        self.AutoScriptPreviewButton.clicked.connect(self.onPreviewAutoScript)
+        self.AutoScriptEditButton.clicked.connect(self.onPreviewAutoScript)
         self.AutoScriptHelpButton.clicked.connect(self.onAutoScriptHelp)
-
 
     def getTimerTask(
         self

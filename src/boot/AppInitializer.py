@@ -16,7 +16,7 @@ from managers.config.ConfigManager import instance as configInstance
 from managers.driver.WebDriverManager import instance as webdriverInstance
 
 
-def initializeLogManager(
+def _initializeLogManager(
 ) -> bool:
 
     app_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
@@ -27,7 +27,7 @@ def initializeLogManager(
     logInstance(log_dir)
     return True
 
-def initializeConfigManager(
+def _initializeConfigManager(
 ) -> bool:
 
     logger = logInstance().getLogger("AppInitializer")
@@ -49,7 +49,7 @@ def initializeConfigManager(
     configInstance(new_config_dir)
     return True
 
-def initializeWebDriverManager(
+def _initializeWebDriverManager(
 ) -> bool:
 
     logger = logInstance().getLogger("AppInitializer")
@@ -66,11 +66,17 @@ def initializeWebDriverManager(
 
 def initializeApp(
 ) -> bool:
+    """
+        Initialize the application components
 
-    if not initializeLogManager():
+        Order:
+            LogManager -> ConfigManager -> WebDriverManager
+    """
+
+    if not _initializeLogManager():
         return False
-    if not initializeConfigManager():
+    if not _initializeConfigManager():
         return False
-    if not initializeWebDriverManager():
+    if not _initializeWebDriverManager():
         return False
     return True

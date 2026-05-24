@@ -81,7 +81,6 @@ class WebDriverManager:
 
         self.initialize()
 
-
     def initialize(
         self
     ):
@@ -92,7 +91,6 @@ class WebDriverManager:
         self._detectBrowsers()
         self._checkDriverStatus()
         self.__initialized = True
-
 
     def _detectBrowsers(
         self
@@ -105,7 +103,6 @@ class WebDriverManager:
                 for info in browser_infos
             ]
 
-
     def _checkDriverStatus(
         self
     ):
@@ -116,7 +113,6 @@ class WebDriverManager:
                 if driver_path and driver_path.exists() and driver_path.is_file():
                     driver_info.driver_path = driver_path
                     driver_info.driver_status = WebDriverStatus.INSTALLED
-
 
     def _mapWebBrowserTypeToDriver(
         self,
@@ -131,7 +127,6 @@ class WebDriverManager:
             return WebDriverType.EDGE
         else:
             raise ValueError(f"不支持的 Web 浏览器类型 : {browser_type}")
-
 
     def _mapWebBrowserArchToDriver(
         self,
@@ -199,7 +194,6 @@ class WebDriverManager:
         else:
             raise ValueError(f"不支持的 Web 浏览器类型 : {browser_type}")
 
-
     def _mapFirefoxDriverVersion(
         self,
         version: str
@@ -240,7 +234,6 @@ class WebDriverManager:
         except Exception as e:
             raise ValueError(f"无效的 Firefox 版本格式 : {version}") from e
 
-
     def _getDriverInfo(
         self,
         browser_info: WebBrowserInfo
@@ -255,7 +248,6 @@ class WebDriverManager:
             driver_info.driver_version = browser_info.browser_version
         driver_info.browser_version = browser_info.browser_version
         return driver_info
-
 
     def _getDriverPath(
         self,
@@ -286,7 +278,6 @@ class WebDriverManager:
         driver_path = driver_dir/exe_name
         return driver_path
 
-
     def refresh(
         self
     ):
@@ -294,14 +285,12 @@ class WebDriverManager:
         self._detectBrowsers()
         self._checkDriverStatus()
 
-
     def getDriverInfos(
         self
     ) -> list[WebDriverInfo]:
 
         with self.__lock:
             return self.__driver_infos.copy()
-
 
     def getDriverInfo(
         self,
@@ -315,7 +304,6 @@ class WebDriverManager:
                 if info.driver_type == driver_type
             ]
 
-
     def getDriverPath(
         self,
         driver_info: WebDriverInfo
@@ -324,7 +312,6 @@ class WebDriverManager:
         if driver_info and driver_info.driver_status == WebDriverStatus.INSTALLED:
             return driver_info.driver_path
         return None
-
 
     def installDriver(
         self,
@@ -390,7 +377,6 @@ class WebDriverManager:
                 driver_info.driver_status = WebDriverStatus.ERROR
             raise e
 
-
     def cancelDriverDownload(
         self,
         driver_info: WebDriverInfo
@@ -410,7 +396,6 @@ class WebDriverManager:
             return True
         except Exception:
             return False
-
 
     def uninstallDriver(
         self,
@@ -440,7 +425,6 @@ class WebDriverManager:
             with self.__lock:
                 driver_info.driver_status = WebDriverStatus.ERROR
             raise
-
 
     def driverDir(
         self

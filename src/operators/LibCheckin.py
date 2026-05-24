@@ -31,7 +31,6 @@ class LibCheckin(LibOperator):
 
         self.__driver = driver
 
-
     def _waitResponseLoad(
         self
     ) -> bool:
@@ -87,7 +86,6 @@ class LibCheckin(LibOperator):
             ok_btn.click()
             return False
 
-
     def __enableCheckinBtn(
         self
     ) -> bool:
@@ -111,7 +109,6 @@ class LibCheckin(LibOperator):
         else:
             self._showTrace("签到按钮启用失败", self.TraceLevel.WARNING)
         return result
-
 
     def checkin(
         self,

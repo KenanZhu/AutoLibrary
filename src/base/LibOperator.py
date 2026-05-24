@@ -29,7 +29,6 @@ class LibOperator(MsgBase):
 
         super().__init__(input_queue, output_queue)
 
-
     def _waitResponseLoad(
         self
     ) -> bool:

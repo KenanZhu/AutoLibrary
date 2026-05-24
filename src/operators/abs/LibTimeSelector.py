@@ -16,7 +16,7 @@ from base.LibOperator import LibOperator
 
 class LibTimeSelector(LibOperator):
     """
-        Base class for time selection operations.
+        Abstract base class for time selection operations.
 
         This class provides common time selection logic for reservation and renewal
         operations, including time conversion utilities and best time option finding.
@@ -60,7 +60,6 @@ class LibTimeSelector(LibOperator):
         hour, minute = divmod(int(mins), 60)
         return f"{hour:02d}:{minute:02d}"
 
-
     def _formatTimeRelation(
         self,
         abs_diff: int,
@@ -77,7 +76,6 @@ class LibTimeSelector(LibOperator):
             return f"晚了 {abs_diff} 分钟"
         else:
             return f"正好等于 {time_type}"
-
 
     def _findBestTimeOption(
         self,
