@@ -12,11 +12,7 @@ See the LICENSE file for details.
 """
 import re
 
-from PySide6.QtCore import (
-    QObject,
-    QDate,
-    QTime
-)
+from PySide6.QtCore import QObject
 from PySide6.QtWidgets import (
     QComboBox,
     QDateEdit,
@@ -31,61 +27,66 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from autoscript import (
-    ALL_VARIABLES,
-)
+from autoscript import createAllVariablesTable
 
-# Types that support arithmetic operations (add/sub)
-ARITH_TYPES = {"Date", "Time", "Int", "Float"}
-VAR_TYPE_ORDER = [
-    "String",
-    "Int",
-    "Float",
-    "Boolean",
-    "Date",
-    "Time"
+VARTYPE_INFOS = [
+    # varType, isArithType
+    ("String",  False),
+    ("Int",     True),
+    ("Float",   True),
+    ("Boolean", False),
+    ("Date",    True),
+    ("Time",    True),
 ]
-PRESET_VARIABLES = [
-    {
-        "name": name.upper(),
-        "type": vtype,
-        "display": display
-    }
-    for display, (name, vtype) in ALL_VARIABLES.items()
+
+
+def getTypeOrder(
+) -> list:
+
+    return [t for t, _ in VARTYPE_INFOS]
+
+def getArithType(
+    varType: str
+) -> bool:
+
+    for t, a in VARTYPE_INFOS:
+        if t == varType:
+            return a
+
+def getPresetVars(
+) -> list:
+
+    return [
+        {"name": name.upper(), "type": vtype, "display": display}
+        for display, (name, vtype) in createAllVariablesTable().items()
+    ]
+
+
+COMPARE_OPTIONS = [
+    ("等于", "=="),
+    ("不等于", "~="),
+    ("大于", ">"),
+    ("小于", "<"),
+    ("大于等于", ">="),
+    ("小于等于", "<="),
 ]
-PRESET_NAMES = {
-    p["name"] for p in PRESET_VARIABLES
-}
-# Operator display names (UI-specific), using Lua operator symbols
-_COMPARE_DISPLAY_MAP = {
-    "==": "等于",
-    "~=": "不等于",
-    ">": "大于",
-    "<": "小于",
-    ">=": "大于等于",
-    "<=": "小于等于",
-}
-COMPARE_OPERATORS = sorted(
-    [(name, op) for op, name in _COMPARE_DISPLAY_MAP.items()],
-    key=lambda x: len(x[1]), reverse=True
-)
-LOGIC_OPERATORS = [
+LOGIC_OPTIONS = [
     ("并且 (and)", "and"),
     ("或者 (or)", "or"),
 ]
-ACTION_TYPES = [
+ACTION_OPTIONS = [
     ("设置为", "set"),
     ("增加", "add"),
     ("减少", "sub"),
 ]
-DATE_RELATIVE_OPTIONS = [
+DATE_OPTIONS = [
     ("前天", "day_before_yesterday"),
     ("昨天", "yesterday"),
     ("今天", "today"),
     ("明天", "tomorrow"),
     ("后天", "day_after_tomorrow")
 ]
-DATE_OFFSET_UNITS = [
+DATE_OFFSET_OPTIONS = [
     ("天", "days"),
     ("周", "weeks"),
     # NOTE: "月" and "年" use fixed day counts (30 / 365), not calendar months/years,
@@ -103,7 +104,6 @@ class _DateInputContainer(QWidget):
     ):
 
         super().__init__(parent)
-        self._dynamicItems = {}  # index -> raw expression, for one-way parsed items
         self.setupUi()
 
     def setupUi(
@@ -119,7 +119,7 @@ class _DateInputContainer(QWidget):
         self._modeCombo.setFixedHeight(25)
         self._stack = QStackedWidget(self)
         self._relCombo = QComboBox(self)
-        for display, data in DATE_RELATIVE_OPTIONS:
+        for display, data in DATE_OPTIONS:
             self._relCombo.addItem(display, data)
         self._relCombo.setFixedHeight(25)
         self._stack.addWidget(self._relCombo)
@@ -135,68 +135,14 @@ class _DateInputContainer(QWidget):
         layout.addWidget(self._stack)
         layout.addStretch()
 
-    _RE_DATE_ADD_CURRENT = re.compile(
-        r'^date_add\(CURRENT_DATE\(\),\s*(-?\d+)\)$', re.IGNORECASE
-    )
-
     def getValue(
         self
     ) -> str:
 
         mode = self._modeCombo.currentData()
         if mode == "relative":
-            idx = self._relCombo.currentIndex()
-            if idx in self._dynamicItems:
-                return self._dynamicItems[idx]
             return self._relCombo.currentText()
         return self._dateEdit.date().toString("yyyy-MM-dd")
-
-    def setValue(
-        self,
-        expr: str
-    ):
-
-        s = expr.strip()
-        up = s.upper()
-        if up == "CURRENT_DATE()":
-            self._modeCombo.setCurrentIndex(0)
-            self._relCombo.setCurrentIndex(2)
-            return
-        m_add = self._RE_DATE_ADD_CURRENT.match(up)
-        if m_add:
-            n = int(m_add.group(1))
-            _OFFSET_IDX = {-2: 0, -1: 1, 0: 2, 1: 3, 2: 4}
-            idx = _OFFSET_IDX.get(n)
-            if idx is not None:
-                self._modeCombo.setCurrentIndex(0)
-                self._relCombo.setCurrentIndex(idx)
-                return
-            label = f"{n}天后" if n >= 0 else f"{-n}天前"
-            raw = f"CURRENT_DATE {'+' if n >= 0 else '-'} {abs(n)}"
-            self._modeCombo.setCurrentIndex(0)
-            for ci in range(self._relCombo.count()):
-                if ci in self._dynamicItems and self._dynamicItems[ci] == raw:
-                    self._relCombo.setCurrentIndex(ci)
-                    return
-            idx = self._relCombo.count()
-            self._relCombo.addItem(label)
-            self._dynamicItems[idx] = raw
-            self._relCombo.setCurrentIndex(idx)
-            return
-        m_date_ctor = re.match(r"^DATE\((\d+),\s*(\d+),\s*(\d+)\)$", up)
-        if m_date_ctor:
-            self._modeCombo.setCurrentIndex(1)
-            self._dateEdit.setDate(QDate(
-                int(m_date_ctor.group(1)),
-                int(m_date_ctor.group(2)),
-                int(m_date_ctor.group(3)),
-            ))
-            return
-        m_date = re.match(r'^"(\d{4}-\d{2}-\d{2})"$', s)
-        if m_date:
-            self._modeCombo.setCurrentIndex(1)
-            parts = m_date.group(1).split("-")
-            self._dateEdit.setDate(QDate(int(parts[0]), int(parts[1]), int(parts[2])))
 
 
 class _TimeInputContainer(QWidget):
@@ -221,25 +167,6 @@ class _TimeInputContainer(QWidget):
 
         return self._timeEdit.time().toString("HH:mm")
 
-    def setValue(
-        self,
-        expr: str
-    ):
-
-        s = expr.strip()
-        up = s.upper()
-        m_time_ctor = re.match(r"^TIME\((\d+),\s*(\d+)\)$", up)
-        if m_time_ctor:
-            self._timeEdit.setTime(QTime(
-                int(m_time_ctor.group(1)),
-                int(m_time_ctor.group(2)),
-            ))
-            return
-        m = re.match(r'^"(\d{1,2}:\d{2})"$', s)
-        if m:
-            parts = m.group(1).split(":")
-            self._timeEdit.setTime(QTime(int(parts[0]), int(parts[1])))
-
 
 class _DateOffsetContainer(QWidget):
 
@@ -253,7 +180,7 @@ class _DateOffsetContainer(QWidget):
         self._spinBox.setRange(0, 99999)
         self._spinBox.setFixedHeight(25)
         self._unitCombo = QComboBox(self)
-        for display, data in DATE_OFFSET_UNITS:
+        for display, data in DATE_OFFSET_OPTIONS:
             self._unitCombo.addItem(display, data)
         self._unitCombo.setFixedHeight(25)
 
@@ -270,17 +197,6 @@ class _DateOffsetContainer(QWidget):
 
         return str(self.getOffsetDays())
 
-    def setValue(
-        self,
-        expr: str
-    ):
-
-        s = expr.strip().lstrip("+")
-        try:
-            self._spinBox.setValue(int(s))
-        except ValueError:
-            pass
-
     def getOffsetDays(
         self
     ) -> int:
@@ -294,12 +210,6 @@ class _DateOffsetContainer(QWidget):
         if unit == "years":
             return val * 365
         return val
-
-    def getRawValue(
-        self
-    ) -> str:
-
-        return str(self._spinBox.value())
 
 
 class _TimeOffsetContainer(QWidget):
@@ -325,28 +235,11 @@ class _TimeOffsetContainer(QWidget):
 
         return str(self.getOffsetHours())
 
-    def setValue(
-        self,
-        expr: str
-    ):
-
-        s = expr.strip().lstrip("+")
-        try:
-            self._spinBox.setValue(int(s))
-        except ValueError:
-            pass
-
     def getOffsetHours(
         self
     ) -> int:
 
         return self._spinBox.value()
-
-    def getRawValue(
-        self
-    ) -> str:
-
-        return str(self._spinBox.value())
 
 
 class VariableManager(QObject):
@@ -360,13 +253,13 @@ class VariableManager(QObject):
         self._vars = []
         self._nameMap = {}
 
-        self._initPresetVars()
+        self.initPresetVars()
 
-    def _initPresetVars(
+    def initPresetVars(
         self
     ):
 
-        for p in PRESET_VARIABLES:
+        for p in getPresetVars():
             entry = {"name": p["name"], "type": p["type"], "display": p["display"]}
             self._vars.append(entry)
             self._nameMap[p["name"]] = entry
@@ -398,19 +291,6 @@ class VariableManager(QObject):
                     combo.setCurrentIndex(i)
                     break
         combo.blockSignals(False)
-
-    def findExactNameEntry(
-        self,
-        combo: QComboBox,
-        name: str
-    ) -> int:
-
-        name = name.upper().strip()
-        for i in range(combo.count()):
-            d = combo.itemData(i)
-            if d and len(d) >= 1 and d[0].upper().strip() == name:
-                return i
-        return -1
 
 
 def makeValueWidget(
@@ -535,68 +415,6 @@ def getValueFromWidget(
         return w.text()
     return ""
 
-def setValueToWidget(
-    w: QWidget,
-    var_type: str,
-    expr: str
-):
-    """
-        Set a widget's value from a Lua script expression.
-    """
-
-    if hasattr(w, "setValue"):
-        w.setValue(expr)
-        return
-    s = expr.strip()
-    up = s.upper()
-    if isinstance(w, QTimeEdit):
-        m_time_ctor = re.match(r"^TIME\((\d+),\s*(\d+)\)$", up)
-        if m_time_ctor:
-            w.setTime(QTime(int(m_time_ctor.group(1)), int(m_time_ctor.group(2))))
-        else:
-            m = re.match(r'^"(\d{1,2}:\d{2})"$', s)
-            if m:
-                parts = m.group(1).split(":")
-                w.setTime(QTime(int(parts[0]), int(parts[1])))
-    elif isinstance(w, QDateEdit):
-        m_date_ctor = re.match(r"^DATE\((\d+),\s*(\d+),\s*(\d+)\)$", up)
-        if m_date_ctor:
-            w.setDate(QDate(
-                int(m_date_ctor.group(1)),
-                int(m_date_ctor.group(2)),
-                int(m_date_ctor.group(3)),
-            ))
-        else:
-            m = re.match(r'^"(\d{4}-\d{2}-\d{2})"$', s)
-            if m:
-                parts = m.group(1).split("-")
-                w.setDate(QDate(int(parts[0]), int(parts[1]), int(parts[2])))
-    elif isinstance(w, QComboBox):
-        for i in range(w.count()):
-            d = w.itemData(i)
-            if d is not None:
-                if str(d).upper() == up:
-                    w.setCurrentIndex(i)
-                    return
-            if w.itemText(i).upper() == up:
-                w.setCurrentIndex(i)
-                return
-    elif isinstance(w, QSpinBox):
-        try:
-            w.setValue(int(expr))
-        except ValueError:
-            pass
-    elif isinstance(w, QDoubleSpinBox):
-        try:
-            w.setValue(float(expr))
-        except ValueError:
-            pass
-    elif isinstance(w, QLineEdit):
-        inner = expr.strip()
-        if inner.startswith('"') and inner.endswith('"'):
-            inner = inner[1:-1].replace('\\"', '"')
-        w.setText(inner)
-
 def encodeValueStr(
     raw_value: str,
     var_type: str
@@ -683,23 +501,6 @@ def encodeDateOrTime(
         return s
     return f'"{s}"'
 
-def stripOuterParens(
-    s: str
-) -> str:
-
-    s = s.strip()
-    if s.startswith("(") and s.endswith(")"):
-        depth = 0
-        for i, ch in enumerate(s):
-            if ch == "(":
-                depth += 1
-            elif ch == ")":
-                depth -= 1
-                if depth == 0 and i < len(s) - 1:
-                    return s
-        return s[1:-1].strip()
-    return s
-
 # Pre-compiled patterns for detecting arithmetic expressions (A + B / A - B)
 _RE_ARITH_SPACED = re.compile(r'^(.+?)\s+([+-])\s+(.+)$')
 _RE_ARITH_NOSPACE = re.compile(r'^([A-Za-z_]\w*)([+-])(\d+|[A-Za-z_]\w*)$')
@@ -713,59 +514,3 @@ def isArithExpr(
 
     s = expr.strip()
     return bool(_RE_ARITH_SPACED.match(s) or _RE_ARITH_NOSPACE.match(s))
-
-def isVarReference(
-    expr: str
-) -> bool:
-    """
-        Return True if *expr* looks like a variable name reference
-        (as opposed to a literal value or function call).
-    """
-
-    s = expr.strip()
-    up = s.upper()
-    if up in ("TRUE", "FALSE"):
-        return False
-    if re.match(r"^DATE\(|^TIME\(|^DATE_ADD\(|^TIME_ADD\(|^CURRENT_DATE\(|^CURRENT_TIME\(|^CURRENT_", up):
-        return False
-    if up.startswith('"') or up.startswith("'"):
-        return False
-    if re.match(r"^[+-]?\d", s):
-        return False
-    if isArithExpr(s):
-        return False
-    return bool(re.match(r"^[A-Z_][A-Z0-9_]*$", up))
-
-def isInsideLiteral(
-    text: str,
-    pos: int
-) -> bool:
-
-    in_single = False
-    in_double = False
-    for i, ch in enumerate(text):
-        if i >= pos:
-            break
-        if ch == "'" and not in_double:
-            in_single = not in_single
-        elif ch == '"' and not in_single:
-            in_double = not in_double
-    return in_single or in_double
-
-def findOperatorIn(
-    text: str,
-    operators: list
-) -> tuple[int, str] | None:
-
-    for op in operators:
-        op_upper = op.upper()
-        start = 0
-        while True:
-            idx = text.upper().find(op_upper, start)
-            if idx < 0:
-                break
-            if isInsideLiteral(text, idx):
-                start = idx + 1
-                continue
-            return (idx, op)
-    return None

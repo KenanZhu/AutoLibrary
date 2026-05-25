@@ -3,6 +3,9 @@
         <file>icons/AutoLibrary_Logo_64.svg</file>
         <file>icons/AutoLibrary_Logo_128.svg</file>
 
+        <file>icons/Copy.svg</file>
+        <file>icons/Reset.svg</file>
+
         <file>translators/qtbase_zh_CN.qm</file>
     </qresource>
 </RCC>

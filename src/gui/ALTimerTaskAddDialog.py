@@ -108,7 +108,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptHelpButton = QPushButton("?")
         self.AutoScriptHelpButton.setFixedSize(20, 20)
         self.AutoScriptHelpButton.setToolTip(
-            "AutoScript 是一种轻量级 DSL\n"
+            "AutoScript 是一种轻量级 DSL 语言，基于 Lua 实现。\n"
             "用于在重复定时任务执行前，对用户的预约数据进行预处理\n"
             "\n"
             "点击查看完整在线文档"

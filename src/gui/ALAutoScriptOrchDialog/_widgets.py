@@ -22,14 +22,14 @@ from PySide6.QtWidgets import (
 )
 
 from gui.ALAutoScriptOrchDialog._helpers import (
-    ACTION_TYPES,
-    ARITH_TYPES,
-    COMPARE_OPERATORS,
-    LOGIC_OPERATORS,
-    PRESET_VARIABLES,
-    VAR_TYPE_ORDER,
+    ACTION_OPTIONS,
+    COMPARE_OPTIONS,
+    LOGIC_OPTIONS,
     encodeValueStr,
+    getPresetVars,
+    getTypeOrder,
     getValueFromWidget,
+    getArithType,
     makeComboWidget,
     makeLabel,
     makeOffsetWidget,
@@ -72,7 +72,7 @@ class ConditionRowFrame(QFrame):
         if self._isFirst:
             self.logicCombo = None
         else:
-            self.logicCombo = makeComboWidget(LOGIC_OPERATORS, min_width=110, parent=self)
+            self.logicCombo = makeComboWidget(LOGIC_OPTIONS, min_width=110, parent=self)
             layout.addWidget(self.logicCombo)
         self.leftVarCombo = QComboBox(self)
         self.leftVarCombo.setFixedHeight(25)
@@ -80,7 +80,7 @@ class ConditionRowFrame(QFrame):
         self.leftVarCombo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.populateLeftVarCombo()
         layout.addWidget(self.leftVarCombo)
-        self.opCombo = makeComboWidget(COMPARE_OPERATORS, min_width=80, parent=self)
+        self.opCombo = makeComboWidget(COMPARE_OPTIONS, min_width=80, parent=self)
         layout.addWidget(self.opCombo)
         self._compTypeCombo = makeComboWidget([
             ("特定值", "literal"),
@@ -139,7 +139,7 @@ class ConditionRowFrame(QFrame):
         self.literalStack = QStackedWidget(self)
         self.literalStack.setFixedHeight(25)
         self._literalWidgets = {}
-        for vt in VAR_TYPE_ORDER:
+        for vt in getTypeOrder():
             w = makeValueWidget(vt, self.literalStack)
             self._literalWidgets[vt] = w
             self.literalStack.addWidget(w)
@@ -272,7 +272,7 @@ class ActionStepFrame(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(4)
-        self.opTypeCombo = makeComboWidget(ACTION_TYPES, min_width=70, parent=self)
+        self.opTypeCombo = makeComboWidget(ACTION_OPTIONS, min_width=70, parent=self)
         layout.addWidget(self.opTypeCombo)
         layout.addWidget(makeLabel("设置", self))
         self.targetCombo = QComboBox(self)
@@ -305,7 +305,7 @@ class ActionStepFrame(QFrame):
 
         self.targetCombo.blockSignals(True)
         self.targetCombo.clear()
-        for p in PRESET_VARIABLES:
+        for p in getPresetVars():
             if p["name"] in ("CURRENT_TIME", "CURRENT_DATE"):
                 continue
             info = self._varMgr.getInfoByName(p["name"])
@@ -322,10 +322,10 @@ class ActionStepFrame(QFrame):
 
         self._literalWidgets = {}
         self._offsetWidgets = {}
-        for vt in VAR_TYPE_ORDER:
+        for vt in getTypeOrder():
             self._literalWidgets[vt] = makeValueWidget(vt, self.valueStack)
             self.valueStack.addWidget(self._literalWidgets[vt])
-            if vt in ARITH_TYPES:
+            if getArithType(vt):
                 self._offsetWidgets[vt] = makeOffsetWidget(vt, self.valueStack)
                 self.valueStack.addWidget(self._offsetWidgets[vt])
             else:

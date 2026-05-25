@@ -9,10 +9,18 @@ See the LICENSE file for details.
 """
 from copy import deepcopy
 
-from PySide6.QtCore import QDate, Qt, QTime, QTimer, Slot
+from PySide6.QtCore import (
+    QDate,
+    QSize,
+    Qt,
+    QTime,
+    QTimer,
+    Slot
+)
 from PySide6.QtGui import (
     QColor,
     QFont,
+    QIcon,
     QSyntaxHighlighter,
     QTextCharFormat,
 )
@@ -46,11 +54,10 @@ from PySide6.QtWidgets import (
 )
 
 from autoscript import (
-    ALL_VARIABLES,
-    _MOCK_TYPE_VALUES,
-    _TARGET_VAR_DEFS,
-    execute,
-    registerDefaultTargetVars,
+    createAllVariablesTable,
+    createMockTargetData,
+    createTargetVarDefs,
+    createEngine,
 )
 
 
@@ -94,12 +101,12 @@ class ALScriptHighlighter(QSyntaxHighlighter):
         funcFmt = QTextCharFormat()
         funcFmt.setForeground(QColor("#DCDCAA"))
         funcFmt.setFontWeight(QFont.Weight.Normal)
-        for fn in ["CURRENT_DATE", "CURRENT_TIME", "date_add", "time_add"]:
+        for fn in [ "time", "date", "datenow", "timenow", "dateadd", "timeadd"]:
             self._rules.append((r"\b" + fn + r"\b", funcFmt))
         varFmt = QTextCharFormat()
         varFmt.setForeground(QColor("#9CDCFE"))
         varFmt.setFontWeight(QFont.Weight.Normal)
-        var_names = [name for _, (name, _) in ALL_VARIABLES.items()]
+        var_names = [name for _, (name, _) in createAllVariablesTable().items()]
         for var in var_names:
             self._rules.append((r"\b" + var + r"\b", varFmt))
         strFmt = QTextCharFormat()
@@ -158,6 +165,19 @@ class _DebugResultDialog(QDialog):
         layout.addWidget(btnBox)
 
 
+class _TabToSpacesEditor(QPlainTextEdit):
+
+    def keyPressEvent(
+        self,
+        event
+    ):
+
+        if event.key() == Qt.Key.Key_Tab:
+            self.insertPlainText("    ")
+            return
+        super().keyPressEvent(event)
+
+
 class ALAutoScriptEditDialog(QDialog):
 
     def __init__(
@@ -194,11 +214,9 @@ class ALAutoScriptEditDialog(QDialog):
         self.zoomInBtn.setFixedSize(25, 25)
         self.zoomOutBtn = QPushButton("－")
         self.zoomOutBtn.setFixedSize(25, 25)
-        self.zoomResetBtn = QPushButton(
-            QApplication.style().standardIcon(
-                QStyle.StandardPixmap.SP_BrowserReload
-            ), ""
-        )
+        self.zoomResetBtn = QPushButton("")
+        self.zoomResetBtn.setIcon(QIcon(":/res/icons/Reset.svg"))
+        self.zoomResetBtn.setIconSize(QSize(20, 20))
         self.zoomResetBtn.setFixedSize(25, 25)
         self.zoomResetBtn.setToolTip("重置缩放")
         self.zoomLabel = QLabel(f"{self._fontSize}px")
@@ -221,16 +239,15 @@ class ALAutoScriptEditDialog(QDialog):
         toolbarLayout.addWidget(self.zoomResetBtn)
         toolbarLayout.addWidget(self.zoomLabel)
         toolbarLayout.addStretch()
-        self.copyBtn = QPushButton(
-            QApplication.style().standardIcon(
-                QStyle.StandardPixmap.SP_FileDialogDetailedView
-            ), ""
-        )
+        self.copyBtn = QPushButton("")
+        self.copyBtn.setIcon(QIcon(":/res/icons/Copy.svg"))
+        self.copyBtn.setIconSize(QSize(20, 20))
         self.copyBtn.setFixedSize(25, 25)
         self.copyBtn.setToolTip("复制脚本")
         toolbarLayout.addWidget(self.copyBtn)
         layout.addLayout(toolbarLayout)
-        self.textEdit = QPlainTextEdit(self)
+        self.textEdit = _TabToSpacesEditor(self)
+        self.textEdit.setTabStopDistance(40)
         self.textEdit.setLineWrapMode(
             QPlainTextEdit.LineWrapMode.NoWrap
         )
@@ -329,10 +346,30 @@ class ALAutoScriptEditDialog(QDialog):
         varLayout.setContentsMargins(4, 4, 4, 4)
         varLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         varButtons = [
-            (display_name, name) for display_name, (name, _) in ALL_VARIABLES.items()
+            (display_name, name) for display_name, (name, _) in createAllVariablesTable().items()
         ]
         self.addButtonsToGrid(varLayout, varButtons, 0, 0, 3)
         tabWidget.addTab(varWidget, "变量")
+        funcWidget = QWidget()
+        funcLayout = QGridLayout(funcWidget)
+        funcLayout.setSpacing(4)
+        funcLayout.setContentsMargins(4, 4, 4, 4)
+        funcLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        funcButtons = [
+            ("datenow()", "datenow()", "返回当前日期的 Unix 时间戳"),
+            ("timenow()", "timenow()", "返回当前时间在一天中的分钟数"),
+            ("dateadd(d, n)", "dateadd(, )", "日期偏移: dateadd(日期时间戳, 天数)"),
+            ("timeadd(t, n)", "timeadd(, )", "时间偏移: timeadd(分钟数, 分钟数)"),
+        ]
+        for i, (text, template, tooltip) in enumerate(funcButtons):
+            btn = QPushButton(text)
+            btn.setProperty("template", template)
+            btn.clicked.connect(self.insertTemplate)
+            btn.setFixedWidth(100)
+            btn.setFixedHeight(25)
+            btn.setToolTip(tooltip)
+            funcLayout.addWidget(btn, i // 2, i % 2)
+        tabWidget.addTab(funcWidget, "工具函数")
         mockPanel = self.createMockPanel()
         mockPanel.setMinimumWidth(260)
         splitter.addWidget(tabWidget)
@@ -376,8 +413,12 @@ class ALAutoScriptEditDialog(QDialog):
         form.setSpacing(4)
         form.setContentsMargins(5, 10, 5, 5)
         self._mockWidgets = {}
-        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
-            default = _MOCK_TYPE_VALUES.get(var_type, "")
+        mockData = createMockTargetData()
+        for name, var_type, key_path, display_name in createTargetVarDefs():
+            d = mockData
+            for key in key_path:
+                d = d[key]
+            default = d
             widget = self.makeMockInput(var_type, default)
             label = QLabel(f"{display_name}: {name}({var_type})")
             form.addRow(label, widget)
@@ -432,7 +473,7 @@ class ALAutoScriptEditDialog(QDialog):
     ) -> dict:
 
         data = {}
-        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+        for name, var_type, key_path, display_name in createTargetVarDefs():
             widget, _, _ = self._mockWidgets[name]
             value = self.getMockValue(widget, var_type)
             d = data
@@ -448,7 +489,7 @@ class ALAutoScriptEditDialog(QDialog):
 
         if not data:
             return
-        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+        for name, var_type, key_path, display_name in createTargetVarDefs():
             d = data
             try:
                 for key in key_path:
@@ -572,11 +613,8 @@ class ALAutoScriptEditDialog(QDialog):
 
         clipboard = QApplication.clipboard()
         clipboard.setText(self.textEdit.toPlainText())
-        original = self.copyBtn.text()
-        self.copyBtn.setText("已复制")
         self.copyBtn.setEnabled(False)
         QTimer.singleShot(2000, lambda: (
-            self.copyBtn.setText(original),
             self.copyBtn.setEnabled(True)
         ))
 
@@ -606,13 +644,13 @@ class ALAutoScriptEditDialog(QDialog):
         target_data = self.getMockData()
         before = deepcopy(target_data)
         try:
-            registerDefaultTargetVars()
-            execute(script, target_data)
+            engine = createEngine()
+            engine.execute(script, target_data)
         except ValueError as e:
             QMessageBox.warning(self, "运行错误", str(e))
             return
         changes = []
-        for name, var_type, key_path, display_name in _TARGET_VAR_DEFS:
+        for name, var_type, key_path, display_name in createTargetVarDefs():
             before_val = before
             after_val = target_data
             try:

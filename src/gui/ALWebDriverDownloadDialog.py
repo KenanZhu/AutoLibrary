@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QCloseEvent
 
 from managers.driver.WebDriverManager import (
-    instance as webdriverManagerInstance,
+    instance as webdriverInstance,
     WebDriverManager,
     WebDriverInfo,
     WebDriverType,
@@ -261,7 +261,7 @@ class ALWebDriverDownloadDialog(QDialog):
     ):
 
         try:
-            self.__driver_manager = webdriverManagerInstance(self.__driver_dir)
+            self.__driver_manager = webdriverInstance(self.__driver_dir)
         except ValueError as e:
             QMessageBox.warning(self, "初始化失败", f"WebDriverManager 初始化失败:\n{str(e)}")
             self.reject()
