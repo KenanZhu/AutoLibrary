@@ -164,7 +164,7 @@ class AutoLibPages(MsgBase):
             self._showTrace("未配置图书馆参数 !", self.TraceLevel.ERROR)
             return False
         url: str = lib_config.get("host_url") + lib_config.get("login_url")
-        self.__login_page = LoginPage(self.__driver)
+        self.__login_page = LoginPage(self.__driver, tracer=self._showTrace)
         self.__driver.set_page_load_timeout(5)
         try:
             self.__driver.get(url)
@@ -244,8 +244,6 @@ class AutoLibPages(MsgBase):
             password,
             captcha_solver=self.__captcha_handler.solveCaptcha,
             auto_captcha=auto_captcha,
-            tracer=self._showTrace,
-            log_level=self.TraceLevel,
             max_attempts=login_config.get("max_attempt", 3),
         ):
             return 1

@@ -7,7 +7,7 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from typing import Callable
+from typing import Callable, Optional
 
 from selenium.common.exceptions import (
     ElementNotInteractableException,
@@ -37,9 +37,21 @@ class LoginPage:
     def __init__(
         self,
         driver: WebDriver,
+        tracer: Optional[Callable[..., None]] = None,
     ) -> None:
 
         self._driver: WebDriver = driver
+        self._tracer: Optional[Callable[..., None]] = tracer
+
+    def _trace(
+        self,
+        msg: str,
+        level: int = 20,
+        no_log: bool = False,
+    ) -> None:
+
+        if self._tracer:
+            self._tracer(msg, level, no_log)
 
     def navigate(
         self,
@@ -177,16 +189,13 @@ class LoginPage:
         password: str,
         captcha_solver: Callable[["LoginPage", bool], str],
         auto_captcha: bool,
-        tracer: Callable[..., None],
-        log_level: type,
         max_attempts: int = 5,
     ) -> bool:
 
-        ERR = log_level.ERROR
         for attempt in range(max_attempts):
-            tracer(
+            self._trace(
                 f"用户 {username} 第 {attempt + 1} 次尝试登录......",
-                20, no_log=True,
+                no_log=True,
             )
             if not self.fillCredentials(username, password):
                 continue
@@ -195,16 +204,16 @@ class LoginPage:
                 continue
             if not self.fillCaptcha(captcha_text):
                 continue
-            tracer("尝试登录...", 20, no_log=True)
+            self._trace("尝试登录...", no_log=True)
             if not self.clickLogin():
                 continue
             if self.waitLoginSuccess():
-                tracer(f"用户 {username} 第 {attempt + 1} 次登录成功 !")
+                self._trace(f"用户 {username} 第 {attempt + 1} 次登录成功 !")
                 return True
             else:
-                err_msg = (
+                self._trace(
                     "登录页面加载失败 ! : "
-                    "用户账号或者密码错误/验证码错误, 具体以页面提示为准"
+                    "用户账号或者密码错误/验证码错误, 具体以页面提示为准",
+                    level=40,
                 )
-                tracer(err_msg, ERR)
         return False
