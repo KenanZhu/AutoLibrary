@@ -15,7 +15,7 @@ from pages.ReserveView import ReserveView
 from pages.flows._helpers import timeStrToMins, minsToTimeStr
 
 
-class ReserveValidator(MsgBase):
+class ReserveChecker(MsgBase):
 
     def __init__(
         self,
@@ -150,7 +150,6 @@ class ReserveValidator(MsgBase):
         end_time = reserve_info["end_time"]
         begin_mins = timeStrToMins(begin_time["time"])
         end_mins = timeStrToMins(end_time["time"])
-
         if end_mins < begin_mins and reserve_info["satisfy_duration"] is False:
             self._showTrace(
                 f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, "
@@ -161,7 +160,6 @@ class ReserveValidator(MsgBase):
             begin_time, end_time = end_time, begin_time
             begin_mins = timeStrToMins(begin_time["time"])
             end_mins = timeStrToMins(end_time["time"])
-
         max_end_mins = timeStrToMins("23:30")
         if end_mins > max_end_mins:
             self._showTrace(
@@ -170,7 +168,6 @@ class ReserveValidator(MsgBase):
             )
             reserve_info["end_time"]["time"] = "23:30"
             end_mins = max_end_mins
-
         if reserve_info["satisfy_duration"]:
             if reserve_info["expect_duration"] > 8:
                 self._showTrace(
@@ -191,7 +188,7 @@ class ReserveValidator(MsgBase):
                 reserve_info["end_time"]["time"] = minsToTimeStr(begin_mins + 8 * 60)
         return True
 
-    def validate(
+    def check(
         self,
         reserve_info: dict,
     ) -> bool:

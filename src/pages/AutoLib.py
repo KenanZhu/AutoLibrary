@@ -24,12 +24,12 @@ from pages.MainShell import MainShell
 from pages.flows.ReserveFlow import ReserveFlow, ReserveContext
 from pages.flows.CheckinFlow import CheckinFlow
 from pages.flows.RenewFlow import RenewFlow
-from pages.services.CaptchaHandler import CaptchaHandler
-from pages.services.ReserveValidator import ReserveValidator
+from pages.services.CaptchaSolver import CaptchaSolver
+from pages.services.ReserveChecker import ReserveChecker
 from pages.services.RecordChecker import RecordChecker
 
 
-class AutoLibPages(MsgBase):
+class AutoLib(MsgBase):
 
     def __init__(
         self,
@@ -46,9 +46,9 @@ class AutoLibPages(MsgBase):
         self.__driver_path: str = ""
         self.__login_page: LoginPage = None
         self.__shell: MainShell = None
-        self.__captcha_handler: CaptchaHandler = None
+        self.__captcha_solver: CaptchaSolver = None
         self.__record_checker: RecordChecker = None
-        self.__reserve_validator: ReserveValidator = None
+        self.__reserve_checker: ReserveChecker = None
         self.__reserve_flow: ReserveFlow = None
         self.__checkin_flow: CheckinFlow = None
         self.__renew_flow: RenewFlow = None
@@ -189,7 +189,7 @@ class AutoLibPages(MsgBase):
             self._showTrace("浏览器驱动未初始化, 请先初始化浏览器驱动 !", self.TraceLevel.WARNING)
             return
         self.__shell = MainShell(self.__driver)
-        self.__captcha_handler = CaptchaHandler(
+        self.__captcha_solver = CaptchaSolver(
             input_queue=self._input_queue,
             output_queue=self._output_queue,
         )
@@ -197,7 +197,7 @@ class AutoLibPages(MsgBase):
             input_queue=self._input_queue,
             output_queue=self._output_queue,
         )
-        self.__reserve_validator = ReserveValidator(
+        self.__reserve_checker = ReserveChecker(
             input_queue=self._input_queue,
             output_queue=self._output_queue,
         )
@@ -242,7 +242,7 @@ class AutoLibPages(MsgBase):
         if not self.__login_page.login(
             username,
             password,
-            captcha_solver=self.__captcha_handler.solveCaptcha,
+            captcha_solver=self.__captcha_solver.solveCaptcha,
             auto_captcha=auto_captcha,
             max_attempts=login_config.get("max_attempt", 3),
         ):
@@ -256,7 +256,7 @@ class AutoLibPages(MsgBase):
         # reserve
         if run_mode["auto_reserve"]:
             if self.__record_checker.canReserve(self.__shell, reserve_info.get("date")):
-                if self.__reserve_validator.validate(reserve_info):
+                if self.__reserve_checker.check(reserve_info):
                     ctx = ReserveContext(
                         username=username,
                         date=reserve_info["date"],

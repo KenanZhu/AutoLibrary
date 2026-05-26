@@ -20,7 +20,7 @@ from base.MsgBase import MsgBase
 from pages.LoginPage import LoginPage
 
 
-class CaptchaHandler(MsgBase):
+class CaptchaSolver(MsgBase):
 
     def __init__(
         self,

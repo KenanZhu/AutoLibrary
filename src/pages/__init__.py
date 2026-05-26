@@ -7,7 +7,7 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from pages.AutoLibPages import AutoLibPages
+from pages.AutoLib import AutoLib
 from pages.LoginPage import LoginPage
 from pages.MainShell import MainShell
 from pages.ReserveView import ReserveView
@@ -19,7 +19,7 @@ from pages.components.CheckinResultDialog import CheckinResultDialog
 from pages.components.RenewDialog import RenewDialog
 
 __all__ = [
-    "AutoLibPages",
+    "AutoLib",
     "LoginPage",
     "MainShell",
     "ReserveView",

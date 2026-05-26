@@ -68,7 +68,6 @@ def findBestTimeOption(
         )
         actual_diff = time_val - target_time
         abs_diff = abs(actual_diff)
-
         if abs_diff < best_time_diff or (
             abs_diff == best_time_diff
             and (
@@ -79,7 +78,6 @@ def findBestTimeOption(
             best_time_diff = abs_diff
             best_actual_diff = actual_diff
             best_time_opt = time_opt
-
     if best_time_opt is not None:
         return (best_time_opt, best_time_opt.text.strip(), best_actual_diff, free_times)
     return (None, None, None, free_times)

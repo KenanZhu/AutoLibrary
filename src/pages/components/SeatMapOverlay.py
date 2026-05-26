@@ -15,6 +15,8 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from pages.components.Overlay import Overlay
 
@@ -48,7 +50,9 @@ class SeatMapOverlay(Overlay):
         try:
             seat_el = self._find(By.ID, f"seat_{int(seat_id):03d}")
             seat_link = seat_el.find_element(By.TAG_NAME, "a")
-            self._waitClickable((By.TAG_NAME, "a"))
+            WebDriverWait(self._driver, 2).until(
+                EC.element_to_be_clickable(seat_link)
+            )
             seat_link.click()
             return seat_link.get_attribute("title")
         except (NoSuchElementException, ValueError, TimeoutException,
@@ -63,7 +67,9 @@ class SeatMapOverlay(Overlay):
                 if not seat_id_upper == seat.text.lstrip('0'):
                     continue
                 seat_link = seat.find_element(By.TAG_NAME, "a")
-                self._waitClickable((By.TAG_NAME, "a"))
+                WebDriverWait(self._driver, 2).until(
+                    EC.element_to_be_clickable(seat_link)
+                )
                 seat_link.click()
                 return seat_link.get_attribute("title")
             return None

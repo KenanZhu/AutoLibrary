@@ -53,23 +53,18 @@ class RenewFlow(MsgBase):
         prefer_earlier = renew_info["prefer_early"]
         end_time = record["time"]["end"]
         target_renew_mins = timeStrToMins(end_time) + renew_info["expect_duration"] * 60
-
         if not self._validateRenewTime(end_time, target_renew_mins):
             return False
-
         if not self._shell.waitExtendButton():
             self._showTrace(f"用户 {username} 续约界面加载失败 !", self.TraceLevel.ERROR)
             return False
-
         if self._shell.isExtendButtonDisabled():
             self._showTrace(
                 f"用户 {username} 续约按钮不可用, 可能不在场馆内, "
                 f"请连接图书馆网络后重试"
             )
             return False
-
         self._shell.clickExtendButton()
-
         try:
             with RenewDialog(self._driver) as dialog:
                 if not dialog.waitUntilReady():
@@ -82,14 +77,12 @@ class RenewFlow(MsgBase):
                     self._shell.refresh()
                     self._showTrace(f"用户 {username} 续约失败 !", self.TraceLevel.ERROR)
                     return False
-
                 renew_ok_btn = dialog.getOkButton()
                 renew_time_opts = dialog.getTimeOptions()
                 if not renew_time_opts:
                     self._showTrace("当前未查询到可用续约时间 !", self.TraceLevel.WARNING)
                     self._shell.refresh()
                     return False
-
                 best_opt, best_text, actual_diff, free_times = findBestTimeOption(
                     renew_time_opts, target_renew_mins, max_diff, prefer_earlier,
                     is_reserve=False,
@@ -111,7 +104,6 @@ class RenewFlow(MsgBase):
                     renew_ok_btn.click()
                     self._shell.refresh()
                     return True
-
                 self._showTrace(
                     "无法选择最近的可用续约时间 ! "
                     f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !",

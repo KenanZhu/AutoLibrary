@@ -42,16 +42,13 @@ class CheckinFlow(MsgBase):
         if not self._shell.waitCheckinButton():
             self._showTrace(f"用户 {username} 签到界面加载失败 !", self.TraceLevel.ERROR)
             return False
-
         if self._shell.isCheckinButtonDisabled():
             self._showTrace("签到按钮不可用, 可能不在场馆内, 正在尝试启用......")
             if not self._shell.enableCheckinButtonByJS():
                 self._showTrace(f"签到按钮启用失败 !", self.TraceLevel.ERROR)
                 return False
             self._showTrace("签到按钮已启用")
-
         self._shell.clickCheckinButton()
-
         try:
             with CheckinResultDialog(self._driver) as dialog:
                 result_msg = dialog.getResultMessage()

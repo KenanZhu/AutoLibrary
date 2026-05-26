@@ -16,7 +16,7 @@ from PySide6.QtCore import (
 )
 
 from base.MsgBase import MsgBase
-from operators.AutoLib import AutoLib
+from pages.AutoLib import AutoLib
 from utils.JSONReader import JSONReader
 from autoscript import createEngine
 
