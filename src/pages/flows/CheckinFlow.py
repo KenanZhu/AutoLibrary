@@ -17,7 +17,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from base.MsgBase import MsgBase
 from pages.MainShell import MainShell
-from pages._dialogs import CheckinResultDialog
+from pages.components.CheckinResultDialog import CheckinResultDialog
 
 
 class CheckinFlow(MsgBase):

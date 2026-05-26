@@ -15,12 +15,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import (
     ElementNotInteractableException,
-    NoSuchElementException,
-    StaleElementReferenceException,
     TimeoutException,
 )
 
-from pages._dialogs import SeatMapOverlay, ReserveResultDialog
+from pages.components.SeatMapOverlay import SeatMapOverlay
+from pages.components.ReserveResultDialog import ReserveResultDialog
 
 
 class ReserveView:
@@ -40,16 +39,7 @@ class ReserveView:
     FIND_ROOM_BTN = (By.ID, "findRoom")
     ROOM_BTN_FMT  = "room_{room}"
 
-    SEAT_LAYOUT    = (By.ID, "seatLayout")
-    SEAT_ITEMS     = (By.CSS_SELECTOR, "li[id^='seat_']")
     RESERVE_BTN    = (By.ID, "reserveBtn")
-
-    START_TIME_OPTS = (By.CSS_SELECTOR, "#startTime ul li a")
-    END_TIME_OPTS   = (By.CSS_SELECTOR, "#endTime ul li a")
-
-    RESULT_DIALOG = (By.CLASS_NAME, "layoutSeat")
-    RESULT_TITLE  = (By.CSS_SELECTOR, ".layoutSeat dt")
-    RESULT_DETAIL = (By.CSS_SELECTOR, ".layoutSeat dd")
 
     FLOOR_MAP = {"2": "二层", "3": "三层", "4": "四层", "5": "五层"}
     ROOM_MAP = {
@@ -138,41 +128,6 @@ class ReserveView:
 
         return SeatMapOverlay(self._driver)
 
-    def selectSeat(
-        self,
-        seat_id: str,
-    ) -> str | None:
-
-        try:
-            WebDriverWait(self._driver, 2).until(
-                EC.presence_of_element_located(self.SEAT_LAYOUT)
-            )
-            WebDriverWait(self._driver, 2).until(
-                EC.presence_of_all_elements_located(self.SEAT_ITEMS)
-            )
-        except TimeoutException:
-            return None
-        except Exception:
-            return None
-        try:
-            all_seats = self._driver.find_elements(*self.SEAT_ITEMS)
-            seat_id_upper = seat_id.lstrip('0').upper()
-            for seat in all_seats:
-                if not seat_id_upper == seat.text.lstrip('0'):
-                    continue
-                seat_link = seat.find_element(By.TAG_NAME, "a")
-                WebDriverWait(self._driver, 2).until(
-                    EC.element_to_be_clickable(seat_link)
-                )
-                seat_link.click()
-                return seat_link.get_attribute("title")
-            return None
-        except (NoSuchElementException, TimeoutException,
-                StaleElementReferenceException, ElementNotInteractableException):
-            return None
-        except Exception:
-            return None
-
     def submitReserve(
         self,
     ) -> bool:
@@ -192,26 +147,6 @@ class ReserveView:
     ) -> ReserveResultDialog:
 
         return ReserveResultDialog(self._driver)
-
-    def getAvailableTimeOptions(
-        self,
-        time_id: str,
-    ) -> list:
-
-        try:
-            WebDriverWait(self._driver, 2).until(
-                EC.presence_of_all_elements_located(
-                    (By.CSS_SELECTOR, f"#{time_id} ul li a")
-                )
-            )
-        except TimeoutException:
-            return []
-        except Exception:
-            return []
-        return self._driver.find_elements(
-            By.CSS_SELECTOR,
-            f"#{time_id} ul li a",
-        )
 
     def refresh(
         self,

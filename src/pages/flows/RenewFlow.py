@@ -18,7 +18,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from base.MsgBase import MsgBase
 from pages.MainShell import MainShell
-from pages._dialogs import RenewDialog
+from pages.components.RenewDialog import RenewDialog
 from pages.flows._helpers import (
     timeStrToMins,
     minsToTimeStr,

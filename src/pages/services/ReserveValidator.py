@@ -25,35 +25,6 @@ class ReserveValidator(MsgBase):
 
         super().__init__(input_queue, output_queue)
 
-    def validate(
-        self,
-        reserve_info: dict,
-    ) -> bool:
-
-        if not self._containRequiredInfo(reserve_info):
-            return False
-        if not self._isValidDate(reserve_info):
-            return False
-        if not self._isValidBeginTime(reserve_info):
-            return False
-        if not self._isValidExpectDuration(reserve_info):
-            return False
-        if not self._isValidEndTime(reserve_info):
-            return False
-        if not self._finalCheck(reserve_info):
-            return False
-        self._showTrace(
-            f"预约信息检查完成, 准备预约 "
-            f"{reserve_info['date']} "
-            f"{reserve_info['begin_time']['time']} - "
-            f"{reserve_info['end_time']['time']} "
-            f"图书馆 "
-            f"{ReserveView.FLOOR_MAP[reserve_info['floor']]} "
-            f"{ReserveView.ROOM_MAP[reserve_info['room']]} "
-            f"的座位 {reserve_info['seat_id']}"
-        )
-        return True
-
     def _containRequiredInfo(
         self,
         reserve_info: dict,
@@ -218,4 +189,33 @@ class ReserveValidator(MsgBase):
                     self.TraceLevel.WARNING,
                 )
                 reserve_info["end_time"]["time"] = minsToTimeStr(begin_mins + 8 * 60)
+        return True
+
+    def validate(
+        self,
+        reserve_info: dict,
+    ) -> bool:
+
+        if not self._containRequiredInfo(reserve_info):
+            return False
+        if not self._isValidDate(reserve_info):
+            return False
+        if not self._isValidBeginTime(reserve_info):
+            return False
+        if not self._isValidExpectDuration(reserve_info):
+            return False
+        if not self._isValidEndTime(reserve_info):
+            return False
+        if not self._finalCheck(reserve_info):
+            return False
+        self._showTrace(
+            f"预约信息检查完成, 准备预约 "
+            f"{reserve_info['date']} "
+            f"{reserve_info['begin_time']['time']} - "
+            f"{reserve_info['end_time']['time']} "
+            f"图书馆 "
+            f"{ReserveView.FLOOR_MAP[reserve_info['floor']]} "
+            f"{ReserveView.ROOM_MAP[reserve_info['room']]} "
+            f"的座位 {reserve_info['seat_id']}"
+        )
         return True

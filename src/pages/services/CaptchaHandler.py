@@ -26,42 +26,18 @@ class CaptchaHandler(MsgBase):
         self,
         input_queue: queue.Queue,
         output_queue: queue.Queue,
-        login_page: LoginPage,
     ) -> None:
 
         super().__init__(input_queue, output_queue)
-        self._login_page = login_page
         self._ocr = ddddocr.DdddOcr()
-
-    def solveCaptcha(
-        self,
-        auto_captcha: bool = True,
-    ) -> str:
-
-        max_attempts = 3
-        for _ in range(max_attempts):
-            if auto_captcha:
-                captcha_text = self._autoRecognize()
-            else:
-                self._showTrace("用户未配置自动识别验证码, 请手动输入验证码 !", 20, no_log=True)
-                captcha_text = self._manualRecognize()
-            if captcha_text:
-                return captcha_text
-            else:
-                if not self._login_page.refreshCaptcha():
-                    return ""
-        self._showTrace(
-            f"验证码识别失败 {max_attempts} 次, 达到最大尝试次数 !",
-            self.TraceLevel.WARNING,
-        )
-        return ""
 
     def _autoRecognize(
         self,
+        login_page: LoginPage,
     ) -> str:
 
         try:
-            img_src = self._login_page.getCaptchaImageSrc()
+            img_src = login_page.getCaptchaImageSrc()
             base64_str = img_src.split(',', 1)[1]
             captcha_img = base64.b64decode(base64_str)
             captcha_text = self._ocr.classification(captcha_img)
@@ -99,3 +75,27 @@ class CaptchaHandler(MsgBase):
         except Exception as e:
             self._showTrace(f"输入验证码失败 ! : {e}", self.TraceLevel.ERROR)
             return ""
+
+    def solveCaptcha(
+        self,
+        login_page: LoginPage,
+        auto_captcha: bool = True,
+    ) -> str:
+
+        max_attempts = 3
+        for _ in range(max_attempts):
+            if auto_captcha:
+                captcha_text = self._autoRecognize(login_page)
+            else:
+                self._showTrace("用户未配置自动识别验证码, 请手动输入验证码 !", 20, no_log=True)
+                captcha_text = self._manualRecognize()
+            if captcha_text:
+                return captcha_text
+            else:
+                if not login_page.refreshCaptcha():
+                    return ""
+        self._showTrace(
+            f"验证码识别失败 {max_attempts} 次, 达到最大尝试次数 !",
+            self.TraceLevel.WARNING,
+        )
+        return ""

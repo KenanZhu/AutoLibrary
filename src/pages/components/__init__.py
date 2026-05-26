@@ -7,11 +7,6 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from pages.AutoLibPages import AutoLibPages
-from pages.LoginPage import LoginPage
-from pages.MainShell import MainShell
-from pages.ReserveView import ReserveView
-from pages.RecordsView import RecordsView
 from pages.components.SeatMapOverlay import SeatMapOverlay
 from pages.components.TimeSelectDialog import TimeSelectDialog
 from pages.components.ReserveResultDialog import ReserveResultDialog
@@ -19,11 +14,6 @@ from pages.components.CheckinResultDialog import CheckinResultDialog
 from pages.components.RenewDialog import RenewDialog
 
 __all__ = [
-    "AutoLibPages",
-    "LoginPage",
-    "MainShell",
-    "ReserveView",
-    "RecordsView",
     "SeatMapOverlay",
     "TimeSelectDialog",
     "ReserveResultDialog",

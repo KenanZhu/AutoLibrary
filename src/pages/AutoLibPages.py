@@ -9,7 +9,6 @@ See the LICENSE file for details.
 """
 import os
 import queue
-
 from selenium import webdriver
 from selenium.common.exceptions import (
     TimeoutException,
@@ -193,12 +192,10 @@ class AutoLibPages(MsgBase):
         self.__captcha_handler = CaptchaHandler(
             input_queue=self._input_queue,
             output_queue=self._output_queue,
-            login_page=self.__login_page,
         )
         self.__record_checker = RecordChecker(
             input_queue=self._input_queue,
             output_queue=self._output_queue,
-            shell=self.__shell,
         )
         self.__reserve_validator = ReserveValidator(
             input_queue=self._input_queue,
@@ -245,7 +242,8 @@ class AutoLibPages(MsgBase):
         if not self.__login_page.login(
             username,
             password,
-            captcha_solver=lambda: self.__captcha_handler.solveCaptcha(auto_captcha),
+            captcha_solver=self.__captcha_handler.solveCaptcha,
+            auto_captcha=auto_captcha,
             tracer=self._showTrace,
             log_level=self.TraceLevel,
             max_attempts=login_config.get("max_attempt", 3),
@@ -259,7 +257,7 @@ class AutoLibPages(MsgBase):
         }
         # reserve
         if run_mode["auto_reserve"]:
-            if self.__record_checker.canReserve(reserve_info.get("date")):
+            if self.__record_checker.canReserve(self.__shell, reserve_info.get("date")):
                 if self.__reserve_validator.validate(reserve_info):
                     ctx = ReserveContext(
                         username=username,
@@ -289,7 +287,7 @@ class AutoLibPages(MsgBase):
         # checkin
         last_result: int = result
         if run_mode["auto_checkin"] and last_result != 1:
-            if self.__record_checker.canCheckin():
+            if self.__record_checker.canCheckin(self.__shell):
                 if self.__checkin_flow.execute(username):
                     result = 0
                 else:
@@ -303,11 +301,11 @@ class AutoLibPages(MsgBase):
         # renewal
         last_result = result
         if run_mode["auto_renewal"] and last_result != 1:
-            can_renew, record = self.__record_checker.canRenew()
+            can_renew, record = self.__record_checker.canRenew(self.__shell)
             if can_renew:
                 renew_info: dict = reserve_info.get("renew_time", {})
                 if self.__renew_flow.execute(username, record, renew_info):
-                    if self.__record_checker.postRenewCheck(record):
+                    if self.__record_checker.postRenewCheck(self.__shell, record):
                         self._showTrace(f"用户 {username} 续约成功 !")
                         result = 0
                     else:

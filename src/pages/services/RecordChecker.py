@@ -29,11 +29,9 @@ class RecordChecker(MsgBase):
         self,
         input_queue: queue.Queue,
         output_queue: queue.Queue,
-        shell: MainShell,
     ) -> None:
 
         super().__init__(input_queue, output_queue)
-        self._shell = shell
 
     @staticmethod
     def _formatDiffTime(
@@ -45,119 +43,9 @@ class RecordChecker(MsgBase):
         seconds = int(seconds % 60)
         return f"{hours} 时 {minutes} 分 {seconds} 秒"
 
-    def canReserve(
-        self,
-        date: str,
-    ) -> bool:
-
-        if self._getReserveRecord(date, "已预约") is None:
-            if self._getReserveRecord(date, "使用中") is None:
-                self._showTrace(f"用户在 {date} 可以预约")
-                return True
-            self._showTrace(f"用户在 {date} 有使用中的预约, 无法预约")
-            return False
-        self._showTrace(f"用户在 {date} 已存在有效预约, 无法预约")
-        return False
-
-    def canCheckin(
-        self,
-    ) -> bool:
-
-        date = time.strftime("%Y-%m-%d", time.localtime())
-        record = self._getReserveRecord(date, "已预约")
-        if record is not None:
-            begin_time = record["time"]["begin"]
-            begin_time = datetime.strptime(
-                f"{date} {begin_time}", "%Y-%m-%d %H:%M"
-            )
-            time_diff = datetime.now() - begin_time
-            time_diff_seconds = time_diff.total_seconds()
-            if time_diff_seconds < -30 * 60:
-                self._showTrace(
-                    f"用户在 {date} 的预约开始时间为 {begin_time}, "
-                    f"当前距离预约开始时间还有 "
-                    f"{self._formatDiffTime(abs(time_diff_seconds))}, 无法签到"
-                )
-                return False
-            elif -30 * 60 <= time_diff_seconds < 0:
-                self._showTrace(
-                    f"用户在 {date} 的预约开始时间为 {begin_time}, "
-                    f"当前距离预约开始时间还有 "
-                    f"{self._formatDiffTime(abs(time_diff_seconds))}, 可以签到"
-                )
-                return True
-            elif 0 <= time_diff_seconds < 30 * 60 - 5:
-                self._showTrace(
-                    f"用户在 {date} 的预约开始时间为 {begin_time}, "
-                    f"当前距离预约开始时间已经过去 "
-                    f"{self._formatDiffTime(abs(time_diff_seconds))}, 可以签到"
-                )
-                return True
-        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法签到")
-        return False
-
-    def canRenew(
-        self,
-    ) -> tuple[bool, dict]:
-
-        date = time.strftime("%Y-%m-%d", time.localtime())
-        record = self._getReserveRecord(date, "使用中")
-        if record is not None:
-            end_time = record["time"]["end"]
-            end_time = datetime.strptime(
-                f"{date} {end_time}", "%Y-%m-%d %H:%M"
-            )
-            time_diff = end_time - datetime.now()
-            time_diff_seconds = time_diff.total_seconds()
-            trace_msg = (
-                f"用户在 {date} 的预约结束时间为 {end_time}, "
-                f"当前距离预约结束时间还有 "
-                f"{self._formatDiffTime(abs(time_diff_seconds))}"
-            )
-            if abs(time_diff_seconds) < 120 * 60:
-                self._showTrace(f"{trace_msg}, 可以续约")
-                return True, record
-            else:
-                self._showTrace(f"{trace_msg}, 无法续约")
-                return False, None
-        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
-        return False, None
-
-    def postRenewCheck(
-        self,
-        record: dict,
-    ) -> bool:
-
-        date = record["date"]
-        act_record = self._getReserveRecord(date, "使用中")
-        if act_record is not None:
-            if (
-                act_record["time"]["begin"] == record["time"]["begin"]
-                and act_record["time"]["end"] == record["time"]["end"]
-            ):
-                self._showTrace(
-                    f"\n"
-                    f"      续约成功 !\n"
-                    f"          日 期 ：{date}\n"
-                    f"          时 间 ：{act_record['time']['begin']}"
-                    f" - {act_record['time']['end']}\n"
-                    f"          位 置 ：{act_record['info']['location']}\n"
-                    f"          状 态 ：{act_record['info']['status']}"
-                )
-                return True
-            else:
-                self._showTrace(
-                    f"\n"
-                    f"      续约失败 !\n"
-                    f"          续约后结束时间为 {act_record['time']['end']},"
-                    f"与预期结束时间 {record['time']['end']} 不符 !"
-                )
-                return False
-        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法检查续约结果")
-        return False
-
     def _getReserveRecord(
         self,
+        shell: MainShell,
         wanted_date: str,
         wanted_status: str,
     ) -> dict | None:
@@ -173,7 +61,7 @@ class RecordChecker(MsgBase):
         checked_count = 0
         max_check_times = 6
 
-        records_view = self._shell.gotoRecordsView()
+        records_view = shell.gotoRecordsView()
         for _ in range(max_check_times):
             reservations = records_view.loadRecords()
             if reservations is None:
@@ -300,3 +188,118 @@ class RecordChecker(MsgBase):
             elif "图书馆" in info.text:
                 location = info.text.strip()
         return {"location": location, "status": status}
+
+    def canReserve(
+        self,
+        shell: MainShell,
+        date: str,
+    ) -> bool:
+
+        if self._getReserveRecord(shell, date, "已预约") is None:
+            if self._getReserveRecord(shell, date, "使用中") is None:
+                self._showTrace(f"用户在 {date} 可以预约")
+                return True
+            self._showTrace(f"用户在 {date} 有使用中的预约, 无法预约")
+            return False
+        self._showTrace(f"用户在 {date} 已存在有效预约, 无法预约")
+        return False
+
+    def canCheckin(
+        self,
+        shell: MainShell,
+    ) -> bool:
+
+        date = time.strftime("%Y-%m-%d", time.localtime())
+        record = self._getReserveRecord(shell, date, "已预约")
+        if record is not None:
+            begin_time = record["time"]["begin"]
+            begin_time = datetime.strptime(
+                f"{date} {begin_time}", "%Y-%m-%d %H:%M"
+            )
+            time_diff = datetime.now() - begin_time
+            time_diff_seconds = time_diff.total_seconds()
+            if time_diff_seconds < -30 * 60:
+                self._showTrace(
+                    f"用户在 {date} 的预约开始时间为 {begin_time}, "
+                    f"当前距离预约开始时间还有 "
+                    f"{self._formatDiffTime(abs(time_diff_seconds))}, 无法签到"
+                )
+                return False
+            elif -30 * 60 <= time_diff_seconds < 0:
+                self._showTrace(
+                    f"用户在 {date} 的预约开始时间为 {begin_time}, "
+                    f"当前距离预约开始时间还有 "
+                    f"{self._formatDiffTime(abs(time_diff_seconds))}, 可以签到"
+                )
+                return True
+            elif 0 <= time_diff_seconds < 30 * 60 - 5:
+                self._showTrace(
+                    f"用户在 {date} 的预约开始时间为 {begin_time}, "
+                    f"当前距离预约开始时间已经过去 "
+                    f"{self._formatDiffTime(abs(time_diff_seconds))}, 可以签到"
+                )
+                return True
+        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法签到")
+        return False
+
+    def canRenew(
+        self,
+        shell: MainShell,
+    ) -> tuple[bool, dict]:
+
+        date = time.strftime("%Y-%m-%d", time.localtime())
+        record = self._getReserveRecord(shell, date, "使用中")
+        if record is not None:
+            end_time = record["time"]["end"]
+            end_time = datetime.strptime(
+                f"{date} {end_time}", "%Y-%m-%d %H:%M"
+            )
+            time_diff = end_time - datetime.now()
+            time_diff_seconds = time_diff.total_seconds()
+            trace_msg = (
+                f"用户在 {date} 的预约结束时间为 {end_time}, "
+                f"当前距离预约结束时间还有 "
+                f"{self._formatDiffTime(abs(time_diff_seconds))}"
+            )
+            if abs(time_diff_seconds) < 120 * 60:
+                self._showTrace(f"{trace_msg}, 可以续约")
+                return True, record
+            else:
+                self._showTrace(f"{trace_msg}, 无法续约")
+                return False, None
+        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法续约")
+        return False, None
+
+    def postRenewCheck(
+        self,
+        shell: MainShell,
+        record: dict,
+    ) -> bool:
+
+        date = record["date"]
+        act_record = self._getReserveRecord(shell, date, "使用中")
+        if act_record is not None:
+            if (
+                act_record["time"]["begin"] == record["time"]["begin"]
+                and act_record["time"]["end"] == record["time"]["end"]
+            ):
+                self._showTrace(
+                    f"\n"
+                    f"      续约成功 !\n"
+                    f"          日 期 ：{date}\n"
+                    f"          时 间 ：{act_record['time']['begin']}"
+                    f" - {act_record['time']['end']}\n"
+                    f"          位 置 ：{act_record['info']['location']}\n"
+                    f"          状 态 ：{act_record['info']['status']}"
+                )
+                return True
+            else:
+                self._showTrace(
+                    f"\n"
+                    f"      续约失败 !\n"
+                    f"          续约后结束时间为 {act_record['time']['end']},"
+                    f"与预期结束时间 {record['time']['end']} 不符 !"
+                )
+                return False
+        self._showTrace(f"用户在 {date} 没有有效预约记录, 无法检查续约结果")
+        return False

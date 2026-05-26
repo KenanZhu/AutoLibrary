@@ -22,7 +22,7 @@ from selenium.common.exceptions import (
 class RecordsView:
 
     RECORDS_LIST = (By.CSS_SELECTOR, ".myReserveList > dl:not(#moreBlock)")
-    MORE_BTN     = (By.ID, "more_btn")
+    MORE_BTN     = (By.ID, "moreBtn")
     RECORD_TIME  = (By.CSS_SELECTOR, "dt")
     RECORD_INFO  = (By.CSS_SELECTOR, "a")
 

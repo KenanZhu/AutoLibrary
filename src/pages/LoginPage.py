@@ -175,7 +175,8 @@ class LoginPage:
         self,
         username: str,
         password: str,
-        captcha_solver: Callable[[], str],
+        captcha_solver: Callable[["LoginPage", bool], str],
+        auto_captcha: bool,
         tracer: Callable[..., None],
         log_level: type,
         max_attempts: int = 5,
@@ -189,7 +190,7 @@ class LoginPage:
             )
             if not self.fillCredentials(username, password):
                 continue
-            captcha_text = captcha_solver()
+            captcha_text = captcha_solver(self, auto_captcha)
             if not captcha_text:
                 continue
             if not self.fillCaptcha(captcha_text):
