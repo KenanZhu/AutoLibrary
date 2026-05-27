@@ -12,9 +12,23 @@ import uuid
 from enum import Enum
 from datetime import datetime, timedelta
 
-from PySide6.QtCore import Slot, QDateTime, QUrl
+from PySide6.QtCore import (
+    Slot,
+    QDateTime,
+    QUrl
+)
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout, QDateTimeEdit, QGroupBox, QPushButton
+from PySide6.QtWidgets import (
+    QLabel,
+    QDialog,
+    QWidget,
+    QSpinBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QDateTimeEdit,
+    QGroupBox,
+    QPushButton
+)
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
 from utils.TimerUtils import TimerUtils
