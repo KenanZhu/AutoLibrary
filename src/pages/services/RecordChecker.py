@@ -38,96 +38,10 @@ class RecordChecker(MsgBase):
         seconds: float,
     ) -> str:
 
-        hours = int(seconds // 3600)
-        minutes = int(seconds % 3600 // 60)
-        seconds = int(seconds % 60)
+        hours = int(seconds//3600)
+        minutes = int(seconds%3600//60)
+        seconds = int(seconds%60)
         return f"{hours} 时 {minutes} 分 {seconds} 秒"
-
-    def _getReserveRecord(
-        self,
-        shell: MainShell,
-        wanted_date: str,
-        wanted_status: str,
-    ) -> dict | None:
-
-        if wanted_date is None:
-            self._showTrace("日期未指定, 无法检查当前预约状态", self.TraceLevel.WARNING)
-            return None
-        self._showTrace(
-            f"正在检查用户在 {wanted_date} 是否有预约状态为 "
-            f"{wanted_status} 的预约记录......", 20, no_log=True
-        )
-
-        checked_count = 0
-        max_check_times = 6
-
-        records_view = shell.gotoRecordsView()
-        for _ in range(max_check_times):
-            reservations = records_view.loadRecords()
-            if reservations is None:
-                return None
-            for reservation in reservations[checked_count:]:
-                record = self._decodeReserveRecord(reservation, records_view)
-                checked_count += 1
-                if record is None:
-                    continue
-                if record["date"] == "":
-                    continue
-                if record["time"] == {"begin": "", "end": ""}:
-                    continue
-                if (
-                    datetime.strptime(record["date"], "%Y-%m-%d").date()
-                    > datetime.strptime(wanted_date, "%Y-%m-%d").date()
-                ):
-                    continue
-                if (
-                    datetime.strptime(record["date"], "%Y-%m-%d").date()
-                    < datetime.strptime(wanted_date, "%Y-%m-%d").date()
-                ):
-                    return None
-                if record["info"]["status"] == wanted_status:
-                    self._showTrace(
-                        f"寻找到用户第 {checked_count} 条状态为 "
-                        f"{wanted_status} 的预约记录, "
-                        f"详细信息: {record['date']} "
-                        f"{record['time']['begin']} - "
-                        f"{record['time']['end']} "
-                        f"{record['info']['location']}",
-                        20, no_log=True,
-                    )
-                    return record
-            if not records_view.showMoreRecords():
-                break
-        return None
-
-    def _decodeReserveRecord(
-        self,
-        reservation,
-        records_view: RecordsView,
-    ) -> dict:
-
-        try:
-            time_element = records_view.getRecordTimeElement(reservation)
-            info_elements = records_view.getRecordInfoElements(reservation)
-        except (NoSuchElementException, TimeoutException, StaleElementReferenceException):
-            return {
-                "date": "",
-                "time": {"begin": "", "end": ""},
-                "info": {"location": "", "status": ""},
-            }
-        except Exception:
-            return {
-                "date": "",
-                "time": {"begin": "", "end": ""},
-                "info": {"location": "", "status": ""},
-            }
-        time_data = self._decodeReserveTime(time_element)
-        info_data = self._decodeReserveInfo(info_elements)
-        return {
-            "date": time_data["date"],
-            "time": time_data["time"],
-            "info": info_data,
-        }
 
     def _decodeReserveTime(
         self,
@@ -189,6 +103,92 @@ class RecordChecker(MsgBase):
                 location = info.text.strip()
         return {"location": location, "status": status}
 
+    def _decodeReserveRecord(
+        self,
+        reservation,
+        records_view: RecordsView,
+    ) -> dict:
+
+        try:
+            time_element = records_view.getRecordTimeElement(reservation)
+            info_elements = records_view.getRecordInfoElements(reservation)
+        except (NoSuchElementException, TimeoutException, StaleElementReferenceException):
+            return {
+                "date": "",
+                "time": {"begin": "", "end": ""},
+                "info": {"location": "", "status": ""},
+            }
+        except Exception:
+            return {
+                "date": "",
+                "time": {"begin": "", "end": ""},
+                "info": {"location": "", "status": ""},
+            }
+        time_data = self._decodeReserveTime(time_element)
+        info_data = self._decodeReserveInfo(info_elements)
+        return {
+            "date": time_data["date"],
+            "time": time_data["time"],
+            "info": info_data,
+        }
+
+    def _getReserveRecord(
+        self,
+        shell: MainShell,
+        wanted_date: str,
+        wanted_status: str,
+    ) -> dict | None:
+
+        if wanted_date is None:
+            self._showTrace("日期未指定, 无法检查当前预约状态", self.TraceLevel.WARNING)
+            return None
+        self._showTrace(
+            f"正在检查用户在 {wanted_date} 是否有预约状态为 "
+            f"{wanted_status} 的预约记录......", 20, no_log=True
+        )
+
+        checked_count = 0
+        max_check_times = 6
+
+        records_view = shell.gotoRecordsView()
+        for _ in range(max_check_times):
+            reservations = records_view.loadRecords()
+            if reservations is None:
+                return None
+            for reservation in reservations[checked_count:]:
+                record = self._decodeReserveRecord(reservation, records_view)
+                checked_count += 1
+                if record is None:
+                    continue
+                if record["date"] == "":
+                    continue
+                if record["time"] == {"begin": "", "end": ""}:
+                    continue
+                if (
+                    datetime.strptime(record["date"], "%Y-%m-%d").date()
+                    > datetime.strptime(wanted_date, "%Y-%m-%d").date()
+                ):
+                    continue
+                if (
+                    datetime.strptime(record["date"], "%Y-%m-%d").date()
+                    < datetime.strptime(wanted_date, "%Y-%m-%d").date()
+                ):
+                    return None
+                if record["info"]["status"] == wanted_status:
+                    self._showTrace(
+                        f"寻找到用户第 {checked_count} 条状态为 "
+                        f"{wanted_status} 的预约记录, "
+                        f"详细信息: {record["date"]} "
+                        f"{record["time"]["begin"]} - "
+                        f"{record["time"]["end"]} "
+                        f"{record["info"]["location"]}",
+                        20, no_log=True,
+                    )
+                    return record
+            if not records_view.showMoreRecords():
+                break
+        return None
+
     def canReserve(
         self,
         shell: MainShell,
@@ -232,7 +232,7 @@ class RecordChecker(MsgBase):
                     f"{self._formatDiffTime(abs(time_diff_seconds))}, 可以签到"
                 )
                 return True
-            elif 0 <= time_diff_seconds < 30 * 60 - 5:
+            elif 0 <= time_diff_seconds < 30*60 - 5:
                 self._showTrace(
                     f"用户在 {date} 的预约开始时间为 {begin_time}, "
                     f"当前距离预约开始时间已经过去 "
@@ -287,18 +287,18 @@ class RecordChecker(MsgBase):
                     f"\n"
                     f"      续约成功 !\n"
                     f"          日 期 ：{date}\n"
-                    f"          时 间 ：{act_record['time']['begin']}"
-                    f" - {act_record['time']['end']}\n"
-                    f"          位 置 ：{act_record['info']['location']}\n"
-                    f"          状 态 ：{act_record['info']['status']}"
+                    f"          时 间 ：{act_record["time"]["begin"]}"
+                    f" - {act_record["time"]["end"]}\n"
+                    f"          位 置 ：{act_record["info"]["location"]}\n"
+                    f"          状 态 ：{act_record["info"]["status"]}"
                 )
                 return True
             else:
                 self._showTrace(
                     f"\n"
                     f"      续约失败 !\n"
-                    f"          续约后结束时间为 {act_record['time']['end']},"
-                    f"与预期结束时间 {record['time']['end']} 不符 !"
+                    f"          续约后结束时间为 {act_record["time"]["end"]},"
+                    f"与预期结束时间 {record["time"]["end"]} 不符 !"
                 )
                 return False
         self._showTrace(f"用户在 {date} 没有有效预约记录, 无法检查续约结果")

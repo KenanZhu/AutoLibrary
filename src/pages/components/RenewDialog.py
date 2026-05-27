@@ -17,6 +17,10 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from pages.components.Dialog import Dialog
+from pages.strategies.TimeSelectMaker import (
+    TimeSelectionResult,
+    TimeSelectMaker,
+)
 
 
 class RenewDialog(Dialog):
@@ -80,6 +84,26 @@ class RenewDialog(Dialog):
 
         return self._findAll(*self.TIME_OPTS)
 
+    def selectBestTime(
+        self,
+        target_time: int,
+        max_time_diff: int,
+        prefer_earlier: bool,
+    ) -> TimeSelectionResult:
+
+        all_time_opts = self.getTimeOptions()
+        if not all_time_opts:
+            return TimeSelectionResult()
+        result = TimeSelectMaker.forRenew().decide(
+            all_time_opts,
+            target_time,
+            max_time_diff,
+            prefer_earlier,
+        )
+        if result.selected_index >= 0:
+            all_time_opts[result.selected_index].click()
+        return result
+
     def getOkButton(
         self,
     ) -> WebElement:
@@ -93,7 +117,8 @@ class RenewDialog(Dialog):
         try:
             self._find(*self.OK_BTN).click()
             return True
-        except (NoSuchElementException, TimeoutException, ElementNotInteractableException):
+        except (NoSuchElementException, TimeoutException,
+                ElementNotInteractableException):
             return False
         except Exception:
             return False

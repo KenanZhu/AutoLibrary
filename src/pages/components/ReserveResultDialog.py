@@ -31,12 +31,18 @@ class ReserveResultDialog(Dialog):
 
         super().__init__(driver, self.ROOT, auto_close_on_exit=False)
 
+    def _titleLocator(
+        self,
+    ) -> tuple:
+
+        return (By.CSS_SELECTOR, ".layoutSeat dt")
+
     def getTitle(
         self,
     ) -> str:
 
         try:
-            return self._find(*self._title_locator()).text
+            return self._find(*self._titleLocator()).text
         except (NoSuchElementException, StaleElementReferenceException):
             return ""
         except Exception:
@@ -73,9 +79,3 @@ class ReserveResultDialog(Dialog):
             return []
         except Exception:
             return []
-
-    def _title_locator(
-        self,
-    ) -> tuple:
-
-        return (By.CSS_SELECTOR, ".layoutSeat dt")

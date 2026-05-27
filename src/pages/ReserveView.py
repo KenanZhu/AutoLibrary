@@ -19,7 +19,6 @@ from selenium.common.exceptions import (
 )
 
 from pages.components.SeatMapDialog import SeatMapDialog
-from pages.components.ReserveResultDialog import ReserveResultDialog
 
 
 class ReserveView:
@@ -102,31 +101,30 @@ class ReserveView:
     def selectRoom(
         self,
         room: str,
-    ) -> bool:
+    ) -> SeatMapDialog | None:
 
         try:
             WebDriverWait(self._driver, 2).until(
                 EC.element_to_be_clickable(self.FIND_ROOM_BTN)
             ).click()
         except (TimeoutException, ElementNotInteractableException):
-            return False
+            return None
         except Exception:
-            return False
+            return None
         try:
             WebDriverWait(self._driver, 2).until(
                 EC.element_to_be_clickable((By.ID, self.ROOM_BTN_FMT.format(room=room)))
             ).click()
-            return True
         except (TimeoutException, ElementNotInteractableException):
-            return False
+            return None
         except Exception:
-            return False
-
-    def openSeatMap(
-        self,
-    ) -> SeatMapDialog:
-
-        return SeatMapDialog(self._driver)
+            return None
+        try:
+            return SeatMapDialog(self._driver)
+        except (TimeoutException):
+            return None
+        except Exception:
+            return None
 
     def submitReserve(
         self,
@@ -141,12 +139,6 @@ class ReserveView:
             return False
         except Exception:
             return False
-
-    def waitResultDialog(
-        self,
-    ) -> ReserveResultDialog:
-
-        return ReserveResultDialog(self._driver)
 
     def refresh(
         self,

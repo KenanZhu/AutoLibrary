@@ -204,11 +204,11 @@ class _DateOffsetContainer(QWidget):
         val = self._spinBox.value()
         unit = self._unitCombo.currentData()
         if unit == "weeks":
-            return val * 7
+            return val*7
         if unit == "months":
-            return val * 30
+            return val*30
         if unit == "years":
-            return val * 365
+            return val*365
         return val
 
 

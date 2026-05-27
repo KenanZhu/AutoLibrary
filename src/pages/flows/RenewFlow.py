@@ -20,7 +20,7 @@ from base.MsgBase import MsgBase
 from pages.MainShell import MainShell
 from pages.components.RenewDialog import RenewDialog
 from pages.flows._helpers import timeStrToMins, minsToTimeStr
-from pages.strategies.timeSelectMaker import TimeSelectMaker
+from pages.strategies.TimeSelectMaker import TimeSelectMaker
 
 
 class RenewFlow(MsgBase):
@@ -46,10 +46,10 @@ class RenewFlow(MsgBase):
         renew_info: dict,
     ) -> bool:
 
-        max_diff = renew_info["max_diff"]
-        prefer_earlier = renew_info["prefer_early"]
+        max_diff = renew_info.get("max_diff", 30)
+        prefer_earlier = renew_info.get("prefer_early", True)
         end_time = record["time"]["end"]
-        target_renew_mins = timeStrToMins(end_time) + renew_info["expect_duration"] * 60
+        target_renew_mins = timeStrToMins(end_time) + renew_info.get("expect_duration", 2) * 60
         if not self._validateRenewTime(end_time, target_renew_mins):
             return False
         if not self._shell.waitExtendButton():
@@ -74,20 +74,12 @@ class RenewFlow(MsgBase):
                     self._shell.refresh()
                     self._showTrace(f"用户 {username} 续约失败 !", self.TraceLevel.ERROR)
                     return False
-                renew_ok_btn = dialog.getOkButton()
-                renew_time_opts = dialog.getTimeOptions()
-                if not renew_time_opts:
-                    self._showTrace("当前未查询到可用续约时间 !", self.TraceLevel.WARNING)
-                    self._shell.refresh()
-                    return False
-                result = TimeSelectMaker.forRenew().decide(
-                    renew_time_opts,
+                result = dialog.selectBestTime(
                     target_renew_mins,
                     max_diff,
-                    prefer_earlier
+                    prefer_earlier,
                 )
                 if result.selected_index >= 0:
-                    renew_time_opts[result.selected_index].click()
                     abs_diff = abs(result.actual_diff)
                     if result.actual_diff < 0:
                         relation = f"早了 {abs_diff} 分钟"
@@ -100,15 +92,18 @@ class RenewFlow(MsgBase):
                         f"与期望续约时间相比 {relation}"
                     )
                     record["time"]["end"] = result.display_text.strip()
-                    renew_ok_btn.click()
+                    dialog.clickOk()
                     self._shell.refresh()
                     return True
-                self._showTrace(
-                    "无法选择最近的可用续约时间 ! "
-                    f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !",
-                    self.TraceLevel.WARNING,
-                )
-                self._showTrace(f"当前可供续约的时间有: {result.free_times}")
+                if not result.free_times:
+                    self._showTrace("当前未查询到可用续约时间 !", self.TraceLevel.WARNING)
+                else:
+                    self._showTrace(
+                        "无法选择最近的可用续约时间 ! "
+                        f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !",
+                        self.TraceLevel.WARNING,
+                    )
+                    self._showTrace(f"当前可供续约的时间有: {result.free_times}")
                 self._shell.refresh()
                 return False
         except (NoSuchElementException, TimeoutException) as e:

@@ -68,7 +68,7 @@ class AutoLib(MsgBase):
 
         self._showTrace("正在初始化浏览器驱动......", no_log=True)
         web_driver_config: dict = self.__run_config.get("web_driver", None)
-        self.__driver_type = web_driver_config.get("driver_type")
+        self.__driver_type = web_driver_config.get("driver_type", "none")
         match self.__driver_type.lower():
             case "edge":
                 driver_options = webdriver.EdgeOptions()
@@ -85,7 +85,7 @@ class AutoLib(MsgBase):
         if not web_driver_config:
             self._showTrace("未配置浏览器驱动参数 !", self.TraceLevel.ERROR)
             return False
-        if web_driver_config.get("headless"):
+        if web_driver_config.get("headless", False):
             driver_options.add_argument("--headless")
             driver_options.add_argument("--disable-gpu")
             driver_options.add_argument("--no-sandbox")
@@ -122,12 +122,12 @@ class AutoLib(MsgBase):
         driver_options.add_argument(f"user-agent={user_agent}")
 
         # init browser driver
-        self.__driver_path = web_driver_config.get("driver_path")
+        self.__driver_path = web_driver_config.get("driver_path", "")
         if not self.__driver_path:
             self._showTrace("未配置浏览器驱动路径 !", self.TraceLevel.WARNING)
             return False
-        self.__driver_path = os.path.abspath(self.__driver_path)
         try:
+            self.__driver_path = os.path.abspath(self.__driver_path)
             service = None
             match self.__driver_type.lower():
                 case "edge":
@@ -236,7 +236,6 @@ class AutoLib(MsgBase):
 
         # result : -1 - terminate, 0 - success, 1 - failed, 2 - passed
         result: int = 2
-
         # login
         auto_captcha: bool = login_config.get("auto_captcha", True)
         if not self.__login_page.login(
@@ -255,7 +254,7 @@ class AutoLib(MsgBase):
         }
         # reserve
         if run_mode["auto_reserve"]:
-            if self.__record_checker.canReserve(self.__shell, reserve_info.get("date")):
+            if self.__record_checker.canReserve(self.__shell, reserve_info["date"]):
                 if self.__reserve_checker.check(reserve_info):
                     ctx = ReserveContext(
                         username=username,
@@ -331,30 +330,29 @@ class AutoLib(MsgBase):
     ) -> None:
 
         self.__user_config = user_config
-
         user_counter: dict[str, int] = {"current": 0, "success": 0, "failed": 0, "passed": 0}
-        users: list = self.__user_config["users"]
+        users: list = self.__user_config.get("users", [])
         self._showTrace(f"共发现 {len(users)} 个用户")
         for user in users:
             user_counter["current"] += 1
             self._showTrace(
-                f"正在处理第 {user_counter['current']}/{len(users)} 个用户: {user['username']}......",
+                f"正在处理第 {user_counter["current"]}/{len(users)} 个用户: {user.get("username", "未知")}......",
                 no_log=True,
             )
-            if not user["enabled"]:
-                self._showTrace(f"用户 {user['username']} 已跳过")
+            if not user.get("enabled", False):
+                self._showTrace(f"用户 {user.get("username", "未知")} 已跳过")
                 user_counter["passed"] += 1
                 continue
             r: int = self.__run(
-                username=user["username"],
-                password=user["password"],
-                login_config=self.__run_config["login"],
-                run_mode_config=self.__run_config["mode"],
-                reserve_info=user["reserve_info"],
+                username=user.get("username", ""),
+                password=user.get("password", ""),
+                login_config=self.__run_config.get("login", {}),
+                run_mode_config=self.__run_config.get("mode", {}),
+                reserve_info=user.get("reserve_info", {}),
             )
             if r == -1:
                 self._showTrace(
-                    f"用户 {user['username']} 处理过程中页面发生异常, 无法继续操作, 任务已终止 !",
+                    f"用户 {user.get("username", "未知")} 处理过程中页面发生异常, 无法继续操作, 任务已终止 !",
                     self.TraceLevel.WARNING,
                 )
                 break
@@ -365,10 +363,10 @@ class AutoLib(MsgBase):
             elif r == 2:
                 user_counter["passed"] += 1
         self._showTrace(
-            f"处理完成, 共计 {user_counter['current']} 个用户, "
-            f"成功 {user_counter['success']} 个用户, "
-            f"失败 {user_counter['failed']} 个用户, "
-            f"跳过 {user_counter['passed']} 个用户"
+            f"处理完成, 共计 {user_counter["current"]} 个用户, "
+            f"成功 {user_counter["success"]} 个用户, "
+            f"失败 {user_counter["failed"]} 个用户, "
+            f"跳过 {user_counter["passed"]} 个用户"
         )
         return
 

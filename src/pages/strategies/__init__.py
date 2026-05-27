@@ -7,7 +7,7 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from pages.strategies.timeSelectMaker import (
+from pages.strategies.TimeSelectMaker import (
     TimeSelectMaker,
     TimeDecisionMaker,
     TimeOptionReader,
@@ -15,6 +15,7 @@ from pages.strategies.timeSelectMaker import (
     RenewTimeReader,
     TimeOption,
     TimeSelectionResult,
+    TimeRangeResult,
 )
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "RenewTimeReader",
     "TimeOption",
     "TimeSelectionResult",
+    "TimeRangeResult",
 ]

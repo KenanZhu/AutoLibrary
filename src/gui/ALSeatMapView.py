@@ -8,7 +8,9 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 from PySide6.QtCore import (
-    Qt, Slot, QEvent
+    Qt,
+    Slot,
+    QEvent
 )
 from PySide6.QtWidgets import (
     QFrame,

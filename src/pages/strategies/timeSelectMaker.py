@@ -11,8 +11,20 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from pages.flows._helpers import minsToTimeStr
 
+def timeStrToMins(
+    time_str: str,
+) -> int:
+
+    hour, minute = map(int, time_str.split(":"))
+    return hour*60 + minute
+
+def minsToTimeStr(
+    mins: int,
+) -> str:
+
+    hour, minute = divmod(int(mins), 60)
+    return f"{hour:02d}:{minute:02d}"
 
 @dataclass
 class TimeOption:
@@ -31,18 +43,28 @@ class TimeSelectionResult:
     free_times: list[str] = field(default_factory=list)
 
 
+@dataclass
+class TimeRangeResult:
+
+    begin_result: TimeSelectionResult = field(default_factory=TimeSelectionResult)
+    end_result: TimeSelectionResult = field(default_factory=TimeSelectionResult)
+    actual_begin_mins: int = -1
+    actual_end_mins: int = -1
+    expect_end_mins: int = 0
+
+
 class TimeOptionReader(ABC):
 
     @abstractmethod
     def readOptions(
         self,
-        elements: list,
+        elements: list
     ) -> list[TimeOption]:
         ...
 
     def formatFreeTime(
         self,
-        opt: TimeOption,
+        opt: TimeOption
     ) -> str:
 
         return opt.element_text
@@ -56,7 +78,7 @@ class ReserveTimeReader(TimeOptionReader):
 
     def readOptions(
         self,
-        elements: list,
+        elements: list
     ) -> list[TimeOption]:
 
         options: list[TimeOption] = []
@@ -74,7 +96,7 @@ class ReserveTimeReader(TimeOptionReader):
 
     def formatFreeTime(
         self,
-        opt: TimeOption,
+        opt: TimeOption
     ) -> str:
 
         return minsToTimeStr(opt.value)
@@ -87,7 +109,7 @@ class RenewTimeReader(TimeOptionReader):
 
     def readOptions(
         self,
-        elements: list,
+        elements: list
     ) -> list[TimeOption]:
 
         options: list[TimeOption] = []
@@ -103,7 +125,7 @@ class TimeDecisionMaker:
 
     def __init__(
         self,
-        reader: TimeOptionReader,
+        reader: TimeOptionReader
     ) -> None:
 
         self._reader = reader
@@ -113,7 +135,7 @@ class TimeDecisionMaker:
         elements: list,
         target_time: int,
         max_time_diff: int,
-        prefer_earlier: bool,
+        prefer_earlier: bool
     ) -> TimeSelectionResult:
 
         options = self._reader.readOptions(elements)
@@ -148,8 +170,29 @@ class TimeDecisionMaker:
 
 class TimeSelectMaker:
 
-    LIBRARY_CLOSE_MINS = 1410
+    LIBRARY_CLOSE_MINS = 1350 # 22:30
     MAX_DURATION_HOURS = 8
+
+    @staticmethod
+    def calcEndTime(
+        begin_mins: int,
+        duration: int,
+        library_close_mins: int = LIBRARY_CLOSE_MINS
+    ) -> int:
+
+        expect_end_mins = int(begin_mins + duration*60)
+        if expect_end_mins > library_close_mins:
+            return library_close_mins
+        return expect_end_mins
+
+    @staticmethod
+    def calcRemainingDuration(
+        end_time_str: str,
+        target_mins: int,
+        library_close_mins: int = LIBRARY_CLOSE_MINS
+    ) -> int:
+
+        return library_close_mins - timeStrToMins(end_time_str)
 
     @staticmethod
     def forReserve(

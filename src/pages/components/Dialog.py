@@ -17,6 +17,9 @@ class Dialog:
     """
         Context-managed overlay / modal / dialog on a page.
 
+        The constructor verifies that the root element is visible — if not,
+        the dialog is not on screen and a :exc:`TimeoutException` is raised.
+
         Automates the lifecycle: wait for appearance on enter,
         optionally wait for disappearance on exit.
     """
@@ -34,13 +37,14 @@ class Dialog:
         self._auto_close: bool = auto_close_on_exit
         self._timeout: float = wait_timeout
 
+        WebDriverWait(self._driver, self._timeout).until(
+            EC.visibility_of_element_located(self._root_locator)
+        )
+
     def __enter__(
         self,
     ) -> "Dialog":
 
-        WebDriverWait(self._driver, self._timeout).until(
-            EC.visibility_of_element_located(self._root_locator)
-        )
         return self
 
     def __exit__(

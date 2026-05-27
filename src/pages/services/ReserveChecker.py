@@ -36,11 +36,11 @@ class ReserveChecker(MsgBase):
             if reserve_info.get("floor") is None:
                 raise ValueError("未指定楼层")
             if reserve_info["floor"] not in floor_map:
-                raise ValueError(f"该楼层 '{reserve_info['floor']}' 不存在")
+                raise ValueError(f"该楼层 '{reserve_info["floor"]}' 不存在")
             if reserve_info.get("room") is None:
                 raise ValueError("未指定房间")
             if reserve_info["room"] not in room_map:
-                raise ValueError(f"该房间 '{reserve_info['room']}' 不存在")
+                raise ValueError(f"该房间 '{reserve_info["room"]}' 不存在")
             if reserve_info.get("seat_id") is None:
                 raise ValueError("未指定座位")
             if reserve_info["seat_id"] == "":
@@ -75,7 +75,7 @@ class ReserveChecker(MsgBase):
             if res_timestamp < cur_timestamp:
                 self._showTrace(
                     f"预约日期错误 ! :"
-                    f"{reserve_info['date']} 早于当前日期 {cur_date_str}, 自动设置为当前日期",
+                    f"{reserve_info["date"]} 早于当前日期 {cur_date_str}, 自动设置为当前日期",
                     self.TraceLevel.WARNING,
                 )
                 reserve_info["date"] = cur_date_str
@@ -131,7 +131,7 @@ class ReserveChecker(MsgBase):
             }
             self._showTrace(
                 f"结束时间未指定, 自动设置为开始时间加上期望时长: "
-                f"{reserve_info['end_time']['time']}"
+                f"{reserve_info["end_time"]["time"]}"
             )
         if "max_diff" not in reserve_info["end_time"]:
             reserve_info["end_time"]["max_diff"] = 30
@@ -152,7 +152,7 @@ class ReserveChecker(MsgBase):
         end_mins = timeStrToMins(end_time["time"])
         if end_mins < begin_mins and reserve_info["satisfy_duration"] is False:
             self._showTrace(
-                f"结束时间 {end_time['time']} 早于开始时间 {begin_time['time']}, "
+                f"结束时间 {end_time["time"]} 早于开始时间 {begin_time["time"]}, "
                 f"尝试交换时间",
                 self.TraceLevel.WARNING,
             )
@@ -163,7 +163,7 @@ class ReserveChecker(MsgBase):
         max_end_mins = timeStrToMins("23:30")
         if end_mins > max_end_mins:
             self._showTrace(
-                f"结束时间 {end_time['time']} 晚于 23:30, 自动设置为 23:30",
+                f"结束时间 {end_time["time"]} 晚于 23:30, 自动设置为 23:30",
                 self.TraceLevel.WARNING,
             )
             reserve_info["end_time"]["time"] = "23:30"
@@ -172,20 +172,20 @@ class ReserveChecker(MsgBase):
             if reserve_info["expect_duration"] > 8:
                 self._showTrace(
                     f"该用户设置了优先满足时长要求, 但是预约期望持续时间 "
-                    f"{reserve_info['expect_duration']} 小时 "
+                    f"{reserve_info["expect_duration"]} 小时 "
                     f"超出最大时长 8 小时, 自动设置为 8 小时",
                     self.TraceLevel.WARNING,
                 )
                 reserve_info["expect_duration"] = 8
         else:
-            if end_mins - begin_mins > 8 * 60:
+            if end_mins - begin_mins > 8*60:
                 self._showTrace(
                     f"该用户未设置优先满足时长要求, 但是检查到预约持续时间 "
                     f"{float((end_mins - begin_mins) / 60)} 小时 "
                     f"超出最大时长 8 小时, 自动设置为 8 小时",
                     self.TraceLevel.WARNING,
                 )
-                reserve_info["end_time"]["time"] = minsToTimeStr(begin_mins + 8 * 60)
+                reserve_info["end_time"]["time"] = minsToTimeStr(begin_mins + 8*60)
         return True
 
     def check(
@@ -207,12 +207,12 @@ class ReserveChecker(MsgBase):
             return False
         self._showTrace(
             f"预约信息检查完成, 准备预约 "
-            f"{reserve_info['date']} "
-            f"{reserve_info['begin_time']['time']} - "
-            f"{reserve_info['end_time']['time']} "
+            f"{reserve_info["date"]} "
+            f"{reserve_info["begin_time"]["time"]} - "
+            f"{reserve_info["end_time"]["time"]} "
             f"图书馆 "
-            f"{ReserveView.FLOOR_MAP[reserve_info['floor']]} "
-            f"{ReserveView.ROOM_MAP[reserve_info['room']]} "
-            f"的座位 {reserve_info['seat_id']}"
+            f"{ReserveView.FLOOR_MAP[reserve_info["floor"]]} "
+            f"{ReserveView.ROOM_MAP[reserve_info["room"]]} "
+            f"的座位 {reserve_info["seat_id"]}"
         )
         return True
