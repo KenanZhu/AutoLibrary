@@ -44,8 +44,6 @@ class RecordsView:
             return self._driver.find_elements(*self.RECORDS_LIST)
         except TimeoutException:
             return None
-        except Exception:
-            return None
 
     def getRecordTimeElement(
         self,
@@ -71,8 +69,6 @@ class RecordsView:
             )
         except TimeoutException:
             return False
-        except Exception:
-            return False
         try:
             more_btn = self._driver.find_element(*self.MORE_BTN)
             if more_btn.is_displayed() and more_btn.is_enabled():
@@ -81,8 +77,6 @@ class RecordsView:
                 return True
             return False
         except (NoSuchElementException, StaleElementReferenceException):
-            return False
-        except Exception:
             return False
 
     def getRecordText(

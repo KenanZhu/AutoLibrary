@@ -13,7 +13,8 @@ import logging
 from typing import TYPE_CHECKING, Callable, Optional
 
 from selenium.common.exceptions import (
-    NoSuchElementException,
+    ElementNotInteractableException,
+    StaleElementReferenceException,
     TimeoutException,
 )
 from selenium.webdriver.common.by import By
@@ -106,9 +107,7 @@ class TimeSelectDialog(Dialog):
             self._waitAllPresence(
                 (By.CSS_SELECTOR, f"#{time_id} ul li a")
             )
-        except (NoSuchElementException, TimeoutException):
-            return []
-        except Exception:
+        except TimeoutException:
             return []
         return self._findAll(
             By.CSS_SELECTOR,
@@ -133,7 +132,10 @@ class TimeSelectDialog(Dialog):
             prefer_earlier,
         )
         if result.selected_index >= 0:
-            all_time_opts[result.selected_index].click()
+            try:
+                all_time_opts[result.selected_index].click()
+            except (ElementNotInteractableException, StaleElementReferenceException):
+                return TimeSelectionResult(free_times=result.free_times)
         return result
 
     def selectTimeRange(

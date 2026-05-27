@@ -45,8 +45,6 @@ class ReserveResultDialog(Dialog):
             return self._find(*self._titleLocator()).text
         except (NoSuchElementException, StaleElementReferenceException):
             return ""
-        except Exception:
-            return ""
 
     def isSuccess(
         self,
@@ -76,6 +74,4 @@ class ReserveResultDialog(Dialog):
             elements = self._findAll(By.CSS_SELECTOR, ".layoutSeat dd")
             return [el.text for el in elements if el.text.strip()]
         except (NoSuchElementException, StaleElementReferenceException):
-            return []
-        except Exception:
             return []

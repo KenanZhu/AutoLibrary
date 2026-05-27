@@ -10,6 +10,7 @@ See the LICENSE file for details.
 import queue
 
 from selenium.common.exceptions import (
+    ElementNotInteractableException,
     NoSuchElementException,
     TimeoutException,
 )
@@ -83,9 +84,6 @@ class CheckinFlow(MsgBase):
                     dialog.clickOk()
                     self._showTrace(f"用户 {username} 签到失败 !", self.TraceLevel.ERROR)
                     return False
-        except (NoSuchElementException, TimeoutException):
-            self._showTrace("签到时发生未知错误 !", self.TraceLevel.ERROR)
-            return False
-        except Exception:
+        except (TimeoutException, NoSuchElementException, ElementNotInteractableException):
             self._showTrace("签到时发生未知错误 !", self.TraceLevel.ERROR)
             return False

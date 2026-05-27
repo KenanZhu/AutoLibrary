@@ -43,9 +43,7 @@ class SeatMapDialog(Dialog):
 
         try:
             self._waitAllPresence(self.SEAT_ITEMS)
-        except (NoSuchElementException, TimeoutException):
-            return None
-        except Exception:
+        except TimeoutException:
             return None
         try:
             seat_el = self._find(By.ID, f"seat_{int(seat_id):03d}")
@@ -57,8 +55,6 @@ class SeatMapDialog(Dialog):
             return seat_link.get_attribute("title")
         except (NoSuchElementException, ValueError, TimeoutException,
                 ElementNotInteractableException, StaleElementReferenceException):
-            pass
-        except Exception:
             pass
         try:
             all_seats = self._findAll(*self.SEAT_ITEMS)
@@ -75,6 +71,4 @@ class SeatMapDialog(Dialog):
             return None
         except (NoSuchElementException, TimeoutException,
                 ElementNotInteractableException, StaleElementReferenceException):
-            return None
-        except Exception:
             return None

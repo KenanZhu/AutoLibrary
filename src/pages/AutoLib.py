@@ -149,9 +149,6 @@ class AutoLib(MsgBase):
         except WebDriverException as e:
             self._showTrace(f"浏览器驱动初始化失败: {e}", self.TraceLevel.ERROR)
             return False
-        except Exception as e:
-            self._showTrace(f"浏览器驱动初始化失败: {e}", self.TraceLevel.ERROR)
-            return False
         self._showTrace(f"浏览器驱动已初始化, 类型: {self.__driver_type}, 路径: {self.__driver_path}")
         return True
 

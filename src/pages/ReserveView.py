@@ -53,6 +53,50 @@ class ReserveView:
 
         self._driver = driver
 
+    def _clickOptionByJS(
+        self,
+        trigger_id: str,
+        option_css: str,
+    ) -> bool:
+
+        script = f"""
+        try {{
+            var trigger = document.getElementById('{trigger_id}');
+            if (trigger) {{
+                trigger.click();
+                var option = document.querySelector("{option_css}");
+                if (option) {{
+                    option.click();
+                    return true;
+                }}
+                return false;
+            }}
+            return false;
+        }} catch (e) {{
+            return false;
+        }}
+        """
+        result = self._driver.execute_script(script)
+        time.sleep(0.1)
+        return result
+
+    def _clickOption(
+        self,
+        trigger: tuple,
+        option: tuple,
+    ) -> bool:
+
+        try:
+            WebDriverWait(self._driver, 2).until(
+                EC.element_to_be_clickable(trigger)
+            ).click()
+            WebDriverWait(self._driver, 2).until(
+                EC.element_to_be_clickable(option)
+            ).click()
+            return True
+        except (TimeoutException, ElementNotInteractableException):
+            return False
+
     def selectDate(
         self,
         date_str: str,
@@ -109,21 +153,15 @@ class ReserveView:
             ).click()
         except (TimeoutException, ElementNotInteractableException):
             return None
-        except Exception:
-            return None
         try:
             WebDriverWait(self._driver, 2).until(
                 EC.element_to_be_clickable((By.ID, self.ROOM_BTN_FMT.format(room=room)))
             ).click()
         except (TimeoutException, ElementNotInteractableException):
             return None
-        except Exception:
-            return None
         try:
             return SeatMapDialog(self._driver)
-        except (TimeoutException):
-            return None
-        except Exception:
+        except TimeoutException:
             return None
 
     def submitReserve(
@@ -137,57 +175,12 @@ class ReserveView:
             return True
         except (TimeoutException, ElementNotInteractableException):
             return False
-        except Exception:
-            return False
 
     def refresh(
         self,
     ) -> None:
 
-        self._driver.refresh()
-
-    def _clickOptionByJS(
-        self,
-        trigger_id: str,
-        option_css: str,
-    ) -> bool:
-
-        script = f"""
-        try {{
-            var trigger = document.getElementById('{trigger_id}');
-            if (trigger) {{
-                trigger.click();
-                var option = document.querySelector("{option_css}");
-                if (option) {{
-                    option.click();
-                    return true;
-                }}
-                return false;
-            }}
-            return false;
-        }} catch (e) {{
-            return false;
-        }}
-        """
-        result = self._driver.execute_script(script)
-        time.sleep(0.1)
-        return result
-
-    def _clickOption(
-        self,
-        trigger: tuple,
-        option: tuple,
-    ) -> bool:
-
         try:
-            WebDriverWait(self._driver, 2).until(
-                EC.element_to_be_clickable(trigger)
-            ).click()
-            WebDriverWait(self._driver, 2).until(
-                EC.element_to_be_clickable(option)
-            ).click()
-            return True
-        except (TimeoutException, ElementNotInteractableException):
-            return False
-        except Exception:
-            return False
+            self._driver.refresh()
+        except TimeoutException:
+            return

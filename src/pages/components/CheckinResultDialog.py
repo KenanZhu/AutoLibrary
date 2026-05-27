@@ -45,9 +45,8 @@ class CheckinResultDialog(Dialog):
             self._waitPresence(self.RESULT_MSG)
             el = self._find(*self.RESULT_MSG)
             return el.text
-        except (TimeoutException, NoSuchElementException, StaleElementReferenceException):
-            return ""
-        except Exception:
+        except (TimeoutException, NoSuchElementException,
+                StaleElementReferenceException):
             return ""
 
     def getDetails(
@@ -59,8 +58,6 @@ class CheckinResultDialog(Dialog):
             return [el.text for el in elements if el.text.strip()]
         except (NoSuchElementException, StaleElementReferenceException):
             return []
-        except Exception:
-            return []
 
     def clickOk(
         self,
@@ -69,7 +66,5 @@ class CheckinResultDialog(Dialog):
         try:
             self._waitClickable(self.OK_BTN).click()
             return True
-        except (NoSuchElementException, TimeoutException, ElementNotInteractableException):
-            return False
-        except Exception:
+        except (TimeoutException, ElementNotInteractableException):
             return False

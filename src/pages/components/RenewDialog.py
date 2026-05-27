@@ -10,6 +10,7 @@ See the LICENSE file for details.
 from selenium.common.exceptions import (
     ElementNotInteractableException,
     NoSuchElementException,
+    StaleElementReferenceException,
     TimeoutException,
 )
 from selenium.webdriver.common.by import By
@@ -50,9 +51,7 @@ class RenewDialog(Dialog):
             self._waitVisible(self.ROOT)
             self._waitPresence(self.MESSAGE_HEAD)
             self._waitPresence(self.RESULT_MSG)
-        except (NoSuchElementException, TimeoutException):
-            return False
-        except Exception:
+        except TimeoutException:
             return False
         head_msg = self._find(*self.MESSAGE_HEAD).text.strip()
         if "警告" in head_msg:
@@ -60,9 +59,7 @@ class RenewDialog(Dialog):
         try:
             self._waitAllPresence(self.TIME_OPTS)
             self._waitPresence(self.OK_BTN)
-        except (NoSuchElementException, TimeoutException):
-            return False
-        except Exception:
+        except TimeoutException:
             return False
         return True
 
@@ -70,13 +67,19 @@ class RenewDialog(Dialog):
         self,
     ) -> str:
 
-        return self._find(*self.MESSAGE_HEAD).text.strip()
+        try:
+            return self._find(*self.MESSAGE_HEAD).text.strip()
+        except (NoSuchElementException, StaleElementReferenceException):
+            return ""
 
     def getResultMessage(
         self,
     ) -> str:
 
-        return self._find(*self.RESULT_MSG).text.strip()
+        try:
+            return self._find(*self.RESULT_MSG).text.strip()
+        except (NoSuchElementException, StaleElementReferenceException):
+            return ""
 
     def getTimeOptions(
         self,
@@ -101,7 +104,10 @@ class RenewDialog(Dialog):
             prefer_earlier,
         )
         if result.selected_index >= 0:
-            all_time_opts[result.selected_index].click()
+            try:
+                all_time_opts[result.selected_index].click()
+            except (ElementNotInteractableException, StaleElementReferenceException):
+                return TimeSelectionResult(free_times=result.free_times)
         return result
 
     def getOkButton(
@@ -117,8 +123,5 @@ class RenewDialog(Dialog):
         try:
             self._find(*self.OK_BTN).click()
             return True
-        except (NoSuchElementException, TimeoutException,
-                ElementNotInteractableException):
-            return False
-        except Exception:
+        except (NoSuchElementException, ElementNotInteractableException):
             return False

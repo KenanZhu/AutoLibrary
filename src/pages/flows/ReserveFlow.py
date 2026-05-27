@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from selenium.common.exceptions import (
     ElementNotInteractableException,
-    NoSuchElementException,
     TimeoutException,
 )
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -70,10 +69,7 @@ class ReserveFlow(MsgBase):
 
         try:
             view = self._shell.gotoReserveView()
-        except (NoSuchElementException, TimeoutException) as e:
-            self._showTrace(f"加载预约选座页面失败 ! : {e}", self.TraceLevel.ERROR)
-            return False
-        except Exception as e:
+        except (TimeoutException, ElementNotInteractableException) as e:
             self._showTrace(f"加载预约选座页面失败 ! : {e}", self.TraceLevel.ERROR)
             return False
         if not view.selectDate(ctx.date):
@@ -139,8 +135,6 @@ class ReserveFlow(MsgBase):
                             else:
                                 self._showTrace("预约结果加载失败 !", self.TraceLevel.ERROR)
                     except (TimeoutException, ElementNotInteractableException):
-                        self._showTrace("预约提交失败 !", self.TraceLevel.ERROR)
-                    except Exception:
                         self._showTrace("预约提交失败 !", self.TraceLevel.ERROR)
         if not submit_reserve and have_hover_on_page:
             view.refresh()

@@ -85,9 +85,7 @@ class LoginPage:
                 EC.presence_of_element_located(self.CAPTCHA_IMG)
             )
             return True
-        except (NoSuchElementException, TimeoutException):
-            return False
-        except Exception:
+        except TimeoutException:
             return False
 
     def fillCredentials(
@@ -104,17 +102,21 @@ class LoginPage:
             el.clear()
             el.send_keys(password)
             return True
-        except (NoSuchElementException, TimeoutException):
-            return False
-        except Exception:
+        except (NoSuchElementException, ElementNotInteractableException):
             return False
 
     def getCaptchaImageSrc(
         self,
-    ) -> str:
+    ) -> str | None:
 
-        captcha_el = self._driver.find_element(*self.CAPTCHA_IMG)
-        return captcha_el.get_attribute("src")
+        # return 'None' if captcha image element is not found.
+        # But the 'get_attribute("src")' also return 'None' if there's no attribute with
+        # that name, which is not what we want.
+        try:
+            captcha_el = self._driver.find_element(*self.CAPTCHA_IMG)
+            return captcha_el.get_attribute("src")
+        except NoSuchElementException:
+            return None
 
     def refreshCaptcha(
         self,
@@ -123,10 +125,7 @@ class LoginPage:
         try:
             self._driver.find_element(*self.CAPTCHA_IMG).click()
             return True
-        except (NoSuchElementException, TimeoutException,
-                ElementNotInteractableException):
-            return False
-        except Exception:
+        except (NoSuchElementException, ElementNotInteractableException):
             return False
 
     def fillCaptcha(
@@ -139,9 +138,7 @@ class LoginPage:
             el.clear()
             el.send_keys(captcha_text)
             return True
-        except (NoSuchElementException, TimeoutException):
-            return False
-        except Exception:
+        except (NoSuchElementException, ElementNotInteractableException):
             return False
 
     def clickLogin(
@@ -151,10 +148,7 @@ class LoginPage:
         try:
             self._driver.find_element(*self.LOGIN_BUTTON).click()
             return True
-        except (NoSuchElementException, TimeoutException,
-                ElementNotInteractableException):
-            return False
-        except Exception:
+        except (NoSuchElementException, ElementNotInteractableException):
             return False
 
     def waitLoginSuccess(
@@ -172,9 +166,7 @@ class LoginPage:
                 EC.presence_of_element_located(self.SUCCESS_INDICATOR_CONTENT)
             )
             return True
-        except (NoSuchElementException, TimeoutException):
-            return False
-        except Exception:
+        except TimeoutException:
             return False
 
     def stopPageLoad(

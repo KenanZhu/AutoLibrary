@@ -39,6 +39,28 @@ class RenewFlow(MsgBase):
         self._driver: WebDriver = driver
         self._shell: MainShell = shell
 
+    def _validateRenewTime(
+        self,
+        end_time: str,
+        target_renew_mins: int,
+    ) -> bool:
+
+        if target_renew_mins > self.LIBRARY_CLOSE_MINS:
+            actual_renew_duration = self.LIBRARY_CLOSE_MINS - timeStrToMins(end_time)
+            if actual_renew_duration <= 0:
+                self._showTrace(
+                    f"当前结束时间 {end_time} 已接近闭馆时间,无法续约 !", self.TraceLevel.ERROR
+                )
+                return False
+            self._showTrace(
+                f"续约时间已调整至闭馆时间 "
+                f"{minsToTimeStr(self.LIBRARY_CLOSE_MINS)},"
+                f"实际续约时长为 "
+                f"{actual_renew_duration // 60} 小时 "
+                f"{actual_renew_duration % 60} 分钟"
+            )
+        return True
+
     def execute(
         self,
         username: str,
@@ -106,37 +128,7 @@ class RenewFlow(MsgBase):
                     self._showTrace(f"当前可供续约的时间有: {result.free_times}")
                 self._shell.refresh()
                 return False
-        except (NoSuchElementException, TimeoutException) as e:
+        except (NoSuchElementException, TimeoutException, ElementNotInteractableException) as e:
             self._showTrace(f"用户 {username} 续约失败 ! : {e}", self.TraceLevel.ERROR)
             self._shell.refresh()
             return False
-        except (ElementNotInteractableException) as e:
-            self._showTrace(f"用户 {username} 续约失败 ! : {e}", self.TraceLevel.ERROR)
-            self._shell.refresh()
-            return False
-        except Exception as e:
-            self._showTrace(f"用户 {username} 续约失败 ! : {e}", self.TraceLevel.ERROR)
-            self._shell.refresh()
-            return False
-
-    def _validateRenewTime(
-        self,
-        end_time: str,
-        target_renew_mins: int,
-    ) -> bool:
-
-        if target_renew_mins > self.LIBRARY_CLOSE_MINS:
-            actual_renew_duration = self.LIBRARY_CLOSE_MINS - timeStrToMins(end_time)
-            if actual_renew_duration <= 0:
-                self._showTrace(
-                    f"当前结束时间 {end_time} 已接近闭馆时间,无法续约 !", self.TraceLevel.ERROR
-                )
-                return False
-            self._showTrace(
-                f"续约时间已调整至闭馆时间 "
-                f"{minsToTimeStr(self.LIBRARY_CLOSE_MINS)},"
-                f"实际续约时长为 "
-                f"{actual_renew_duration // 60} 小时 "
-                f"{actual_renew_duration % 60} 分钟"
-            )
-        return True

@@ -14,8 +14,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import (
+    ElementNotInteractableException,
     NoSuchElementException,
     TimeoutException,
+    WebDriverException,
 )
 
 from pages.ReserveView import ReserveView
@@ -37,6 +39,15 @@ class MainShell:
     ) -> None:
 
         self._driver = driver
+
+    def _clickTab(
+        self,
+        locator: tuple,
+    ) -> None:
+
+        WebDriverWait(self._driver, 2).until(
+            EC.element_to_be_clickable(locator)
+        ).click()
 
     def gotoReserveView(
         self,
@@ -65,9 +76,7 @@ class MainShell:
         try:
             self._driver.find_element(*self.TAB_LOGOUT).click()
             return True
-        except NoSuchElementException:
-            return False
-        except Exception:
+        except (NoSuchElementException, ElementNotInteractableException):
             return False
 
     def waitCheckinButton(
@@ -81,8 +90,6 @@ class MainShell:
             return True
         except TimeoutException:
             return False
-        except Exception:
-            return False
 
     def waitExtendButton(
         self,
@@ -95,40 +102,50 @@ class MainShell:
             return True
         except TimeoutException:
             return False
-        except Exception:
-            return False
 
     def isCheckinButtonDisabled(
         self,
     ) -> bool:
 
-        btn = self._driver.find_element(*self.BTN_CHECKIN)
-        return "disabled" in btn.get_attribute("class")
+        try:
+            btn = self._driver.find_element(*self.BTN_CHECKIN)
+            return "disabled" in btn.get_attribute("class")
+        except NoSuchElementException:
+            return True
 
     def isExtendButtonDisabled(
         self,
     ) -> bool:
 
-        btn = self._driver.find_element(*self.BTN_EXTEND)
-        return "disabled" in btn.get_attribute("class")
+        try:
+            btn = self._driver.find_element(*self.BTN_EXTEND)
+            return "disabled" in btn.get_attribute("class")
+        except NoSuchElementException:
+            return True
 
     def clickCheckinButton(
         self,
     ) -> None:
 
-        btn = WebDriverWait(self._driver, 2).until(
-            EC.element_to_be_clickable(self.BTN_CHECKIN)
-        )
-        btn.click()
+        try:
+            btn = WebDriverWait(self._driver, 2).until(
+                EC.element_to_be_clickable(self.BTN_CHECKIN)
+            )
+            btn.click()
+        except (TimeoutException, ElementNotInteractableException):
+            return
 
     def clickExtendButton(
         self,
     ) -> None:
 
-        btn = WebDriverWait(self._driver, 2).until(
-            EC.element_to_be_clickable(self.BTN_EXTEND)
-        )
-        btn.click()
+        try:
+            btn = WebDriverWait(self._driver, 2).until(
+                EC.element_to_be_clickable(self.BTN_EXTEND)
+            )
+            btn.click()
+        except (TimeoutException, ElementNotInteractableException):
+            return
 
     def enableCheckinButtonByJS(
         self,
@@ -154,13 +171,7 @@ class MainShell:
         self,
     ) -> None:
 
-        self._driver.refresh()
-
-    def _clickTab(
-        self,
-        locator: tuple,
-    ) -> None:
-
-        WebDriverWait(self._driver, 2).until(
-            EC.element_to_be_clickable(locator)
-        ).click()
+        try:
+            self._driver.refresh()
+        except (TimeoutException, WebDriverException):
+            return
