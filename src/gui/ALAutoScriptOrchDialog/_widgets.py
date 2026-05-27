@@ -178,9 +178,11 @@ class ConditionRowFrame(QFrame):
         if not data:
             return ""
         name, vartype = data
-        # CURRENT_DATE / CURRENT_TIME are Lua functions — call them, not reference them
-        if name in ("CURRENT_DATE", "CURRENT_TIME"):
-            name = f"{name}()"
+        # CURRENT_DATE / CURRENT_TIME map to datenow() / timenow()
+        if name == "CURRENT_DATE":
+            name = "datenow()"
+        elif name == "CURRENT_TIME":
+            name = "timenow()"
         opSym = self.opCombo.currentData()
         if self._rawRhsExpr:
             return f"{name} {opSym} {self._rawRhsExpr}"
@@ -189,8 +191,10 @@ class ConditionRowFrame(QFrame):
             rd = self.rhsVarCombo.currentData()
             if rd:
                 rhsName = rd[0]
-                if rhsName in ("CURRENT_DATE", "CURRENT_TIME"):
-                    rhsName = f"{rhsName}()"
+                if rhsName == "CURRENT_DATE":
+                    rhsName = "datenow()"
+                elif rhsName == "CURRENT_TIME":
+                    rhsName = "timenow()"
                 return f"{name} {opSym} {rhsName}"
             rhsText = self.rhsVarCombo.currentText().strip()
             if rhsText:
@@ -384,18 +388,18 @@ class ActionStepFrame(QFrame):
         elif op == "add":
             if vartype == "Date" and hasattr(self.valueStack.currentWidget(), "getOffsetDays"):
                 days = self.valueStack.currentWidget().getOffsetDays()
-                return f"    {target} = date_add({target}, {days})"
+                return f"    {target} = dateadd({target}, {days})"
             if vartype == "Time" and hasattr(self.valueStack.currentWidget(), "getOffsetHours"):
                 hours = self.valueStack.currentWidget().getOffsetHours()
-                return f"    {target} = time_add({target}, {hours})"
+                return f"    {target} = timeadd({target}, {hours})"
             return f"    {target} = {target} + {rawVal}"
         elif op == "sub":
             if vartype == "Date" and hasattr(self.valueStack.currentWidget(), "getOffsetDays"):
                 days = self.valueStack.currentWidget().getOffsetDays()
-                return f"    {target} = date_add({target}, -{days})"
+                return f"    {target} = dateadd({target}, -{days})"
             if vartype == "Time" and hasattr(self.valueStack.currentWidget(), "getOffsetHours"):
                 hours = self.valueStack.currentWidget().getOffsetHours()
-                return f"    {target} = time_add({target}, -{hours})"
+                return f"    {target} = timeadd({target}, -{hours})"
             return f"    {target} = {target} - {rawVal}"
         return ""
 

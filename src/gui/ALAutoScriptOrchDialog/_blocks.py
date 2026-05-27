@@ -203,7 +203,6 @@ class ConditionalBlock(QGroupBox):
             ]
             if not condTexts:
                 condTexts = ["true"]
-
             if len(condTexts) == 1:
                 combined = condTexts[0]
             else:

@@ -90,7 +90,7 @@ DATE_OFFSET_OPTIONS = [
     ("天", "days"),
     ("周", "weeks"),
     # NOTE: "月" and "年" use fixed day counts (30 / 365), not calendar months/years,
-    # because date_add() works with second-level offsets (n * 86400).
+    # because dateadd() works with second-level offsets (n * 86400).
     ("月", "months"),
     ("年", "years"),
 ]
@@ -423,7 +423,7 @@ def encodeValueStr(
         Encode a raw widget value as a Lua expression.
 
         Arithmetic expressions (A + B) are passed through for numeric types;
-        Date/Time arithmetic is translated to ``date_add()`` / ``time_add()`` calls.
+        Date/Time arithmetic is translated to ``dateadd()`` / ``timeadd()`` calls.
     """
 
     if var_type in ("Date", "Time"):
@@ -464,24 +464,24 @@ def encodeDateOrTime(
         right = m_arith.group(3).strip()
         operand = right if sign == "+" else f"-{right}"
         if left == "CURRENT_DATE":
-            return f"date_add(CURRENT_DATE(), {operand})"
+            return f"dateadd(datenow(), {operand})"
         if left == "CURRENT_TIME":
-            return f"time_add(CURRENT_TIME(), {operand})"
+            return f"timeadd(timenow(), {operand})"
         if var_type == "Date":
-            return f"date_add({left}, {operand})"
+            return f"dateadd({left}, {operand})"
         if var_type == "Time":
-            return f"time_add({left}, {operand})"
+            return f"timeadd({left}, {operand})"
         return f"{left} {sign} {right}"
     if up == "CURRENT_DATE":
-        return "CURRENT_DATE()"
+        return "datenow()"
     if up == "CURRENT_TIME":
-        return "CURRENT_TIME()"
+        return "timenow()"
     _REL_MAP = {
-        "前天": "date_add(CURRENT_DATE(), -2)",
-        "昨天": "date_add(CURRENT_DATE(), -1)",
-        "今天": "CURRENT_DATE()",
-        "明天": "date_add(CURRENT_DATE(), 1)",
-        "后天": "date_add(CURRENT_DATE(), 2)",
+        "前天": "dateadd(datenow(), -2)",
+        "昨天": "dateadd(datenow(), -1)",
+        "今天": "datenow()",
+        "明天": "dateadd(datenow(), 1)",
+        "后天": "dateadd(datenow(), 2)",
     }
     if s in _REL_MAP:
         return _REL_MAP[s]

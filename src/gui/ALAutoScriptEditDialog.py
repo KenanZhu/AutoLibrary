@@ -329,8 +329,8 @@ class ALAutoScriptEditDialog(QDialog):
         ]
         self.addButtonsToGrid(literalLayout, bool_buttons, 0, 0, 3)
         dateTimeButtons = [
-            ("日期", '"2099-01-01"'),
-            ("时间", '"00:00"'),
+            ("日期", 'date(2026, 1, 1)'),
+            ("时间", 'time(0, 0)'),
         ]
         self.addButtonsToGrid(literalLayout, dateTimeButtons, 1, 0, 3)
         hintButtons = [
@@ -358,8 +358,8 @@ class ALAutoScriptEditDialog(QDialog):
         funcButtons = [
             ("datenow()", "datenow()", "返回当前日期的 Unix 时间戳"),
             ("timenow()", "timenow()", "返回当前时间在一天中的分钟数"),
-            ("dateadd(d, n)", "dateadd(, )", "日期偏移: dateadd(日期时间戳, 天数)"),
-            ("timeadd(t, n)", "timeadd(, )", "时间偏移: timeadd(分钟数, 分钟数)"),
+            ("dateadd(day, n)", "dateadd(, )", "日期偏移: dateadd(日期时间戳, 天数)"),
+            ("timeadd(time, n)", "timeadd(, )", "时间偏移: timeadd(分钟数, 分钟数)"),
         ]
         for i, (text, template, tooltip) in enumerate(funcButtons):
             btn = QPushButton(text)
