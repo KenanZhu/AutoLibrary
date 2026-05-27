@@ -12,7 +12,7 @@ from pages.LoginPage import LoginPage
 from pages.MainShell import MainShell
 from pages.ReserveView import ReserveView
 from pages.RecordsView import RecordsView
-from pages.components.SeatMapOverlay import SeatMapOverlay
+from pages.components.SeatMapDialog import SeatMapDialog
 from pages.components.TimeSelectDialog import TimeSelectDialog
 from pages.components.ReserveResultDialog import ReserveResultDialog
 from pages.components.CheckinResultDialog import CheckinResultDialog
@@ -24,7 +24,7 @@ __all__ = [
     "MainShell",
     "ReserveView",
     "RecordsView",
-    "SeatMapOverlay",
+    "SeatMapDialog",
     "TimeSelectDialog",
     "ReserveResultDialog",
     "CheckinResultDialog",

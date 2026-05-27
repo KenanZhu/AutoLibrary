@@ -18,10 +18,10 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from pages.components.Overlay import Overlay
+from pages.components.Dialog import Dialog
 
 
-class SeatMapOverlay(Overlay):
+class SeatMapDialog(Dialog):
     """
         Seat selection overlay that opens after choosing a floor and room.
     """

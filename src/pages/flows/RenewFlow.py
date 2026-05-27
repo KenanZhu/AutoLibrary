@@ -19,16 +19,13 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from base.MsgBase import MsgBase
 from pages.MainShell import MainShell
 from pages.components.RenewDialog import RenewDialog
-from pages.flows._helpers import (
-    timeStrToMins,
-    minsToTimeStr,
-    findBestTimeOption,
-)
+from pages.flows._helpers import timeStrToMins, minsToTimeStr
+from pages.strategies.timeSelectMaker import TimeSelectMaker
 
 
 class RenewFlow(MsgBase):
 
-    LIBRARY_CLOSE_MINS = 1410
+    LIBRARY_CLOSE_MINS = TimeSelectMaker.LIBRARY_CLOSE_MINS
 
     def __init__(
         self,
@@ -83,24 +80,26 @@ class RenewFlow(MsgBase):
                     self._showTrace("当前未查询到可用续约时间 !", self.TraceLevel.WARNING)
                     self._shell.refresh()
                     return False
-                best_opt, best_text, actual_diff, free_times = findBestTimeOption(
-                    renew_time_opts, target_renew_mins, max_diff, prefer_earlier,
-                    is_reserve=False,
+                result = TimeSelectMaker.forRenew().decide(
+                    renew_time_opts,
+                    target_renew_mins,
+                    max_diff,
+                    prefer_earlier
                 )
-                if best_opt is not None:
-                    best_opt.click()
-                    abs_diff = abs(actual_diff)
-                    if actual_diff < 0:
+                if result.selected_index >= 0:
+                    renew_time_opts[result.selected_index].click()
+                    abs_diff = abs(result.actual_diff)
+                    if result.actual_diff < 0:
                         relation = f"早了 {abs_diff} 分钟"
-                    elif actual_diff > 0:
+                    elif result.actual_diff > 0:
                         relation = f"晚了 {abs_diff} 分钟"
                     else:
                         relation = "正好等于 续约时间"
                     self._showTrace(
-                        f"选择距离期望续约时间最近的 {best_text}, "
+                        f"选择距离期望续约时间最近的 {result.display_text}, "
                         f"与期望续约时间相比 {relation}"
                     )
-                    record["time"]["end"] = best_text.strip()
+                    record["time"]["end"] = result.display_text.strip()
                     renew_ok_btn.click()
                     self._shell.refresh()
                     return True
@@ -109,7 +108,7 @@ class RenewFlow(MsgBase):
                     f"所有可选时间与目标时间相差都超过了 {max_diff} 分钟 !",
                     self.TraceLevel.WARNING,
                 )
-                self._showTrace(f"当前可供续约的时间有: {free_times}")
+                self._showTrace(f"当前可供续约的时间有: {result.free_times}")
                 self._shell.refresh()
                 return False
         except (NoSuchElementException, TimeoutException) as e:

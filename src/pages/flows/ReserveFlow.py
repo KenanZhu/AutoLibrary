@@ -20,11 +20,8 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from base.MsgBase import MsgBase
 from pages.MainShell import MainShell
-from pages.flows._helpers import (
-    timeStrToMins,
-    minsToTimeStr,
-    findBestTimeOption,
-)
+from pages.flows._helpers import timeStrToMins, minsToTimeStr
+from pages.strategies.timeSelectMaker import TimeSelectMaker
 from pages.ReserveView import ReserveView
 from pages.components.ReserveResultDialog import ReserveResultDialog
 from pages.components.TimeSelectDialog import TimeSelectDialog
@@ -50,7 +47,7 @@ class ReserveContext:
 
 class ReserveFlow(MsgBase):
 
-    LIBRARY_CLOSE_MINS = timeStrToMins("23:30")
+    LIBRARY_CLOSE_MINS = TimeSelectMaker.LIBRARY_CLOSE_MINS
 
     def __init__(
         self,
@@ -219,30 +216,33 @@ class ReserveFlow(MsgBase):
                 f"{time_type} 选择失败 ! : 当前未查询到可用时间", self.TraceLevel.ERROR
             )
             return -1
-        best_opt, best_text, actual_diff, free_times = findBestTimeOption(
-            all_time_opts, target_time, max_time_diff, prefer_earlier, is_reserve=True
+        result = TimeSelectMaker.forReserve().decide(
+            all_time_opts,
+            target_time,
+            max_time_diff,
+            prefer_earlier
         )
-        if best_opt is not None:
-            best_opt.click()
-            abs_diff = abs(actual_diff)
-            if actual_diff < 0:
+        if result.selected_index >= 0:
+            all_time_opts[result.selected_index].click()
+            abs_diff = abs(result.actual_diff)
+            if result.actual_diff < 0:
                 relation = f"早了 {abs_diff} 分钟"
-            elif actual_diff > 0:
+            elif result.actual_diff > 0:
                 relation = f"晚了 {abs_diff} 分钟"
             else:
                 relation = f"正好等于 {time_type}"
             self._showTrace(
-                f"选择距离期望 {time_type} 最近的 {best_text}, "
+                f"选择距离期望 {time_type} 最近的 {result.display_text}, "
                 f"与期望 {time_type} 相比 {relation}"
             )
-            return target_time + actual_diff
+            return target_time + result.actual_diff
         target_time_str = minsToTimeStr(target_time)
         self._showTrace(
             f"无法选择最近的 {time_type} {target_time_str}, "
             f"所有可选时间与目标时间相差都超过 {max_time_diff} 分钟",
             self.TraceLevel.WARNING,
         )
-        self._showTrace(f"当前可供预约的 {time_type} 有: {free_times}")
+        self._showTrace(f"当前可供预约的 {time_type} 有: {result.free_times}")
         return -1
 
     def _calcEndTime(
@@ -251,7 +251,7 @@ class ReserveFlow(MsgBase):
         duration: int,
     ) -> int:
 
-        expect_end_mins = int(begin_mins + duration * 60)
+        expect_end_mins = int(begin_mins + duration*60)
         if expect_end_mins > self.LIBRARY_CLOSE_MINS:
             expect_end_mins = self.LIBRARY_CLOSE_MINS
             self._showTrace(

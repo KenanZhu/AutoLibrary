@@ -14,10 +14,10 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from pages.components.Overlay import Overlay
+from pages.components.Dialog import Dialog
 
 
-class ReserveResultDialog(Overlay):
+class ReserveResultDialog(Dialog):
     """
         Reservation result dialog shown after submitting a reserve request.
     """

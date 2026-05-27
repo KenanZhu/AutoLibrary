@@ -13,7 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-class Overlay:
+class Dialog:
     """
         Context-managed overlay / modal / dialog on a page.
 
@@ -36,7 +36,7 @@ class Overlay:
 
     def __enter__(
         self,
-    ) -> "Overlay":
+    ) -> "Dialog":
 
         WebDriverWait(self._driver, self._timeout).until(
             EC.visibility_of_element_located(self._root_locator)

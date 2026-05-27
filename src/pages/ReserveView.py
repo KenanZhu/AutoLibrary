@@ -18,7 +18,7 @@ from selenium.common.exceptions import (
     TimeoutException,
 )
 
-from pages.components.SeatMapOverlay import SeatMapOverlay
+from pages.components.SeatMapDialog import SeatMapDialog
 from pages.components.ReserveResultDialog import ReserveResultDialog
 
 
@@ -124,9 +124,9 @@ class ReserveView:
 
     def openSeatMap(
         self,
-    ) -> SeatMapOverlay:
+    ) -> SeatMapDialog:
 
-        return SeatMapOverlay(self._driver)
+        return SeatMapDialog(self._driver)
 
     def submitReserve(
         self,

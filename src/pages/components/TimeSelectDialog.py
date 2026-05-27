@@ -15,10 +15,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from pages.components.Overlay import Overlay
+from pages.components.Dialog import Dialog
 
 
-class TimeSelectDialog(Overlay):
+class TimeSelectDialog(Dialog):
     """
         Time selection panel that appears after selecting a seat.
 
