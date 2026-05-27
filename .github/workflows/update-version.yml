@@ -128,10 +128,15 @@ jobs:
         echo "Build version file location: $VER_INFO_BUILDFILE"
         echo "Commit version file location: $VER_INFO_COMMITFILE"
         echo ""
-        echo "Build version ALVersionInfo.py content ="
+        echo "========================================"
+        echo "Build version ALVersionInfo.py"
+        echo "========================================"
         cat "$VER_INFO_BUILDFILE"
+        echo "========================================"
         echo ""
-        echo "Commit version ALVersionInfo.py content "
+        echo "========================================"
+        echo "Commit version ALVersionInfo.py"
+        echo "========================================"
         cat "$VER_INFO_COMMITFILE"
         echo "========================================"
 
@@ -140,11 +145,16 @@ jobs:
       run: |
         if git diff --quiet src/gui/ALVersionInfo.py; then
           echo "has_changes=false" >> $GITHUB_OUTPUT
-          echo "! No changes detected in ALVersionInfo.py"
+          echo "⚠ No changes detected in ALVersionInfo.py"
         else
           echo "has_changes=true" >> $GITHUB_OUTPUT
           echo "✓ ALVersionInfo.py has been modified"
         fi
+        echo "## Update Version Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "========================================" >> $GITHUB_STEP_SUMMARY
+        echo "- Version: ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload modified ALVersionInfo.py ready for build
       if: steps.check_changes.outputs.has_changes == 'true'
