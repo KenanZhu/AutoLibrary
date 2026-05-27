@@ -11,11 +11,6 @@ import base64
 import queue
 
 import ddddocr
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    TimeoutException,
-)
-
 from base.MsgBase import MsgBase
 from pages.LoginPage import LoginPage
 
@@ -38,6 +33,9 @@ class CaptchaSolver(MsgBase):
 
         try:
             img_src = login_page.getCaptchaImageSrc()
+            if img_src is None:
+                self._showTrace("验证码图片元素定位时发生错误 !", self.TraceLevel.ERROR)
+                return ""
             base64_str = img_src.split(',', 1)[1]
             captcha_img = base64.b64decode(base64_str)
             captcha_text = self._ocr.classification(captcha_img)
@@ -45,15 +43,9 @@ class CaptchaSolver(MsgBase):
             self._showTrace(f"识别到验证码为 : '{captcha_text}'", 20, no_log=True)
             if len(captcha_text) != 4:
                 self._showLog("识别到的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
-                raise Exception("识别到的验证码长度不等于 4 个字符 !")
+                return ""
             return captcha_text
-        except (NoSuchElementException, TimeoutException) as e:
-            self._showTrace(f"验证码识别失败 ! : {e}", self.TraceLevel.ERROR)
-            return ""
-        except (ValueError, OSError) as e:
-            self._showTrace(f"验证码识别失败 ! : {e}", self.TraceLevel.ERROR)
-            return ""
-        except Exception as e:
+        except ValueError as e:
             self._showTrace(f"验证码识别失败 ! : {e}", self.TraceLevel.ERROR)
             return ""
 
@@ -61,20 +53,13 @@ class CaptchaSolver(MsgBase):
         self,
     ) -> str:
 
-        try:
-            self._showMsg("请输入验证码:")
-            captcha_text = self._waitMsg(timeout=15)
-            self._showTrace(f"输入的验证码为 : '{captcha_text}'", 20, no_log=True)
-            if len(captcha_text) != 4:
-                self._showLog("输入的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
-                raise Exception("输入的验证码长度不等于 4 个字符 !")
-            return captcha_text
-        except ValueError as e:
-            self._showTrace(f"输入验证码失败 ! : {e}", self.TraceLevel.ERROR)
+        self._showMsg("请输入验证码:")
+        captcha_text = self._waitMsg(timeout=15)
+        self._showTrace(f"输入的验证码为 : '{captcha_text}'", 20, no_log=True)
+        if len(captcha_text) != 4:
+            self._showLog("输入的验证码长度不等于 4 个字符 !", self.TraceLevel.WARNING)
             return ""
-        except Exception as e:
-            self._showTrace(f"输入验证码失败 ! : {e}", self.TraceLevel.ERROR)
-            return ""
+        return captcha_text
 
     def solveCaptcha(
         self,

@@ -88,11 +88,22 @@ class ReserveChecker(MsgBase):
     ) -> bool:
 
         cur_time = time.strftime("%H:%M", time.localtime())
+        cur_date = time.strftime("%Y-%m-%d", time.localtime())
         if reserve_info.get("begin_time") is None:
             reserve_info["begin_time"] = {}
         if "time" not in reserve_info["begin_time"]:
             reserve_info["begin_time"]["time"] = cur_time
             self._showTrace(f"开始时间未指定, 自动设置为当前时间: {cur_time}")
+        elif reserve_info.get("date") == cur_date:
+            begin_mins = timeStrToMins(reserve_info["begin_time"]["time"])
+            cur_mins = timeStrToMins(cur_time)
+            if begin_mins < cur_mins:
+                self._showTrace(
+                    f"开始时间 {reserve_info['begin_time']['time']} 已过当前时间 {cur_time}, "
+                    f"自动调整为当前时间",
+                    self.TraceLevel.WARNING,
+                )
+                reserve_info["begin_time"]["time"] = cur_time
         if "max_diff" not in reserve_info["begin_time"]:
             reserve_info["begin_time"]["max_diff"] = 30
             self._showTrace("开始时间最大时间差未指定, 自动设置为 30 分钟")

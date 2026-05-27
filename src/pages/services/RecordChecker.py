@@ -112,20 +112,21 @@ class RecordChecker(MsgBase):
         try:
             time_element = records_view.getRecordTimeElement(reservation)
             info_elements = records_view.getRecordInfoElements(reservation)
-        except (NoSuchElementException, TimeoutException, StaleElementReferenceException):
+        except (NoSuchElementException, StaleElementReferenceException):
             return {
                 "date": "",
                 "time": {"begin": "", "end": ""},
                 "info": {"location": "", "status": ""},
             }
-        except Exception:
+        try:
+            time_data = self._decodeReserveTime(time_element)
+            info_data = self._decodeReserveInfo(info_elements)
+        except StaleElementReferenceException:
             return {
                 "date": "",
                 "time": {"begin": "", "end": ""},
                 "info": {"location": "", "status": ""},
             }
-        time_data = self._decodeReserveTime(time_element)
-        info_data = self._decodeReserveInfo(info_elements)
         return {
             "date": time_data["date"],
             "time": time_data["time"],
@@ -152,7 +153,10 @@ class RecordChecker(MsgBase):
 
         records_view = shell.gotoRecordsView()
         for _ in range(max_check_times):
-            reservations = records_view.loadRecords()
+            try:
+                reservations = records_view.loadRecords()
+            except TimeoutException:
+                reservations = None
             if reservations is None:
                 return None
             for reservation in reservations[checked_count:]:
