@@ -13,6 +13,7 @@ import time
 from base.MsgBase import MsgBase
 from pages.ReserveView import ReserveView
 from pages.flows._helpers import timeStrToMins, minsToTimeStr
+from pages.strategies.TimeSelectMaker import TimeSelectMaker
 
 
 class ReserveChecker(MsgBase):
@@ -160,13 +161,15 @@ class ReserveChecker(MsgBase):
             begin_time, end_time = end_time, begin_time
             begin_mins = timeStrToMins(begin_time["time"])
             end_mins = timeStrToMins(end_time["time"])
-        max_end_mins = timeStrToMins("23:30")
+        max_end_mins = TimeSelectMaker.LIBRARY_CLOSE_MINS
         if end_mins > max_end_mins:
+            close_time_str = minsToTimeStr(TimeSelectMaker.LIBRARY_CLOSE_MINS)
             self._showTrace(
-                f"结束时间 {end_time["time"]} 晚于 23:30, 自动设置为 23:30",
+                f"结束时间 {end_time["time"]} 晚于 {close_time_str}, "
+                f"自动设置为 {close_time_str}",
                 self.TraceLevel.WARNING,
             )
-            reserve_info["end_time"]["time"] = "23:30"
+            reserve_info["end_time"]["time"] = close_time_str
             end_mins = max_end_mins
         if reserve_info["satisfy_duration"]:
             if reserve_info["expect_duration"] > 8:
