@@ -7,16 +7,7 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from autoscript.ASEngine import ASEngine
-
-
-__all__ = [
-    "ASEngine",
-    "createEngine",
-    "createMockTargetData",
-    "createAllVariablesTable",
-    "createTargetVarDefs",
-]
+from .ASEngine import ASEngine
 
 
 _TARGET_VAR_DEFS = [

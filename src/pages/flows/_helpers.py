@@ -9,11 +9,5 @@ See the LICENSE file for details.
 """
 from pages.strategies.TimeSelectMaker import (
     minsToTimeStr,
-    timeStrToMins
+    timeStrToMins,
 )
-
-
-__all__ = [
-    "minsToTimeStr",
-    "timeStrToMins",
-]

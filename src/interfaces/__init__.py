@@ -1,11 +1,9 @@
+# -*- coding: utf-8 -*-
 """
-    Interfaces module for the AutoLibrary project.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
 
-    Defines abstract interfaces (Protocols) and shared type definitions
-    used across layers to decouple consumers from concrete implementations.
-
-    Key components:
-    - ConfigProvider: Abstract interface for configuration access.
-    - ConfigType: Enumeration of configuration file types.
-    - ConfigKey: Type-safe hierarchical key constants for config lookups.
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
 """

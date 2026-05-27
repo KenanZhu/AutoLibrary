@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
 """
-    Config managers module for the AutoLibrary project.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
 
-    Here are the classes and modules in this package:
-    - ConfigManager: Config manager for managing configuration files.
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
 """
