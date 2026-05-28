@@ -9,6 +9,7 @@ See the LICENSE file for details.
 """
 from .ASEngine import ASEngine
 
+__version__ = "1.0.0" # autoscript version
 
 _TARGET_VAR_DEFS = [
     ("USERNAME",           "String",  ["username"],                           "用户名"),
