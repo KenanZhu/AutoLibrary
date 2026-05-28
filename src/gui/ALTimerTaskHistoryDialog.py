@@ -41,7 +41,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         self.setWindowTitle("定时任务执行历史 - AutoLibrary")
         self.setMinimumSize(300, 300)
         self.setMaximumSize(500, 400)
-
         MainLayout = QVBoxLayout(self)
         InfoLayout = QGridLayout()
         TaskNameLabel = QLabel(f"任务: {self.__task_data.get('name', '未命名')}")
@@ -51,7 +50,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         TaskUUIDLabel.setStyleSheet("color: #969696; font-size: 11px;")
         InfoLayout.addWidget(TaskUUIDLabel, 1, 0)
         InfoLayout.setColumnStretch(0, 1)
-
         if self.__task_data.get("repeat", False):
             RepeatLabel = QLabel("可重复性任务")
             RepeatLabel.setStyleSheet("color: #2294FF; font-size: 12px;")
@@ -68,7 +66,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         self.HistoryTableWidget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.loadHistory()
         MainLayout.addWidget(self.HistoryTableWidget)
-
         ButtonLayout = QHBoxLayout()
         ButtonLayout.addStretch()
         self.CloseButton = QPushButton("关闭")

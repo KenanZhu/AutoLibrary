@@ -110,39 +110,39 @@ class _DateInputContainer(QWidget):
         self
     ):
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-        self._modeCombo = QComboBox(self)
-        self._modeCombo.addItem("相对日期", "relative")
-        self._modeCombo.addItem("绝对日期", "absolute")
-        self._modeCombo.setFixedHeight(25)
-        self._stack = QStackedWidget(self)
-        self._relCombo = QComboBox(self)
+        Layout = QHBoxLayout(self)
+        Layout.setContentsMargins(0, 0, 0, 0)
+        Layout.setSpacing(4)
+        self._ModeCombo = QComboBox(self)
+        self._ModeCombo.addItem("相对日期", "relative")
+        self._ModeCombo.addItem("绝对日期", "absolute")
+        self._ModeCombo.setFixedHeight(25)
+        self._Stack = QStackedWidget(self)
+        self._RelCombo = QComboBox(self)
         for display, data in DATE_OPTIONS:
-            self._relCombo.addItem(display, data)
-        self._relCombo.setFixedHeight(25)
-        self._stack.addWidget(self._relCombo)
-        self._dateEdit = QDateEdit(self)
-        self._dateEdit.setDisplayFormat("yyyy-MM-dd")
-        self._dateEdit.setCalendarPopup(True)
-        self._dateEdit.setFixedHeight(25)
-        self._stack.addWidget(self._dateEdit)
-        self._modeCombo.currentIndexChanged.connect(
-            lambda i: self._stack.setCurrentIndex(i)
+            self._RelCombo.addItem(display, data)
+        self._RelCombo.setFixedHeight(25)
+        self._Stack.addWidget(self._RelCombo)
+        self._DateEdit = QDateEdit(self)
+        self._DateEdit.setDisplayFormat("yyyy-MM-dd")
+        self._DateEdit.setCalendarPopup(True)
+        self._DateEdit.setFixedHeight(25)
+        self._Stack.addWidget(self._DateEdit)
+        self._ModeCombo.currentIndexChanged.connect(
+            lambda i: self._Stack.setCurrentIndex(i)
         )
-        layout.addWidget(self._modeCombo)
-        layout.addWidget(self._stack)
-        layout.addStretch()
+        Layout.addWidget(self._ModeCombo)
+        Layout.addWidget(self._Stack)
+        Layout.addStretch()
 
     def getValue(
         self
     ) -> str:
 
-        mode = self._modeCombo.currentData()
+        mode = self._ModeCombo.currentData()
         if mode == "relative":
-            return self._relCombo.currentText()
-        return self._dateEdit.date().toString("yyyy-MM-dd")
+            return self._RelCombo.currentText()
+        return self._DateEdit.date().toString("yyyy-MM-dd")
 
 
 class _TimeInputContainer(QWidget):
@@ -153,19 +153,19 @@ class _TimeInputContainer(QWidget):
     ):
 
         super().__init__(parent)
-        self._timeEdit = QTimeEdit(self)
-        self._timeEdit.setDisplayFormat("HH:mm")
-        self._timeEdit.setFixedHeight(25)
+        self._TimeEdit = QTimeEdit(self)
+        self._TimeEdit.setDisplayFormat("HH:mm")
+        self._TimeEdit.setFixedHeight(25)
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._timeEdit)
+        Layout = QHBoxLayout(self)
+        Layout.setContentsMargins(0, 0, 0, 0)
+        Layout.addWidget(self._TimeEdit)
 
     def getValue(
         self
     ) -> str:
 
-        return self._timeEdit.time().toString("HH:mm")
+        return self._TimeEdit.time().toString("HH:mm")
 
 
 class _DateOffsetContainer(QWidget):
@@ -176,20 +176,20 @@ class _DateOffsetContainer(QWidget):
     ):
 
         super().__init__(parent)
-        self._spinBox = QSpinBox(self)
-        self._spinBox.setRange(0, 99999)
-        self._spinBox.setFixedHeight(25)
-        self._unitCombo = QComboBox(self)
+        self._SpinBox = QSpinBox(self)
+        self._SpinBox.setRange(0, 99999)
+        self._SpinBox.setFixedHeight(25)
+        self._UnitCombo = QComboBox(self)
         for display, data in DATE_OFFSET_OPTIONS:
-            self._unitCombo.addItem(display, data)
-        self._unitCombo.setFixedHeight(25)
+            self._UnitCombo.addItem(display, data)
+        self._UnitCombo.setFixedHeight(25)
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-        layout.addWidget(self._spinBox)
-        layout.addWidget(self._unitCombo)
-        layout.addStretch()
+        Layout = QHBoxLayout(self)
+        Layout.setContentsMargins(0, 0, 0, 0)
+        Layout.setSpacing(4)
+        Layout.addWidget(self._SpinBox)
+        Layout.addWidget(self._UnitCombo)
+        Layout.addStretch()
 
     def getValue(
         self
@@ -201,8 +201,8 @@ class _DateOffsetContainer(QWidget):
         self
     ) -> int:
 
-        val = self._spinBox.value()
-        unit = self._unitCombo.currentData()
+        val = self._SpinBox.value()
+        unit = self._UnitCombo.currentData()
         if unit == "weeks":
             return val*7
         if unit == "months":
@@ -220,14 +220,14 @@ class _TimeOffsetContainer(QWidget):
     ):
 
         super().__init__(parent)
-        self._spinBox = QSpinBox(self)
-        self._spinBox.setRange(0, 99999)
-        self._spinBox.setSuffix(" 小时")
-        self._spinBox.setFixedHeight(25)
+        self._SpinBox = QSpinBox(self)
+        self._SpinBox.setRange(0, 99999)
+        self._SpinBox.setSuffix(" 小时")
+        self._SpinBox.setFixedHeight(25)
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._spinBox)
+        Layout = QHBoxLayout(self)
+        Layout.setContentsMargins(0, 0, 0, 0)
+        Layout.addWidget(self._SpinBox)
 
     def getValue(
         self
@@ -239,7 +239,7 @@ class _TimeOffsetContainer(QWidget):
         self
     ) -> int:
 
-        return self._spinBox.value()
+        return self._SpinBox.value()
 
 
 class VariableManager(QObject):
@@ -364,11 +364,11 @@ def makeVarRefCombo(
     parent: QWidget = None
 ) -> QComboBox:
 
-    cb = QComboBox(parent)
-    cb.setFixedHeight(25)
-    cb.setMinimumWidth(120)
-    cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-    return cb
+    Cb = QComboBox(parent)
+    Cb.setFixedHeight(25)
+    Cb.setMinimumWidth(120)
+    Cb.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    return Cb
 
 def makeComboWidget(
     items,
@@ -376,12 +376,12 @@ def makeComboWidget(
     parent: QWidget = None
 ) -> QComboBox:
 
-    cb = QComboBox(parent)
+    Cb = QComboBox(parent)
     for display, data in items:
-        cb.addItem(display, data)
-    cb.setFixedHeight(25)
-    cb.setMinimumWidth(min_width)
-    return cb
+        Cb.addItem(display, data)
+    Cb.setFixedHeight(25)
+    Cb.setMinimumWidth(min_width)
+    return Cb
 
 def makeLabel(
     text: str,
@@ -389,11 +389,11 @@ def makeLabel(
     width: int = None
 ) -> QLabel:
 
-    lbl = QLabel(text, parent)
-    lbl.setFixedHeight(25)
+    Lbl = QLabel(text, parent)
+    Lbl.setFixedHeight(25)
     if width:
-        lbl.setFixedWidth(width)
-    return lbl
+        Lbl.setFixedWidth(width)
+    return Lbl
 
 def getValueFromWidget(
     w: QWidget

@@ -173,20 +173,20 @@ class ALTimerTaskItemWidget(QWidget):
         pos
     ):
 
-        menu = QMenu(self)
-        edit_action = QAction("编辑", self)
-        edit_action.triggered.connect(
+        Menu = QMenu(self)
+        EditAction = QAction("编辑", self)
+        EditAction.triggered.connect(
             lambda: self.editRequested.emit(self.__timer_task)
         )
-        menu.addAction(edit_action)
+        Menu.addAction(EditAction)
         if self.__timer_task["status"] != ALTimerTaskStatus.RUNNING\
         and self.__timer_task["status"] != ALTimerTaskStatus.READY:
-            delete_action = QAction("删除", self)
-            delete_action.triggered.connect(
+            DeleteAction = QAction("删除", self)
+            DeleteAction.triggered.connect(
                 lambda: self.__manage_widget.deleteTask(self.__timer_task)
             )
-            menu.addAction(delete_action)
-        menu.exec(self.mapToGlobal(pos))
+            Menu.addAction(DeleteAction)
+        Menu.exec(self.mapToGlobal(pos))
 
 
 class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
@@ -209,7 +209,7 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         super().__init__(parent)
         self.__cfg_mgr: ConfigProvider = ConfigManager.instance()
         self.__timer_tasks = []
-        self.__check_timer = None
+        self.__CheckTimer = None
         self.__sort_policy = self.SortPolicy.BY_EXECUTE_TIME
         self.__sort_order = Qt.SortOrder.AscendingOrder
 
@@ -233,9 +233,9 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self
     ):
 
-        self.__check_timer = QTimer(self)
-        self.__check_timer.timeout.connect(self.checkTasks)
-        self.__check_timer.start(500)
+        self.__CheckTimer = QTimer(self)
+        self.__CheckTimer.timeout.connect(self.checkTasks)
+        self.__CheckTimer.start(500)
 
     def initializeTimerTasks(
         self
@@ -386,28 +386,28 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         self.TimerTasksListWidget.clear()
         self.sortTimerTasks(self.__sort_policy, self.__sort_order)
         for timer_task in self.__timer_tasks:
-            item = QListWidgetItem()
-            item.setData(Qt.UserRole, timer_task)
-            widget = ALTimerTaskItemWidget(self, timer_task)
-            widget.DeleteButton.clicked.connect(
+            Item = QListWidgetItem()
+            Item.setData(Qt.UserRole, timer_task)
+            Widget = ALTimerTaskItemWidget(self, timer_task)
+            Widget.DeleteButton.clicked.connect(
                 lambda _, task = timer_task: self.deleteTask(task)
             )
-            if timer_task.get("repeat", False) and hasattr(widget, "HistoryButton"):
-                widget.HistoryButton.clicked.connect(
+            if timer_task.get("repeat", False) and hasattr(Widget, "HistoryButton"):
+                Widget.HistoryButton.clicked.connect(
                     lambda _, task = timer_task: self.showTaskHistory(task)
                 )
-            widget.editRequested.connect(self.editTask)
-            item.setSizeHint(widget.size())
-            self.TimerTasksListWidget.addItem(item)
-            self.TimerTasksListWidget.setItemWidget(item, widget)
+            Widget.editRequested.connect(self.editTask)
+            Item.setSizeHint(Widget.size())
+            self.TimerTasksListWidget.addItem(Item)
+            self.TimerTasksListWidget.setItemWidget(Item, Widget)
 
     def addTask(
         self
     ):
 
-        dialog = ALTimerTaskAddDialog(self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            timer_task = dialog.getTimerTask()
+        Dialog = ALTimerTaskAddDialog(self)
+        if Dialog.exec() == QDialog.DialogCode.Accepted:
+            timer_task = Dialog.getTimerTask()
             self.__timer_tasks.append(timer_task)
             self.timerTasksChanged.emit()
 
@@ -416,9 +416,9 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         timer_task: dict
     ):
 
-        dialog = ALTimerTaskAddDialog(self, timer_task)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            updated = dialog.getTimerTask()
+        Dialog = ALTimerTaskAddDialog(self, timer_task)
+        if Dialog.exec() == QDialog.DialogCode.Accepted:
+            updated = Dialog.getTimerTask()
             for i, task in enumerate(self.__timer_tasks):
                 if task["uuid"] == updated["uuid"]:
                     self.__timer_tasks[i] = updated
@@ -449,19 +449,19 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
     ):
 
         if timer_task["repeat"]: # when delete a repeat task
-            msgbox = QMessageBox(self)
-            msgbox.setIcon(QMessageBox.Icon.Question)
-            msgbox.setWindowTitle("警告 - AutoLibrary")
-            msgbox.setStandardButtons(
+            MsgBox = QMessageBox(self)
+            MsgBox.setIcon(QMessageBox.Icon.Question)
+            MsgBox.setWindowTitle("警告 - AutoLibrary")
+            MsgBox.setStandardButtons(
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
-            msgbox.setText("删除可重复性任务将同时删除所有已执行的记录 !\n是否继续 ?")
-            msgbox.setDetailedText(
+            MsgBox.setText("删除可重复性任务将同时删除所有已执行的记录 !\n是否继续 ?")
+            MsgBox.setDetailedText(
                 "以下可重复性任务将被删除：\n"\
                 "\n"
                 f"{self.getTimerTaskDetailMessage(timer_task)}"
             )
-            result = msgbox.exec()
+            result = MsgBox.exec()
             if result != QMessageBox.StandardButton.Yes:
                 return
         task_uuid = timer_task["uuid"]
@@ -506,13 +506,13 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         ]
         repeat_tasks_count = len(repeat_tasks)
         if repeat_tasks_count > 0:
-            msgbox = QMessageBox(self)
-            msgbox.setIcon(QMessageBox.Icon.Question)
-            msgbox.setWindowTitle("警告 - AutoLibrary")
-            msgbox.setStandardButtons(
+            MsgBox = QMessageBox(self)
+            MsgBox.setIcon(QMessageBox.Icon.Question)
+            MsgBox.setWindowTitle("警告 - AutoLibrary")
+            MsgBox.setStandardButtons(
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
-            msgbox.setText(
+            MsgBox.setText(
                 f"存在 {repeat_tasks_count} 个可重复性任务,\n"
                 "删除可重复性任务将同时删除所有已执行的记录 !\n"
                 "是否继续 ?"
@@ -520,12 +520,12 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
             delete_msgs = [
                 self.getTimerTaskDetailMessage(x) for x in repeat_tasks
             ]
-            msgbox.setDetailedText(
+            MsgBox.setDetailedText(
                 "以下可重复性任务将被删除：\n"\
                 "\n"
                 f"{"\n\n".join(delete_msgs)}"
             )
-            result = msgbox.exec()
+            result = MsgBox.exec()
             if result != QMessageBox.StandardButton.Yes:
                 return
         # clear all tasks
@@ -537,8 +537,8 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
         task: dict
     ):
 
-        dialog = ALTimerTaskHistoryDialog(self, task)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        Dialog = ALTimerTaskHistoryDialog(self, task)
+        if Dialog.exec() == QDialog.DialogCode.Accepted:
             self.timerTasksChanged.emit()
 
     def checkTasks(

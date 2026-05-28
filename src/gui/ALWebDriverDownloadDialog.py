@@ -182,14 +182,11 @@ class ALWebDriverDownloadDialog(QDialog):
         self.setMaximumHeight(240)
         self.setMinimumHeight(240)
         self.setWindowTitle("浏览器驱动下载 - AutoLibrary")
-
         self.MainLayout = QVBoxLayout(self)
         self.MainLayout.setContentsMargins(5, 5, 5, 5)
         self.MainLayout.setSpacing(5)
-
         self.BrowserCountLabel = QLabel("检测到 0 个可用浏览器：")
         self.MainLayout.addWidget(self.BrowserCountLabel)
-
         self.DriverInfoLayout = QHBoxLayout()
         self.DriverInfoLayout.setSpacing(5)
         self.DriverComboBox = QComboBox()
@@ -198,7 +195,6 @@ class ALWebDriverDownloadDialog(QDialog):
         self.StatusLabel.setFixedSize(32, 32)
         self.DriverInfoLayout.addWidget(self.StatusLabel)
         self.MainLayout.addLayout(self.DriverInfoLayout)
-
         self.DetailLayout = QVBoxLayout()
         self.DetailLayout.setSpacing(5)
         self.DetailLayout.setContentsMargins(5, 5, 5, 5)
@@ -211,7 +207,6 @@ class ALWebDriverDownloadDialog(QDialog):
         self.PathLabel.setText("路径：未安装")
         self.DetailLayout.addWidget(self.PathLabel)
         self.MainLayout.addLayout(self.DetailLayout)
-
         self.Line = QFrame()
         self.Line.setFrameShape(QFrame.Shape.HLine)
         self.Line.setFrameShadow(QFrame.Shadow.Sunken)
@@ -237,7 +232,6 @@ class ALWebDriverDownloadDialog(QDialog):
         self.ConfirmButton = QPushButton("确认")
         self.ConfirmButton.setFixedSize(80, 25)
         self.ConfirmButton.setEnabled(False)
-
         self.ControlLayout.addWidget(self.RefreshButton)
         self.ControlLayout.addWidget(self.DownloadButton)
         self.ControlLayout.addWidget(self.DeleteButton)

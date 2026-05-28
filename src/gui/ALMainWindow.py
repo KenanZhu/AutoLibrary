@@ -76,8 +76,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.icon = QIcon(":/res/icons/AutoLibrary_Logo_64.svg")
-        self.setWindowIcon(self.icon)
+        self.Icon = QIcon(":/res/icons/AutoLibrary_Logo_64.svg")
+        self.setWindowIcon(self.Icon)
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
@@ -106,15 +106,15 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        about_dialog = ALAboutDialog(self)
-        about_dialog.exec()
+        AboutDialog = ALAboutDialog(self)
+        AboutDialog.exec()
 
     def onManualActionTriggered(
         self
     ):
 
-        url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
-        QDesktopServices.openUrl(url)
+        Url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
+        QDesktopServices.openUrl(Url)
 
     def setupTray(
         self
@@ -123,7 +123,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self._showTrace("操作系统不支持系统托盘功能, 无法创建系统托盘图标", self.TraceLevel.WARNING)
             return
-        self.TrayIcon = QSystemTrayIcon(self.icon, self)
+        self.TrayIcon = QSystemTrayIcon(self.Icon, self)
         self.TrayIcon.setToolTip("AutoLibrary")
 
         self.TrayMenu = QMenu()

@@ -57,81 +57,81 @@ class ConditionalBlock(QGroupBox):
             "margin-top: 5px; padding-top: 5px; }"
         )
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        mainLayout = QVBoxLayout(self)
-        mainLayout.setSpacing(6)
-        mainLayout.setContentsMargins(8, 8, 8, 8)
-        headerLayout = QHBoxLayout()
-        headerLayout.setSpacing(8)
-        self.typeCombo = QComboBox(self)
-        self.typeCombo.addItem("IF", "IF")
-        self.typeCombo.addItem("ELSE IF", "ELSE IF")
-        self.typeCombo.addItem("ELSE", "ELSE")
-        self.typeCombo.setFixedHeight(25)
+        MainLayout = QVBoxLayout(self)
+        MainLayout.setSpacing(6)
+        MainLayout.setContentsMargins(8, 8, 8, 8)
+        HeaderLayout = QHBoxLayout()
+        HeaderLayout.setSpacing(8)
+        self.TypeCombo = QComboBox(self)
+        self.TypeCombo.addItem("IF", "IF")
+        self.TypeCombo.addItem("ELSE IF", "ELSE IF")
+        self.TypeCombo.addItem("ELSE", "ELSE")
+        self.TypeCombo.setFixedHeight(25)
         if self.blockIndex == 0:
-            self.typeCombo.setEnabled(False)
-        headerLayout.addWidget(QLabel("类型:", self))
-        headerLayout.addWidget(self.typeCombo)
-        headerLayout.addStretch()
-        self.deleteBlockBtn = QPushButton("删除此块", self)
-        self.deleteBlockBtn.setStyleSheet("color: red;")
-        self.deleteBlockBtn.setFixedHeight(25)
-        headerLayout.addWidget(self.deleteBlockBtn)
-        mainLayout.addLayout(headerLayout)
-        self.conditionWidget = QWidget(self)
-        self.conditionWidget.setSizePolicy(
+            self.TypeCombo.setEnabled(False)
+        HeaderLayout.addWidget(QLabel("类型:", self))
+        HeaderLayout.addWidget(self.TypeCombo)
+        HeaderLayout.addStretch()
+        self.DeleteBlockBtn = QPushButton("删除此块", self)
+        self.DeleteBlockBtn.setStyleSheet("color: red;")
+        self.DeleteBlockBtn.setFixedHeight(25)
+        HeaderLayout.addWidget(self.DeleteBlockBtn)
+        MainLayout.addLayout(HeaderLayout)
+        self.ConditionWidget = QWidget(self)
+        self.ConditionWidget.setSizePolicy(
             QSizePolicy.Preferred, QSizePolicy.Preferred
         )
-        condLayout = QVBoxLayout(self.conditionWidget)
-        condLayout.setContentsMargins(4, 4, 4, 4)
-        condLayout.setSpacing(6)
-        self.condRowsLayout = QVBoxLayout()
-        self.condRowsLayout.setSpacing(4)
-        condLayout.addLayout(self.condRowsLayout)
-        self.addCondBtn = QPushButton("+ 添加条件", self.conditionWidget)
-        self.addCondBtn.setFixedHeight(25)
-        condLayout.addWidget(self.addCondBtn)
-        mainLayout.addWidget(self.conditionWidget)
-        self.actionLabel = QLabel("执行步骤:", self)
-        self.actionLabel.setFixedHeight(25)
-        mainLayout.addWidget(self.actionLabel)
-        self.actionsLayout = QVBoxLayout()
-        self.actionsLayout.setSpacing(4)
-        mainLayout.addLayout(self.actionsLayout)
-        self.addActionBtn = QPushButton("+ 添加执行步骤", self)
-        self.addActionBtn.setFixedHeight(25)
-        mainLayout.addWidget(self.addActionBtn)
+        CondLayout = QVBoxLayout(self.ConditionWidget)
+        CondLayout.setContentsMargins(4, 4, 4, 4)
+        CondLayout.setSpacing(6)
+        self.CondRowsLayout = QVBoxLayout()
+        self.CondRowsLayout.setSpacing(4)
+        CondLayout.addLayout(self.CondRowsLayout)
+        self.AddCondBtn = QPushButton("+ 添加条件", self.ConditionWidget)
+        self.AddCondBtn.setFixedHeight(25)
+        CondLayout.addWidget(self.AddCondBtn)
+        MainLayout.addWidget(self.ConditionWidget)
+        self.ActionLabel = QLabel("执行步骤:", self)
+        self.ActionLabel.setFixedHeight(25)
+        MainLayout.addWidget(self.ActionLabel)
+        self.ActionsLayout = QVBoxLayout()
+        self.ActionsLayout.setSpacing(4)
+        MainLayout.addLayout(self.ActionsLayout)
+        self.AddActionBtn = QPushButton("+ 添加执行步骤", self)
+        self.AddActionBtn.setFixedHeight(25)
+        MainLayout.addWidget(self.AddActionBtn)
         self.setUpdatesEnabled(True)
 
     def connectSignals(
         self
     ):
 
-        self.typeCombo.currentIndexChanged.connect(self.onTypeChanged)
-        self.addCondBtn.clicked.connect(self.addConditionRow)
-        self.addActionBtn.clicked.connect(self.addActionStep)
+        self.TypeCombo.currentIndexChanged.connect(self.onTypeChanged)
+        self.AddCondBtn.clicked.connect(self.addConditionRow)
+        self.AddActionBtn.clicked.connect(self.addActionStep)
 
     def addInitialConditionRow(
         self
     ):
 
-        row = ConditionRowFrame(
+        Row = ConditionRowFrame(
             self._varMgr, self.blockIndex,
             isFirst=True, parent=self
         )
-        self._conditionRows.append(row)
-        self.condRowsLayout.addWidget(row)
+        self._conditionRows.append(Row)
+        self.CondRowsLayout.addWidget(Row)
 
     def addConditionRow(
         self
     ):
 
-        row = ConditionRowFrame(
+        Row = ConditionRowFrame(
             self._varMgr, self.blockIndex,
             isFirst=False, parent=self
         )
-        row.deleteBtn.clicked.connect(lambda: self.removeConditionRow(row))
-        self._conditionRows.append(row)
-        self.condRowsLayout.addWidget(row)
+        Row.DeleteBtn.clicked.connect(lambda: self.removeConditionRow(Row))
+        self._conditionRows.append(Row)
+        self.CondRowsLayout.addWidget(Row)
 
     def removeConditionRow(
         self,
@@ -140,7 +140,7 @@ class ConditionalBlock(QGroupBox):
 
         if row in self._conditionRows and len(self._conditionRows) > 1:
             self._conditionRows.remove(row)
-            self.condRowsLayout.removeWidget(row)
+            self.CondRowsLayout.removeWidget(row)
             row.hide()
             row.deleteLater()
 
@@ -148,10 +148,10 @@ class ConditionalBlock(QGroupBox):
         self
     ):
 
-        step = ActionStepFrame(self._varMgr, self.blockIndex, parent=self)
-        step.deleteBtn.clicked.connect(lambda: self.removeActionStep(step))
-        self._actionWidgets.append(step)
-        self.actionsLayout.addWidget(step)
+        Step = ActionStepFrame(self._varMgr, self.blockIndex, parent=self)
+        Step.DeleteBtn.clicked.connect(lambda: self.removeActionStep(Step))
+        self._actionWidgets.append(Step)
+        self.ActionsLayout.addWidget(Step)
 
     def removeActionStep(
         self,
@@ -160,7 +160,7 @@ class ConditionalBlock(QGroupBox):
 
         if step in self._actionWidgets:
             self._actionWidgets.remove(step)
-            self.actionsLayout.removeWidget(step)
+            self.ActionsLayout.removeWidget(step)
             step.hide()
             step.deleteLater()
 
@@ -168,7 +168,7 @@ class ConditionalBlock(QGroupBox):
         self
     ) -> str:
 
-        return self.typeCombo.currentData()
+        return self.TypeCombo.currentData()
 
     def getConditionRows(
         self
@@ -239,18 +239,18 @@ class ConditionalBlock(QGroupBox):
         prevType: str | None
     ):
 
-        model = self.typeCombo.model()
+        model = self.TypeCombo.model()
         if model is None:
             return
         for data in ("ELSE IF", "ELSE"):
-            idx = self.typeCombo.findData(data)
+            idx = self.TypeCombo.findData(data)
             if idx < 0:
                 continue
             item = model.item(idx)
             shouldEnable = prevType != "ELSE"
             item.setEnabled(shouldEnable)
-        if prevType == "ELSE" and self.typeCombo.currentData() in ("ELSE IF", "ELSE"):
-            self.typeCombo.setCurrentIndex(0)
+        if prevType == "ELSE" and self.TypeCombo.currentData() in ("ELSE IF", "ELSE"):
+            self.TypeCombo.setCurrentIndex(0)
 
     @Slot(int)
     def onTypeChanged(
@@ -258,8 +258,8 @@ class ConditionalBlock(QGroupBox):
         _idx
     ):
 
-        isCond = self.typeCombo.currentData() in ("IF", "ELSE IF")
-        self.conditionWidget.setVisible(isCond)
-        self.actionLabel.setText(
+        isCond = self.TypeCombo.currentData() in ("IF", "ELSE IF")
+        self.ConditionWidget.setVisible(isCond)
+        self.ActionLabel.setText(
             "执行步骤:" if isCond else "ELSE 执行步骤:"
         )

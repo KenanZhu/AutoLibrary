@@ -80,7 +80,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.SpecificDateTimeEdit.setDateTime(QDateTime.currentDateTime().addSecs(60))
         self.SpecificTimerLayout.addWidget(self.SpecificDateTimeEdit)
         self.TimerConfigLayout.addWidget(self.SpecificTimerWidget)
-
         self.RelativeTimerWidget = QWidget()
         self.RelativeTimerLayout = QHBoxLayout(self.RelativeTimerWidget)
         self.RelativeTimerLayout.setContentsMargins(0, 0, 0, 0)
@@ -108,17 +107,16 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.RelativeTimerLayout.addWidget(self.RelativeSecondSpinBox)
         self.TimerConfigLayout.addWidget(self.RelativeTimerWidget)
         self.RelativeTimerWidget.setVisible(False)
-
         self.AutoScriptGroupBox = QGroupBox("AutoScript 指令")
         self.AutoScriptLayout = QVBoxLayout(self.AutoScriptGroupBox)
         self.AutoScriptLayout.setContentsMargins(3, 3, 3, 3)
         self.AutoScriptLayout.setSpacing(3)
-        autoScriptBtnLayout = QHBoxLayout()
+        AutoScriptBtnLayout = QHBoxLayout()
         self.AutoScriptEditButton = QPushButton("编辑")
         self.AutoScriptEditButton.setMinimumHeight(25)
         self.AutoScriptEditButton.setFixedWidth(80)
-        autoScriptBtnLayout.addWidget(self.AutoScriptEditButton)
-        autoScriptBtnLayout.addStretch()
+        AutoScriptBtnLayout.addWidget(self.AutoScriptEditButton)
+        AutoScriptBtnLayout.addStretch()
         self.AutoScriptHelpButton = QPushButton("?")
         self.AutoScriptHelpButton.setFixedSize(20, 20)
         self.AutoScriptHelpButton.setToolTip(
@@ -132,12 +130,12 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "font-weight: bold; color: #555; }"
             "QPushButton:hover { background-color: #E0E0E0; }"
         )
-        autoScriptBtnLayout.addWidget(self.AutoScriptHelpButton)
+        AutoScriptBtnLayout.addWidget(self.AutoScriptHelpButton)
         self.AutoScriptStatusLabel = QLabel("未设置")
         self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
         self.AutoScriptStatusLabel.setFixedHeight(25)
-        autoScriptBtnLayout.addWidget(self.AutoScriptStatusLabel)
-        self.AutoScriptLayout.addLayout(autoScriptBtnLayout)
+        AutoScriptBtnLayout.addWidget(self.AutoScriptStatusLabel)
+        self.AutoScriptLayout.addLayout(AutoScriptBtnLayout)
         self.ALAddTimerTaskLayout.insertWidget(
             self.ALAddTimerTaskLayout.indexOf(self.TaskConfigGroupBox) + 1,
             self.AutoScriptGroupBox
@@ -305,18 +303,18 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
     @Slot()
     def onPreviewAutoScript(self):
         from gui.ALAutoScriptEditDialog import ALAutoScriptEditDialog
-        dlg = ALAutoScriptEditDialog(self, self.__auto_script, self.__mock_target_data)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            script = dlg.getScript()
+        Dlg = ALAutoScriptEditDialog(self, self.__auto_script, self.__mock_target_data)
+        if Dlg.exec() == QDialog.DialogCode.Accepted:
+            script = Dlg.getScript()
             self.__auto_script = script
-            self.__mock_target_data = dlg.getMockData()
+            self.__mock_target_data = Dlg.getMockData()
             if script:
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
             else:
                 self.AutoScriptStatusLabel.setText("未设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
-        dlg.deleteLater()
+        Dlg.deleteLater()
 
     @Slot()
     def onAutoScriptHelp(

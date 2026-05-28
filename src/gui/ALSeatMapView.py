@@ -103,15 +103,15 @@ class ALSeatMapView(QGraphicsView):
             seats_number = [seat.strip() for seat in row.split(",")]
             for seat_number in seats_number:
                 if seat_number:
-                    seat_widget = ALSeatFrame(seat_number)
-                    seat_widget.clicked.connect(self.onSeatClicked)
-                    self.SeatsContainerLayout.addWidget(seat_widget, row_idx, col_idx)
-                    self.__seat_frames[seat_number] = seat_widget
+                    SeatWidget = ALSeatFrame(seat_number)
+                    SeatWidget.clicked.connect(self.onSeatClicked)
+                    self.SeatsContainerLayout.addWidget(SeatWidget, row_idx, col_idx)
+                    self.__seat_frames[seat_number] = SeatWidget
                 else:
-                    spacer = QFrame()
-                    spacer.setFixedSize(20, 30)
-                    spacer.setStyleSheet("background-color: transparent; border: none;")
-                    self.SeatsContainerLayout.addWidget(spacer, row_idx, col_idx)
+                    Spacer = QFrame()
+                    Spacer.setFixedSize(20, 30)
+                    Spacer.setStyleSheet("background-color: transparent; border: none;")
+                    self.SeatsContainerLayout.addWidget(Spacer, row_idx, col_idx)
                 col_idx += 1
         self.SeatsContainerLayout.setSpacing(20)
         self.SeatsContainerLayout.setContentsMargins(20, 20, 20, 20)

@@ -51,9 +51,9 @@ class ALUserTreeWidget(QTreeWidget):
         self
     ):
 
-        __qtreewidgetitem = QTreeWidgetItem()
-        __qtreewidgetitem.setText(0, u"\u5206\u7ec4/\u7528\u6237");
-        self.setHeaderItem(__qtreewidgetitem)
+        __QTreeWidgetItem = QTreeWidgetItem()
+        __QTreeWidgetItem.setText(0, u"\u5206\u7ec4/\u7528\u6237");
+        self.setHeaderItem(__QTreeWidgetItem)
         self.setObjectName(u"UserTreeWidget")
         self.setMinimumSize(QSize(230, 0))
         self.setMaximumSize(QSize(250, 16777215))
@@ -81,8 +81,8 @@ class ALUserTreeWidget(QTreeWidget):
         self
     ):
 
-        ___qtreewidgetitem = self.headerItem()
-        ___qtreewidgetitem.setText(1, QCoreApplication.translate("ALConfigWidget", u"\u72b6\u6001", None));
+        ___QTreeWidgetItem = self.headerItem()
+        ___QTreeWidgetItem.setText(1, QCoreApplication.translate("ALConfigWidget", u"\u72b6\u6001", None));
 
     @staticmethod
     def isDragPositionValid(
@@ -109,27 +109,27 @@ class ALUserTreeWidget(QTreeWidget):
 
         super().dragMoveEvent(event)
 
-        source_item = self.currentItem()
-        target_item = self.itemAt(event.position().toPoint())
-        if source_item is None:
+        SourceItem = self.currentItem()
+        TargetItem = self.itemAt(event.position().toPoint())
+        if SourceItem is None:
             event.ignore()
             return
-        if source_item.type() == ALUserTreeItemType.GROUP.value:
-            if target_item is not None:
+        if SourceItem.type() == ALUserTreeItemType.GROUP.value:
+            if TargetItem is not None:
                 event.ignore()
                 return
-        elif source_item.type() == ALUserTreeItemType.USER.value:
-            if target_item is None:
+        elif SourceItem.type() == ALUserTreeItemType.USER.value:
+            if TargetItem is None:
                 event.ignore()
                 return
-            if target_item.type() != ALUserTreeItemType.GROUP.value:
+            if TargetItem.type() != ALUserTreeItemType.GROUP.value:
                 event.ignore()
                 return
-            if target_item.checkState(1) == Qt.CheckState.Unchecked:
+            if TargetItem.checkState(1) == Qt.CheckState.Unchecked:
                 event.ignore()
                 return
             if not self.isDragPositionValid(
-                self.visualItemRect(target_item),
+                self.visualItemRect(TargetItem),
                 event.position().toPoint()
             ):
                 event.ignore()

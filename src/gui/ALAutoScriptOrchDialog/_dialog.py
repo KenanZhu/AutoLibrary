@@ -40,7 +40,7 @@ class ALAutoScriptOrchDialog(QDialog):
         self.setupUi()
         self.connectSignals()
         self.addBlock()
-        self.scrollLayout.addStretch()
+        self.ScrollLayout.addStretch()
 
     def setupUi(
         self
@@ -49,33 +49,33 @@ class ALAutoScriptOrchDialog(QDialog):
         self.setWindowTitle("AutoScript 指令编排 - AutoLibrary")
         self.setMinimumSize(640, 600)
         self.setModal(True)
-        mainLayout = QVBoxLayout(self)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        scrollContent = QWidget()
-        self.scrollLayout = QVBoxLayout(scrollContent)
-        self.scrollLayout.setSpacing(5)
-        scroll.setWidget(scrollContent)
-        mainLayout.addWidget(scroll)
-        self.addBlockBtn = QPushButton("+ 添加判断块")
-        self.addBlockBtn.setFixedHeight(25)
-        mainLayout.addWidget(self.addBlockBtn)
-        self.btnBox = QDialogButtonBox(
+        MainLayout = QVBoxLayout(self)
+        Scroll = QScrollArea()
+        Scroll.setWidgetResizable(True)
+        Scroll.setFrameShape(QFrame.NoFrame)
+        ScrollContent = QWidget()
+        self.ScrollLayout = QVBoxLayout(ScrollContent)
+        self.ScrollLayout.setSpacing(5)
+        Scroll.setWidget(ScrollContent)
+        MainLayout.addWidget(Scroll)
+        self.AddBlockBtn = QPushButton("+ 添加判断块")
+        self.AddBlockBtn.setFixedHeight(25)
+        MainLayout.addWidget(self.AddBlockBtn)
+        self.BtnBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok |
             QDialogButtonBox.StandardButton.Cancel
         )
-        self.btnBox.button(QDialogButtonBox.StandardButton.Ok).setText("确定")
-        self.btnBox.button(QDialogButtonBox.StandardButton.Cancel).setText("取消")
-        mainLayout.addWidget(self.btnBox)
+        self.BtnBox.button(QDialogButtonBox.StandardButton.Ok).setText("确定")
+        self.BtnBox.button(QDialogButtonBox.StandardButton.Cancel).setText("取消")
+        MainLayout.addWidget(self.BtnBox)
 
     def connectSignals(
         self
     ):
 
-        self.btnBox.accepted.connect(self.onAccept)
-        self.btnBox.rejected.connect(self.reject)
-        self.addBlockBtn.clicked.connect(self.addBlock)
+        self.BtnBox.accepted.connect(self.onAccept)
+        self.BtnBox.rejected.connect(self.reject)
+        self.AddBlockBtn.clicked.connect(self.addBlock)
 
     def updateBlockTypeRestrictions(
         self
@@ -90,24 +90,24 @@ class ALAutoScriptOrchDialog(QDialog):
         self
     ):
 
-        block = ConditionalBlock(
+        Block = ConditionalBlock(
             len(self._blocks), self._varMgr, parent=self
         )
-        block.deleteBlockBtn.clicked.connect(lambda: self.removeBlock(block))
-        block.typeCombo.currentIndexChanged.connect(self.updateBlockTypeRestrictions)
-        block.addActionStep()
-        self._blocks.append(block)
+        Block.DeleteBlockBtn.clicked.connect(lambda: self.removeBlock(Block))
+        Block.TypeCombo.currentIndexChanged.connect(self.updateBlockTypeRestrictions)
+        Block.addActionStep()
+        self._blocks.append(Block)
         self.updateBlockTypeRestrictions()
-        if self.scrollLayout.count() > 0:
-            lastItem = self.scrollLayout.itemAt(
-                self.scrollLayout.count() - 1
+        if self.ScrollLayout.count() > 0:
+            lastItem = self.ScrollLayout.itemAt(
+                self.ScrollLayout.count() - 1
             )
             if lastItem and lastItem.spacerItem():
-                self.scrollLayout.insertWidget(
-                    self.scrollLayout.count() - 1, block
+                self.ScrollLayout.insertWidget(
+                    self.ScrollLayout.count() - 1, Block
                 )
                 return
-        self.scrollLayout.addWidget(block)
+        self.ScrollLayout.addWidget(Block)
 
     def removeBlock(
         self,
@@ -119,16 +119,16 @@ class ALAutoScriptOrchDialog(QDialog):
             return
         if block in self._blocks:
             self._blocks.remove(block)
-            self.scrollLayout.removeWidget(block)
+            self.ScrollLayout.removeWidget(block)
             block.hide()
             block.deleteLater()
         for i, blk in enumerate(self._blocks):
             blk.blockIndex = i
             if i == 0:
-                blk.typeCombo.setEnabled(False)
-                blk.typeCombo.setCurrentIndex(0)
+                blk.TypeCombo.setEnabled(False)
+                blk.TypeCombo.setCurrentIndex(0)
             else:
-                blk.typeCombo.setEnabled(True)
+                blk.TypeCombo.setEnabled(True)
             blk.refreshVarCombos()
         self.updateBlockTypeRestrictions()
 
