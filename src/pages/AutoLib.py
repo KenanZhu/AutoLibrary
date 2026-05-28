@@ -233,6 +233,7 @@ class AutoLib(MsgBase):
 
         # result : -1 - terminate, 0 - success, 1 - failed, 2 - passed
         result: int = 2
+
         # login
         auto_captcha: bool = login_config.get("auto_captcha", True)
         if not self.__login_page.login(
@@ -249,10 +250,11 @@ class AutoLib(MsgBase):
             "auto_checkin": run_mode_raw & 0x2,
             "auto_renewal": run_mode_raw & 0x4,
         }
+
         # reserve
         if run_mode["auto_reserve"]:
-            if self.__record_checker.canReserve(self.__shell, reserve_info["date"]):
-                if self.__reserve_checker.check(reserve_info):
+            if self.__reserve_checker.check(reserve_info):
+                if self.__record_checker.canReserve(self.__shell, reserve_info["date"]):
                     ctx = ReserveContext(
                         username=username,
                         date=reserve_info["date"],
@@ -273,10 +275,10 @@ class AutoLib(MsgBase):
                     else:
                         result = 1
                 else:
-                    result = 1
+                    self._showTrace(f"用户 {username} 无法预约, 已跳过")
+                    result = 2
             else:
-                self._showTrace(f"用户 {username} 无法预约, 已跳过")
-                result = 2
+                result = 1
 
         # checkin
         last_result: int = result
@@ -317,8 +319,11 @@ class AutoLib(MsgBase):
 
         # logout
         if not self.__shell.logout():
+            self._showTrace(f"用户 {username} 退出登录失败, 尝试直接重载页面")
             if not self.__initDriverUrl():
+                self._showTrace(f"用户 {username} 重载页面失败, 无法继续操作, 该任务已终止 !")
                 return -1
+        self._showTrace(f"用户 {username} 已退出登录")
         return result
 
     def run(
