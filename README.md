@@ -42,7 +42,7 @@
 本工具目前仅支持 Windows 平台，由于使用 PySide6 库开发，理论上是可以自行编译并在 Linux 和 macOS 上运行，这里提供简单的编译步骤：
 
 1. 确保系统安装了 Python 3.13 版本 （推荐，过低或高版本会导致兼容问题）。
-2. 安装所需依赖库，包括 PySide6、ddddocr、selenium、pillow 等（建议在虚拟环境下操作）。
+2. 安装所有依赖库，命令为 `pip install -r requirements.txt` （建议在虚拟环境下操作）。
 3. 在 `batchs` 目录下运行 `compile_ui.bat` （linux 和 macOS 系统使用 `compile_ui.sh`） 文件来编译 Qt 的 UI 文件。
 4. 在上一步相同目录内运行 `compile_rc.bat` （linux 和 macOS 系统使用 `compile_rc.sh`） 文件来编译 Qt 的资源文件。
 5. 待上述步骤完成后，运行 `src/Main.py` 文件即可。
