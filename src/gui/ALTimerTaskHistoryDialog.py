@@ -28,22 +28,19 @@ class ALTimerTaskHistoryDialog(QDialog):
     ):
 
         super().__init__(parent)
-
         self.__task_data = task_data
         self.__history = task_data.get("repeat_history", [])
 
-        self.modifyUi()
+        self.setupUi()
         self.connectSignals()
 
-
-    def modifyUi(
+    def setupUi(
         self
     ):
 
         self.setWindowTitle("定时任务执行历史 - AutoLibrary")
         self.setMinimumSize(300, 300)
         self.setMaximumSize(500, 400)
-
         MainLayout = QVBoxLayout(self)
         InfoLayout = QGridLayout()
         TaskNameLabel = QLabel(f"任务: {self.__task_data.get('name', '未命名')}")
@@ -53,7 +50,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         TaskUUIDLabel.setStyleSheet("color: #969696; font-size: 11px;")
         InfoLayout.addWidget(TaskUUIDLabel, 1, 0)
         InfoLayout.setColumnStretch(0, 1)
-
         if self.__task_data.get("repeat", False):
             RepeatLabel = QLabel("可重复性任务")
             RepeatLabel.setStyleSheet("color: #2294FF; font-size: 12px;")
@@ -70,7 +66,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         self.HistoryTableWidget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.loadHistory()
         MainLayout.addWidget(self.HistoryTableWidget)
-
         ButtonLayout = QHBoxLayout()
         ButtonLayout.addStretch()
         self.CloseButton = QPushButton("关闭")
@@ -83,14 +78,12 @@ class ALTimerTaskHistoryDialog(QDialog):
         ButtonLayout.addWidget(self.CloseButton)
         MainLayout.addLayout(ButtonLayout)
 
-
     def connectSignals(
         self
     ):
 
         self.CloseButton.clicked.connect(self.accept)
         self.ClearHistoryButton.clicked.connect(self.onClearHistoryButtonClicked)
-
 
     def loadHistory(
         self
@@ -100,6 +93,11 @@ class ALTimerTaskHistoryDialog(QDialog):
         for row, record in enumerate(self.__history):
             self.addHistoryRow(row, record)
 
+    def getHistory(
+        self
+    ) -> list:
+
+        return self.__history
 
     def addHistoryRow(
         self,
@@ -129,13 +127,6 @@ class ALTimerTaskHistoryDialog(QDialog):
         DurationItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.HistoryTableWidget.setItem(row, 2, DurationItem)
         self.HistoryTableWidget.setRowHeight(row, 25)
-
-
-    def getHistory(
-        self
-    ) -> list:
-
-        return self.__history
 
     @Slot()
     def onClearHistoryButtonClicked(

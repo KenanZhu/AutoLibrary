@@ -47,7 +47,7 @@ on:
 jobs:
   #
   # Start :
-  #   virtual job that indacates the start of the release process
+  #   virtual job that indicates the start of the release process
   #
 
   start:
@@ -158,7 +158,7 @@ jobs:
     needs:
       - update-version
       - commit-release
-    if: always() && needs.update-version.result == 'success' && needs.commit-release.result == 'success'
+    if: always() && needs.update-version.result == 'success' && (needs.commit-release.result == 'success' || needs.commit-release.result == 'skipped')
     uses: ./.github/workflows/build.yml
     permissions:
       contents: write
@@ -205,7 +205,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # End :
-  #   virtual job that indacates the end of the release process
+  #   virtual job that indicates the end of the release process
   #
 
   end:
@@ -227,7 +227,7 @@ jobs:
       - release
       - extract-version
       - commit-release
-    if: ${{ needs.release.result == 'success' && needs.commit-release.result == 'success' }}
+    if: ${{ needs.release.result == 'success' && (needs.commit-release.result == 'success' || needs.commit-release.result == 'skipped') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -267,9 +267,13 @@ jobs:
         git checkout ${MAIN_BRANCH}
 
         # Show branch status before merge
-        echo "=== Branch status before merge ==="
+        echo "========================================"
+        echo "Branch status before merge"
+        echo "========================================"
         git log --oneline --graph --all -5
-        echo "=== Diff between ${MAIN_BRANCH} and origin/${BRANCH_NAME} ==="
+        echo "========================================"
+        echo "Diff: ${MAIN_BRANCH} vs origin/${BRANCH_NAME}"
+        echo "========================================"
         git diff ${MAIN_BRANCH} origin/${BRANCH_NAME} --stat || echo "No differences found"
 
         # Force create a merge commit even if there are no changes
@@ -279,7 +283,9 @@ jobs:
           -m "chore(release): merge ${BRANCH_NAME} to ${MAIN_BRANCH} [auto release commit]"
 
         # Show merge result
-        echo "=== Merge result ==="
+        echo "========================================"
+        echo "Merge result"
+        echo "========================================"
         git log --oneline --graph -3
 
         # Push to main
@@ -310,6 +316,7 @@ jobs:
 
         echo "## Release Cleanup Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "========================================" >> $GITHUB_STEP_SUMMARY
         echo "✓ Release completed successfully!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Actions Performed:" >> $GITHUB_STEP_SUMMARY

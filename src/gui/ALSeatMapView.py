@@ -8,14 +8,21 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 from PySide6.QtCore import (
-    Qt, Slot, QEvent
+    Qt,
+    Slot,
+    QEvent
 )
 from PySide6.QtWidgets import (
-    QFrame, QWidget,
-    QGridLayout, QGraphicsView, QGraphicsScene, QGraphicsItem
+    QFrame,
+    QWidget,
+    QGridLayout,
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsItem
 )
 from PySide6.QtGui import (
-    QPainter, QWheelEvent
+    QPainter,
+    QWheelEvent
 )
 
 from gui.ALSeatFrame import ALSeatFrame
@@ -35,18 +42,6 @@ class ALSeatMapView(QGraphicsView):
 
         self.setupUi()
 
-    @staticmethod
-    def formatSeatNumber(
-        seat_number: str
-    ) -> str:
-
-        if seat_number and not seat_number[-1].isdigit():
-            digits = seat_number[:-1]
-            letter = seat_number[-1]
-            return digits.zfill(3) + letter
-        return seat_number.zfill(3)
-
-
     def eventFilter(
         self,
         watched,
@@ -60,7 +55,6 @@ class ALSeatMapView(QGraphicsView):
             self.zoomGraphicsView(event)
             return True
         return super().eventFilter(watched, event)
-
 
     def zoomGraphicsView(
         self,
@@ -79,7 +73,6 @@ class ALSeatMapView(QGraphicsView):
             return
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scale(zoom_factor, zoom_factor)
-
 
     def setupUi(
         self
@@ -100,7 +93,6 @@ class ALSeatMapView(QGraphicsView):
         self.ContainerProxy = self.SeatMapGraphicsScene.addWidget(self.SeatsContainerWidget)
         self.ContainerProxy.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
 
-
     def setupSeatMap(
         self
     ):
@@ -111,20 +103,19 @@ class ALSeatMapView(QGraphicsView):
             seats_number = [seat.strip() for seat in row.split(",")]
             for seat_number in seats_number:
                 if seat_number:
-                    seat_widget = ALSeatFrame(seat_number)
-                    seat_widget.clicked.connect(self.onSeatClicked)
-                    self.SeatsContainerLayout.addWidget(seat_widget, row_idx, col_idx)
-                    self.__seat_frames[seat_number] = seat_widget
+                    SeatWidget = ALSeatFrame(seat_number)
+                    SeatWidget.clicked.connect(self.onSeatClicked)
+                    self.SeatsContainerLayout.addWidget(SeatWidget, row_idx, col_idx)
+                    self.__seat_frames[seat_number] = SeatWidget
                 else:
-                    spacer = QFrame()
-                    spacer.setFixedSize(20, 30)
-                    spacer.setStyleSheet("background-color: transparent; border: none;")
-                    self.SeatsContainerLayout.addWidget(spacer, row_idx, col_idx)
+                    Spacer = QFrame()
+                    Spacer.setFixedSize(20, 30)
+                    Spacer.setStyleSheet("background-color: transparent; border: none;")
+                    self.SeatsContainerLayout.addWidget(Spacer, row_idx, col_idx)
                 col_idx += 1
         self.SeatsContainerLayout.setSpacing(20)
         self.SeatsContainerLayout.setContentsMargins(20, 20, 20, 20)
         self.SeatsContainerWidget.adjustSize()
-
 
     def selectSeat(
         self,
@@ -142,7 +133,6 @@ class ALSeatMapView(QGraphicsView):
         widget.toggleSelection()
         self.__selected_seats.append(seat_number)
 
-
     def selectSeats(
         self,
         selected_seats: list
@@ -152,13 +142,11 @@ class ALSeatMapView(QGraphicsView):
         for seat_number in selected_seats:
             self.selectSeat(seat_number)
 
-
     def getSelectedSeats(
         self
     ) -> list[str]:
 
         return self.__selected_seats
-
 
     def clearSelections(
         self
@@ -186,3 +174,14 @@ class ALSeatMapView(QGraphicsView):
                 self.__selected_seats.append(seat_number)
             else:
                 self.__seat_frames[seat_number].toggleSelection()
+
+    @staticmethod
+    def formatSeatNumber(
+        seat_number: str
+    ) -> str:
+
+        if seat_number and not seat_number[-1].isdigit():
+            digits = seat_number[:-1]
+            letter = seat_number[-1]
+            return digits.zfill(3) + letter
+        return seat_number.zfill(3)

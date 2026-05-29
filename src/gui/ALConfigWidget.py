@@ -10,27 +10,46 @@ See the LICENSE file for details.
 import os
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTime, QDate, QDir, QFileInfo
-)
-from PySide6.QtWidgets import (
-    QDialog, QWidget, QLineEdit, QMessageBox, QFileDialog,
-    QTreeWidgetItem, QMenu, QInputDialog
+    QDate,
+    QDir,
+    QFileInfo,
+    Qt,
+    QTime,
+    Signal,
+    Slot
 )
 from PySide6.QtGui import (
-     QCloseEvent, QAction
+    QAction,
+    QCloseEvent
+)
+from PySide6.QtWidgets import (
+    QDialog,
+    QFileDialog,
+    QInputDialog,
+    QLineEdit,
+    QMenu,
+    QMessageBox,
+    QTreeWidgetItem,
+    QWidget
 )
 
 import managers.config.ConfigManager as ConfigManager
 
-from utils.JSONReader import JSONReader
-from utils.JSONWriter import JSONWriter
-from utils.ConfigUtils import ConfigUtils
-
-from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
 from gui.ALSeatMapSelectDialog import ALSeatMapSelectDialog
 from gui.ALSeatMapTable import ALSeatMapTable
-from gui.ALUserTreeWidget import ALUserTreeWidget, ALUserTreeItemType
+from gui.ALUserTreeWidget import (
+    ALUserTreeItemType,
+    ALUserTreeWidget
+)
 from gui.ALWebDriverDownloadDialog import ALWebDriverDownloadDialog
+from gui.resources.ui.Ui_ALConfigWidget import Ui_ALConfigWidget
+from interfaces.ConfigProvider import (
+    CfgKey,
+    ConfigProvider
+)
+from managers.config.ConfigUtils import ConfigUtils
+from utils.JSONReader import JSONReader
+from utils.JSONWriter import JSONWriter
 
 
 class ALConfigWidget(QWidget, Ui_ALConfigWidget):
@@ -43,7 +62,7 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
     ):
 
         super().__init__(parent)
-        self.__cfg_mgr = ConfigManager.instance()
+        self.__cfg_mgr: ConfigProvider = ConfigManager.instance()
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.__config_data = {"run": {}, "user": {}}
 
@@ -52,7 +71,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.connectSignals()
         if not self.initializeConfigs():
             self.close()
-
 
     def modifyUi(
         self
@@ -68,7 +86,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.UserTreeWidget.customContextMenuRequested.connect(self.onUserTreeWidgetContextMenu)
         self.initializeFloorRoomMap()
         self.initializeUserInfoWidget()
-
 
     def connectSignals(
         self
@@ -93,7 +110,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
 
-
     def showEvent(
         self,
         event
@@ -117,7 +133,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         return result
 
-
     def closeEvent(
         self,
         event: QCloseEvent
@@ -125,7 +140,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
 
         self.configWidgetIsClosed.emit()
         super().closeEvent(event)
-
 
     def initializeFloorRoomMap(
         self
@@ -160,7 +174,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             "五层": ["五层考研"]
         }
 
-
     def initializeConfigToWidget(
         self,
         which: str,
@@ -174,7 +187,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             self.initializeUserInfoWidget()
             self.setUsersToTreeWidget(config_data)
             self.CurrentUserConfigEdit.setText(self.__config_paths["user"])
-
 
     def initializeConfig(
         self,
@@ -209,7 +221,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                     is_success = False
         return is_success
 
-
     def initializeConfigs(
         self
     ) -> bool:
@@ -221,7 +232,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 break
             self.initializeConfigToWidget(which, self.__config_data[which])
         return is_success
-
 
     def defaultRunConfig(
         self
@@ -246,7 +256,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             }
         }
 
-
     def defaultUserConfig(
         self
     ) -> dict:
@@ -255,7 +264,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             "groups": [
             ]
         }
-
 
     def collectRunConfigFromWidget(
         self
@@ -277,7 +285,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             run_mode |= 0x04
         run_config["mode"]["run_mode"] = run_mode
         return run_config
-
 
     def setRunConfigToWidget(
         self,
@@ -317,7 +324,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "文件可能被意外修改或已经损坏\n"
             )
 
-
     def initializeUserInfoWidget(
         self
     ):
@@ -341,7 +347,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self.ExpectRenewDurationSpinBox.setValue(1.0)
         self.MaxRenewTimeDiffSpinBox.setValue(30)
         self.PreferLateRenewTimeCheckBox.setChecked(False)
-
 
     def collectUserFromWidget(
         self
@@ -375,29 +380,27 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         user["reserve_info"]["renew_time"]["prefer_early"] = not self.PreferLateRenewTimeCheckBox.isChecked()
         return user
 
-
     def collectUsersFromTreeWidget(
         self
     ) -> dict:
 
         user_config = self.defaultUserConfig()
         for i in range(self.UserTreeWidget.topLevelItemCount()):
-            group_item = self.UserTreeWidget.topLevelItem(i)
+            GroupItem = self.UserTreeWidget.topLevelItem(i)
             group_config = {
-                "name": group_item.text(0),
-                "enabled": group_item.checkState(1) == Qt.CheckState.Checked,
+                "name": GroupItem.text(0),
+                "enabled": GroupItem.checkState(1) == Qt.CheckState.Checked,
                 "users": []
             }
-            for j in range(group_item.childCount()):
-                user_item = group_item.child(j)
-                user = user_item.data(0, Qt.UserRole)
+            for j in range(GroupItem.childCount()):
+                UserItem = GroupItem.child(j)
+                user = UserItem.data(0, Qt.UserRole)
                 if not user:
                     continue
-                user["enabled"] = user_item.checkState(1) == Qt.CheckState.Checked
+                user["enabled"] = UserItem.checkState(1) == Qt.CheckState.Checked
                 group_config["users"].append(user)
             user_config["groups"].append(group_config)
         return user_config
-
 
     def setUserToWidget(
         self,
@@ -440,7 +443,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 "文件可能被意外修改或已经损坏\n"
             )
 
-
     def setUsersToTreeWidget(
         self,
         users: dict
@@ -451,18 +453,18 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         try:
             if "groups" in users:
                 for group_config in users["groups"]:
-                    group_item = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
-                    group_item.setText(0, group_config["name"])
-                    group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
-                    group_item.setCheckState(1, Qt.Checked if group_config.get("enabled", True) else Qt.Unchecked)
+                    GroupItem = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
+                    GroupItem.setText(0, group_config["name"])
+                    GroupItem.setFlags(GroupItem.flags() | Qt.ItemIsEditable)
+                    GroupItem.setCheckState(1, Qt.Checked if group_config.get("enabled", True) else Qt.Unchecked)
                     for user_config in group_config["users"]:
-                        user_item = QTreeWidgetItem(group_item, ALUserTreeItemType.USER.value)
-                        user_item.setText(0, user_config["username"])
-                        user_item.setText(1, "" if user_config.get("enabled", True) else "跳过")
-                        user_item.setData(0, Qt.UserRole, user_config)
-                        user_item.setCheckState(1, Qt.Checked if user_config.get("enabled", True) else Qt.Unchecked)
-                        user_item.setDisabled(not group_config.get("enabled", True))
-                    group_item.setExpanded(True)
+                        UserItem = QTreeWidgetItem(GroupItem, ALUserTreeItemType.USER.value)
+                        UserItem.setText(0, user_config["username"])
+                        UserItem.setText(1, "" if user_config.get("enabled", True) else "跳过")
+                        UserItem.setData(0, Qt.UserRole, user_config)
+                        UserItem.setCheckState(1, Qt.Checked if user_config.get("enabled", True) else Qt.Unchecked)
+                        UserItem.setDisabled(not group_config.get("enabled", True))
+                    GroupItem.setExpanded(True)
         except KeyError as e:
             QMessageBox.warning(
                 self,
@@ -481,7 +483,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             )
         finally:
             self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
-
 
     def loadRunConfig(
         self,
@@ -506,7 +507,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             )
             return None
 
-
     def saveRunConfig(
         self,
         run_config_path: str,
@@ -527,7 +527,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 f"配置文件写入发生错误 ! : \n{e}"
             )
             return False
-
 
     def loadUserConfig(
         self,
@@ -562,7 +561,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             )
             return None
 
-
     def saveUserConfig(
         self,
         user_config_path: str,
@@ -583,7 +581,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 f"用户配置文件写入发生错误 ! :\n{e}"
             )
             return False
-
 
     def saveConfigs(
         self,
@@ -606,7 +603,6 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             ):
                 return False
         return True
-
 
     def loadConfig(
         self,
@@ -636,52 +632,49 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         except:
             return False
 
-
     def addGroup(
         self,
         group_name: str = ""
     ) -> QTreeWidgetItem:
 
         self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
-        group_item = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
+        GroupItem = QTreeWidgetItem(self.UserTreeWidget, ALUserTreeItemType.GROUP.value)
         if not group_name:
             group_name = f"新分组-{self.UserTreeWidget.topLevelItemCount()}"
-        group_item.setText(0, group_name)
-        group_item.setFlags(group_item.flags() | Qt.ItemIsEditable)
-        group_item.setCheckState(1, Qt.Checked)
-        self.UserTreeWidget.setCurrentItem(group_item)
+        GroupItem.setText(0, group_name)
+        GroupItem.setFlags(GroupItem.flags() | Qt.ItemIsEditable)
+        GroupItem.setCheckState(1, Qt.Checked)
+        self.UserTreeWidget.setCurrentItem(GroupItem)
         self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
-        return group_item
-
+        return GroupItem
 
     def delGroup(
         self,
-        group_item: QTreeWidgetItem = None
+        GroupItem: QTreeWidgetItem = None
     ):
 
-        if group_item is None:
+        if GroupItem is None:
             return
-        if group_item.type() != ALUserTreeItemType.GROUP.value:
+        if GroupItem.type() != ALUserTreeItemType.GROUP.value:
             return
-        index = self.UserTreeWidget.indexOfTopLevelItem(group_item)
+        index = self.UserTreeWidget.indexOfTopLevelItem(GroupItem)
         self.UserTreeWidget.takeTopLevelItem(index)
-
 
     def addUser(
         self,
-        group_item: QTreeWidgetItem = None
+        GroupItem: QTreeWidgetItem = None
     ) -> QTreeWidgetItem:
 
-        if group_item is None:
-            current_item = self.UserTreeWidget.currentItem()
-            if current_item is None:
-                group_item = self.addGroup()
-        if group_item.type() == ALUserTreeItemType.USER.value:
-            group_item = group_item.parent()
-        if group_item.checkState(1) == Qt.CheckState.Unchecked:
+        if GroupItem is None:
+            CurrentItem = self.UserTreeWidget.currentItem()
+            if CurrentItem is None:
+                GroupItem = self.addGroup()
+        if GroupItem.type() == ALUserTreeItemType.USER.value:
+            GroupItem = GroupItem.parent()
+        if GroupItem.checkState(1) == Qt.CheckState.Unchecked:
             return None
         new_user = {
-            "username": f"新用户-{group_item.childCount()}",
+            "username": f"新用户-{GroupItem.childCount()}",
             "password": "000000",
             "enabled": True,
             "reserve_info": {
@@ -710,33 +703,31 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
             }
         }
         self.UserTreeWidget.itemChanged.disconnect(self.onUserTreeWidgetItemChanged)
-        user_item = QTreeWidgetItem(group_item, ALUserTreeItemType.USER.value)
-        user_item.setText(0, new_user["username"])
-        user_item.setText(1, "")
-        user_item.setData(0, Qt.UserRole, new_user)
-        user_item.setCheckState(1, Qt.CheckState.Checked)
-        group_item.setExpanded(True)
-        self.UserTreeWidget.setCurrentItem(user_item)
+        UserItem = QTreeWidgetItem(GroupItem, ALUserTreeItemType.USER.value)
+        UserItem.setText(0, new_user["username"])
+        UserItem.setText(1, "")
+        UserItem.setData(0, Qt.UserRole, new_user)
+        UserItem.setCheckState(1, Qt.CheckState.Checked)
+        GroupItem.setExpanded(True)
+        self.UserTreeWidget.setCurrentItem(UserItem)
         self.setUserToWidget(new_user)
         self.UserTreeWidget.itemChanged.connect(self.onUserTreeWidgetItemChanged)
-        return user_item
-
+        return UserItem
 
     def delUser(
         self,
-        user_item: QTreeWidgetItem = None
+        UserItem: QTreeWidgetItem = None
     ):
 
-        if user_item is None:
+        if UserItem is None:
             return
-        if user_item.type() != ALUserTreeItemType.USER.value:
+        if UserItem.type() != ALUserTreeItemType.USER.value:
             return
-        parent_item = user_item.parent()
-        index = parent_item.indexOfChild(user_item)
-        parent_item.takeChild(index)
-        if parent_item.childCount() == 0:
+        ParentItem = UserItem.parent()
+        index = ParentItem.indexOfChild(UserItem)
+        ParentItem.takeChild(index)
+        if ParentItem.childCount() == 0:
             self.UserTreeWidget.setCurrentItem(None)
-
 
     def renameItem(
         self,
@@ -796,19 +787,19 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         room = self.RoomComboBox.currentText()
         floor_idx = self.__floor_rmap[floor]
         room_idx = self.__room_rmap[room]
-        dialog = ALSeatMapSelectDialog(
+        Dialog = ALSeatMapSelectDialog(
             self,
             floor,
             room,
             ALSeatMapTable[floor_idx][room_idx]
         )
-        dialog.selectSeats(self.SeatIDEdit.text().split(","))
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            selected_seats = dialog.getSelectedSeats()
+        Dialog.selectSeats(self.SeatIDEdit.text().split(","))
+        if Dialog.exec() == QDialog.DialogCode.Accepted:
+            selected_seats = Dialog.getSelectedSeats()
             if len(selected_seats) == 0:
                 self.SeatIDEdit.clear()
                 return
-            self.SeatIDEdit.setText(",".join(dialog.getSelectedSeats()))
+            self.SeatIDEdit.setText(",".join(Dialog.getSelectedSeats()))
 
     @Slot()
     def onUserTreeWidgetCurrentItemChanged(
@@ -853,57 +844,54 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if item.type() == ALUserTreeItemType.GROUP.value:
             is_checked = item.checkState(1) == Qt.CheckState.Checked
             for i in range(item.childCount()):
-                child = item.child(i)
-                if self.UserTreeWidget.currentItem() == child:
+                Child = item.child(i)
+                if self.UserTreeWidget.currentItem() == Child:
                     self.UserTreeWidget.setCurrentItem(item)
-                child.setDisabled(not is_checked)
+                Child.setDisabled(not is_checked)
         else:
             is_checked = item.checkState(1) == Qt.CheckState.Checked
             item.setText(1, "" if is_checked else "跳过")
-
 
     def showTreeMenu(
         self,
         menu: QMenu
     ):
 
-        add_group_action = QAction("添加分组", menu)
-        add_group_action.triggered.connect(self.addGroup)
-        menu.addAction(add_group_action)
-
+        AddGroupAction = QAction("添加分组", menu)
+        AddGroupAction.triggered.connect(self.addGroup)
+        menu.addAction(AddGroupAction)
 
     def showGroupMenu(
         self,
         menu: QMenu,
-        group_item: QTreeWidgetItem = None
+        GroupItem: QTreeWidgetItem = None
     ):
 
-        add_user_action = QAction("添加用户", menu)
-        rename_group_action = QAction("重命名分组", menu)
-        del_group_action = QAction("删除分组", menu)
-        add_user_action.triggered.connect(lambda: self.addUser(group_item))
-        rename_group_action.triggered.connect(lambda: self.renameItem(group_item))
-        del_group_action.triggered.connect(lambda: self.delGroup(group_item))
-        menu.addAction(add_user_action)
+        AddUserAction = QAction("添加用户", menu)
+        RenameGroupAction = QAction("重命名分组", menu)
+        DelGroupAction = QAction("删除分组", menu)
+        AddUserAction.triggered.connect(lambda: self.addUser(GroupItem))
+        RenameGroupAction.triggered.connect(lambda: self.renameItem(GroupItem))
+        DelGroupAction.triggered.connect(lambda: self.delGroup(GroupItem))
+        menu.addAction(AddUserAction)
         menu.addSeparator()
-        menu.addAction(rename_group_action)
-        menu.addAction(del_group_action)
-        if group_item.checkState(1) == Qt.CheckState.Unchecked:
-            add_user_action.setEnabled(False)
-
+        menu.addAction(RenameGroupAction)
+        menu.addAction(DelGroupAction)
+        if GroupItem.checkState(1) == Qt.CheckState.Unchecked:
+            AddUserAction.setEnabled(False)
 
     def showUserMenu(
         self,
         menu: QMenu,
-        user_item: QTreeWidgetItem = None
+        UserItem: QTreeWidgetItem = None
     ):
 
-        rename_user_action = QAction("重命名用户", menu)
-        del_user_action = QAction("删除用户", menu)
-        rename_user_action.triggered.connect(lambda: self.renameItem(user_item))
-        del_user_action.triggered.connect(lambda: self.delUser(user_item))
-        menu.addAction(rename_user_action)
-        menu.addAction(del_user_action)
+        RenameUserAction = QAction("重命名用户", menu)
+        DelUserAction = QAction("删除用户", menu)
+        RenameUserAction.triggered.connect(lambda: self.renameItem(UserItem))
+        DelUserAction.triggered.connect(lambda: self.delUser(UserItem))
+        menu.addAction(RenameUserAction)
+        menu.addAction(DelUserAction)
 
     @Slot()
     def onUserTreeWidgetContextMenu(
@@ -911,31 +899,31 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         pos
     ):
 
-        current_item = self.UserTreeWidget.itemAt(pos)
-        menu = QMenu(self.UserTreeWidget)
-        if current_item is None:
-            self.showTreeMenu(menu)
-        elif current_item.type() == ALUserTreeItemType.GROUP.value:
-            self.showGroupMenu(menu, current_item)
+        CurrentItem = self.UserTreeWidget.itemAt(pos)
+        Menu = QMenu(self.UserTreeWidget)
+        if CurrentItem is None:
+            self.showTreeMenu(Menu)
+        elif CurrentItem.type() == ALUserTreeItemType.GROUP.value:
+            self.showGroupMenu(Menu, CurrentItem)
         else:
-            self.showUserMenu(menu, current_item)
-        menu.exec_(self.UserTreeWidget.mapToGlobal(pos))
+            self.showUserMenu(Menu, CurrentItem)
+        Menu.exec_(self.UserTreeWidget.mapToGlobal(pos))
 
     @Slot()
     def onAddUserButtonClicked(
         self
     ):
 
-        current_item = self.UserTreeWidget.currentItem()
-        self.addUser(current_item)
+        CurrentItem = self.UserTreeWidget.currentItem()
+        self.addUser(CurrentItem)
 
     @Slot()
     def onDelUserButtonClicked(
         self
     ):
 
-        current_item = self.UserTreeWidget.currentItem()
-        self.delUser(current_item)
+        CurrentItem = self.UserTreeWidget.currentItem()
+        self.delUser(CurrentItem)
 
     @Slot()
     def onBrowseBrowserDriverButtonClicked(
@@ -951,20 +939,18 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         if browser_driver_path:
             self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(browser_driver_path))
 
-
     @Slot()
     def onAutoDownloadWebDriverButtonClicked(
         self
     ):
 
-        dialog = ALWebDriverDownloadDialog(self)
-        dialog.show()
-        dialog.exec_()
-        selected_driver_info = dialog.getSelectedDriverInfo()
+        Dialog = ALWebDriverDownloadDialog(self)
+        Dialog.show()
+        Dialog.exec_()
+        selected_driver_info = Dialog.getSelectedDriverInfo()
         if selected_driver_info and selected_driver_info.driver_path:
             self.BrowserTypeComboBox.setCurrentText(selected_driver_info.driver_type.value)
             self.BrowseBrowserDriverEdit.setText(QDir.toNativeSeparators(str(selected_driver_info.driver_path)))
-
 
     @Slot()
     def onBrowseCurrentRunConfigButtonClicked(
@@ -985,13 +971,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setRunConfigToWidget(data)
                 self.__config_paths["run"] = run_config_path
                 self.CurrentRunConfigEdit.setText(run_config_path)
-                paths = self.__cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation.run_path.paths", [])
+                paths = self.__cfg_mgr.get(CfgKey.GLOBAL.AUTOMATION.RUN_PATH.PATHS, [])
                 if run_config_path not in paths:
                     paths.append(run_config_path)
                     index = len(paths) - 1
                 else:
                     index = paths.index(run_config_path)
-                self.__cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation.run_path", {"current": index, "paths": paths})
+                self.__cfg_mgr.set(CfgKey.GLOBAL.AUTOMATION.RUN_PATH.ROOT, {"current": index, "paths": paths})
             else:
                 QMessageBox.warning(
                     self,
@@ -1020,13 +1006,13 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
                 self.setUsersToTreeWidget(data)
                 self.__config_paths["user"] = user_config_path
                 self.CurrentUserConfigEdit.setText(user_config_path)
-                paths = self.__cfg_mgr.get(ConfigManager.ConfigType.GLOBAL, "automation.user_path.paths", [])
+                paths = self.__cfg_mgr.get(CfgKey.GLOBAL.AUTOMATION.USER_PATH.PATHS, [])
                 if user_config_path not in paths:
                     paths.append(user_config_path)
                     index = len(paths) - 1
                 else:
                     index = paths.index(user_config_path)
-                self.__cfg_mgr.set(ConfigManager.ConfigType.GLOBAL, "automation.user_path", {"current": index, "paths": paths})
+                self.__cfg_mgr.set(CfgKey.GLOBAL.AUTOMATION.USER_PATH.ROOT, {"current": index, "paths": paths})
             else:
                 QMessageBox.warning(
                     self,
@@ -1147,8 +1133,8 @@ class ALConfigWidget(QWidget, Ui_ALConfigWidget):
         self
     ):
 
-        current_item = self.UserTreeWidget.currentItem()
-        if current_item and current_item.type() == ALUserTreeItemType.USER.value:
+        CurrentItem = self.UserTreeWidget.currentItem()
+        if CurrentItem and CurrentItem.type() == ALUserTreeItemType.USER.value:
             self.UserTreeWidget.setCurrentItem(None)
         if self.saveConfigs(
             self.__config_paths["run"],

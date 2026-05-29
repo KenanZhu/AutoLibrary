@@ -58,14 +58,12 @@ class MsgBase:
         except RuntimeError:
             self._logger = None
 
-
     def _showMsg(
         self,
         msg: str
     ):
 
         self._output_queue.put(f"[{self._class_name:<15}] >>> : {msg}")
-
 
     def _showTrace(
         self,
@@ -79,7 +77,6 @@ class MsgBase:
         if self._logger and not no_log:
             self._logger.log(level, msg)
 
-
     def _showLog(
         self,
         msg: str,
@@ -88,7 +85,6 @@ class MsgBase:
 
         if self._logger:
             self._logger.log(level, msg)
-
 
     def _waitMsg(
         self,

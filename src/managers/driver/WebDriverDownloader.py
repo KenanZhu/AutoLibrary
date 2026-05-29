@@ -95,7 +95,6 @@ class WebDriverName:
 
         self.driver_type = driver_type
 
-
     def __str__(
         self
     ) -> str:
@@ -124,7 +123,6 @@ class WebDriverExecName:
 
         self.driver_type = driver_type
         self.arch = arch
-
 
     def __str__(
         self
@@ -200,7 +198,6 @@ class WebDriverURL:
         self.arch = arch
         self.file_name = str(WebDriverFileName(self.version, self.driver_type, self.arch))
 
-
     def __str__(
         self
     ) -> str:
@@ -249,31 +246,6 @@ class WebDriverDownloader:
         self.download_dir = Path(download_dir)/self.driver_type.value/self.version/self.arch.value
         self.download_dir.mkdir(mode=0o0755, parents=True, exist_ok=True)
         self.download_path = self.download_dir/str(WebDriverFileName(self.version, self.driver_type, self.arch))
-
-
-    def download(
-        self,
-        progress_callback: Optional[Callable[[float, int, float, str], None]] = None,
-        cancel_event: Optional[threading.Event] = None
-    ) -> Optional[Path]:
-
-        try:
-            # downlaod file : 0% - 98%
-            if not self._download(progress_callback, cancel_event=cancel_event):
-                return None
-            # verify file : 98% - 99%
-            if not self._verify(progress_callback):
-                progress_callback(0, 100, 0.0, "验证失败")
-                return None
-            # extract file : 99% - 100%
-            driver_path = self._extract(progress_callback)
-            if not driver_path:
-                progress_callback(0, 100, 0.0, "解压失败")
-                return None
-            return driver_path
-        except Exception as e:
-            raise e
-
 
     def _download(
         self,
@@ -352,7 +324,6 @@ class WebDriverDownloader:
                     continue
                 raise e
 
-
     def _verify(
         self,
         progress_callback: Optional[Callable[[float, int, float, str], None]] = None
@@ -360,7 +331,6 @@ class WebDriverDownloader:
 
         progress_callback(98, 100, 0.0, "验证完成")
         return True
-
 
     def _extract(
         self,
@@ -397,7 +367,6 @@ class WebDriverDownloader:
         except Exception:
             return None
 
-
     def _cleanup(
         self,
         driver_file: Path
@@ -409,6 +378,29 @@ class WebDriverDownloader:
                     shutil.rmtree(item)
                 else:
                     item.unlink()
+
+    def download(
+        self,
+        progress_callback: Optional[Callable[[float, int, float, str], None]] = None,
+        cancel_event: Optional[threading.Event] = None
+    ) -> Optional[Path]:
+
+        try:
+            # downlaod file : 0% - 98%
+            if not self._download(progress_callback, cancel_event=cancel_event):
+                return None
+            # verify file : 98% - 99%
+            if not self._verify(progress_callback):
+                progress_callback(0, 100, 0.0, "验证失败")
+                return None
+            # extract file : 99% - 100%
+            driver_path = self._extract(progress_callback)
+            if not driver_path:
+                progress_callback(0, 100, 0.0, "解压失败")
+                return None
+            return driver_path
+        except Exception as e:
+            raise e
 
 
 class ChromeDriverDownloader(WebDriverDownloader):

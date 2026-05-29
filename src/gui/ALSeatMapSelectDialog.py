@@ -8,14 +8,19 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 from PySide6.QtCore import (
-    Qt, Slot, Signal
-)
-from PySide6.QtWidgets import (
-    QDialog, QLabel, QHBoxLayout, QVBoxLayout,
-    QPushButton,
+    Qt,
+    Signal,
+    Slot
 )
 from PySide6.QtGui import (
     QCloseEvent
+)
+from PySide6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout
 )
 
 from gui.ALSeatMapView import ALSeatMapView
@@ -41,7 +46,6 @@ class ALSeatMapSelectDialog(QDialog):
 
         self.setupUi()
         self.connectSignals()
-
 
     def setupUi(
         self
@@ -85,14 +89,12 @@ class ALSeatMapSelectDialog(QDialog):
         self.SeatMapWidgetControlLayout.addWidget(self.ConfirmButton)
         self.SeatMapWidgetMainLayout.addLayout(self.SeatMapWidgetControlLayout)
 
-
     def connectSignals(
         self
     ):
 
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
-
 
     def showEvent(
         self,
@@ -117,7 +119,6 @@ class ALSeatMapSelectDialog(QDialog):
 
         return result
 
-
     def closeEvent(
         self,
         event: QCloseEvent
@@ -131,14 +132,12 @@ class ALSeatMapSelectDialog(QDialog):
         self.seatMapSelectDialogIsClosed.emit(self.getSelectedSeats())
         super().closeEvent(event)
 
-
     def selectSeat(
         self,
         seat_number: str
     ):
 
         self.SeatMapGraphicsView.selectSeat(seat_number)
-
 
     def selectSeats(
         self,
@@ -147,13 +146,11 @@ class ALSeatMapSelectDialog(QDialog):
 
         return self.SeatMapGraphicsView.selectSeats(seat_numbers)
 
-
     def getSelectedSeats(
         self
     ) -> list[str]:
 
         return self.SeatMapGraphicsView.getSelectedSeats()
-
 
     def clearSelections(
         self

@@ -12,12 +12,25 @@ import uuid
 from enum import Enum
 from datetime import datetime, timedelta
 
-from PySide6.QtCore import Slot, QDateTime, QUrl
+from PySide6.QtCore import (
+    Slot,
+    QDateTime,
+    QUrl
+)
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QLabel, QDialog, QWidget, QSpinBox, QHBoxLayout, QVBoxLayout, QGridLayout, QDateTimeEdit, QGroupBox, QPushButton
+from PySide6.QtWidgets import (
+    QLabel,
+    QDialog,
+    QWidget,
+    QSpinBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QDateTimeEdit,
+    QGroupBox,
+    QPushButton
+)
 
 from gui.resources.ui.Ui_ALTimerTaskAddDialog import Ui_ALTimerTaskAddDialog
-from gui.ALAutoScriptOrchDialog import ALAutoScriptOrchDialog
 from utils.TimerUtils import TimerUtils
 
 
@@ -50,7 +63,6 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         if self.__edit_timer_task:
             self.loadTask(self.__edit_timer_task)
 
-
     def modifyUi(
         self
     ):
@@ -58,6 +70,8 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.TimerTypeComboBox.setCurrentIndex(0)
         self.SpecificTimerWidget = QWidget()
         self.SpecificTimerLayout = QHBoxLayout(self.SpecificTimerWidget)
+        self.SpecificTimerLayout.setContentsMargins(0, 0, 0, 0)
+        self.SpecificTimerLayout.setSpacing(5)
         self.SpecificTimerLayout.addWidget(QLabel("定时时间："))
         self.SpecificDateTimeEdit = QDateTimeEdit()
         self.SpecificDateTimeEdit.setCalendarPopup(True)
@@ -66,9 +80,10 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.SpecificDateTimeEdit.setDateTime(QDateTime.currentDateTime().addSecs(60))
         self.SpecificTimerLayout.addWidget(self.SpecificDateTimeEdit)
         self.TimerConfigLayout.addWidget(self.SpecificTimerWidget)
-
         self.RelativeTimerWidget = QWidget()
         self.RelativeTimerLayout = QHBoxLayout(self.RelativeTimerWidget)
+        self.RelativeTimerLayout.setContentsMargins(0, 0, 0, 0)
+        self.RelativeTimerLayout.setSpacing(5)
         self.RelativeTimerLayout.addWidget(QLabel("相对时间："))
         self.RelativeDaySpinBox = QSpinBox()
         self.RelativeDaySpinBox.setMinimum(0)
@@ -92,26 +107,20 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.RelativeTimerLayout.addWidget(self.RelativeSecondSpinBox)
         self.TimerConfigLayout.addWidget(self.RelativeTimerWidget)
         self.RelativeTimerWidget.setVisible(False)
-
         self.AutoScriptGroupBox = QGroupBox("AutoScript 指令")
         self.AutoScriptLayout = QVBoxLayout(self.AutoScriptGroupBox)
         self.AutoScriptLayout.setContentsMargins(3, 3, 3, 3)
         self.AutoScriptLayout.setSpacing(3)
-        autoScriptBtnLayout = QHBoxLayout()
-        self.AutoScriptSetButton = QPushButton("设置指令")
-        self.AutoScriptSetButton.setMinimumHeight(25)
-        self.AutoScriptSetButton.setFixedWidth(130)
-        autoScriptBtnLayout.addWidget(self.AutoScriptSetButton)
-        self.AutoScriptPreviewButton = QPushButton("预览")
-        self.AutoScriptPreviewButton.setMinimumHeight(25)
-        self.AutoScriptPreviewButton.setFixedWidth(60)
-        self.AutoScriptPreviewButton.setEnabled(False)
-        autoScriptBtnLayout.addWidget(self.AutoScriptPreviewButton)
-        autoScriptBtnLayout.addStretch()
+        AutoScriptBtnLayout = QHBoxLayout()
+        self.AutoScriptEditButton = QPushButton("编辑")
+        self.AutoScriptEditButton.setMinimumHeight(25)
+        self.AutoScriptEditButton.setFixedWidth(80)
+        AutoScriptBtnLayout.addWidget(self.AutoScriptEditButton)
+        AutoScriptBtnLayout.addStretch()
         self.AutoScriptHelpButton = QPushButton("?")
         self.AutoScriptHelpButton.setFixedSize(20, 20)
         self.AutoScriptHelpButton.setToolTip(
-            "AutoScript 是一种轻量级 DSL\n"
+            "AutoScript 是一种轻量级 DSL 语言，基于 Lua 实现。\n"
             "用于在重复定时任务执行前，对用户的预约数据进行预处理\n"
             "\n"
             "点击查看完整在线文档"
@@ -121,19 +130,19 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             "font-weight: bold; color: #555; }"
             "QPushButton:hover { background-color: #E0E0E0; }"
         )
-        autoScriptBtnLayout.addWidget(self.AutoScriptHelpButton)
+        AutoScriptBtnLayout.addWidget(self.AutoScriptHelpButton)
         self.AutoScriptStatusLabel = QLabel("未设置")
         self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
         self.AutoScriptStatusLabel.setFixedHeight(25)
-        autoScriptBtnLayout.addWidget(self.AutoScriptStatusLabel)
-        self.AutoScriptLayout.addLayout(autoScriptBtnLayout)
+        AutoScriptBtnLayout.addWidget(self.AutoScriptStatusLabel)
+        self.AutoScriptLayout.addLayout(AutoScriptBtnLayout)
         self.ALAddTimerTaskLayout.insertWidget(
             self.ALAddTimerTaskLayout.indexOf(self.TaskConfigGroupBox) + 1,
             self.AutoScriptGroupBox
         )
         self.AutoScriptGroupBox.setVisible(False)
         self.__auto_script = ""
-
+        self.__mock_target_data = None
 
     def loadTask(
         self,
@@ -170,9 +179,10 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 self.__auto_script = auto_script
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
-                self.AutoScriptPreviewButton.setEnabled(True)
+            mock_data = task.get("mock_target_data")
+            if mock_data:
+                self.__mock_target_data = mock_data
         self.ConfirmButton.setText("保存")
-
 
     def connectSignals(
         self
@@ -182,10 +192,8 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.ConfirmButton.clicked.connect(self.accept)
         self.TimerTypeComboBox.currentIndexChanged.connect(self.onTimerTypeComboBoxIndexChanged)
         self.RepeatCheckBox.toggled.connect(self.onRepeatCheckBoxToggled)
-        self.AutoScriptSetButton.clicked.connect(self.onSetAutoScript)
-        self.AutoScriptPreviewButton.clicked.connect(self.onPreviewAutoScript)
+        self.AutoScriptEditButton.clicked.connect(self.onPreviewAutoScript)
         self.AutoScriptHelpButton.clicked.connect(self.onAutoScriptHelp)
-
 
     def getTimerTask(
         self
@@ -218,6 +226,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
             task_data["status"] = ALTimerTaskStatus.PENDING
             task_data["executed"] = False
             task_data["repeat_auto_script"] = self.__auto_script
+            task_data["mock_target_data"] = self.__mock_target_data
         else:
             task_data = {
                 "name": name,
@@ -230,6 +239,7 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
                 "executed": False,
                 "repeat": self.RepeatCheckBox.isChecked(),
                 "repeat_auto_script": self.__auto_script,
+                "mock_target_data": self.__mock_target_data,
             }
 
         repeat = self.RepeatCheckBox.isChecked()
@@ -291,29 +301,20 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         self.AutoScriptGroupBox.setVisible(checked)
 
     @Slot()
-    def onSetAutoScript(self):
-        dlg = ALAutoScriptOrchDialog(self, existingScript=self.__auto_script)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            script = dlg.getScript()
+    def onPreviewAutoScript(self):
+        from gui.ALAutoScriptEditDialog import ALAutoScriptEditDialog
+        Dlg = ALAutoScriptEditDialog(self, self.__auto_script, self.__mock_target_data)
+        if Dlg.exec() == QDialog.DialogCode.Accepted:
+            script = Dlg.getScript()
             self.__auto_script = script
+            self.__mock_target_data = Dlg.getMockData()
             if script:
                 self.AutoScriptStatusLabel.setText("已设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #4CAF50;")
-                self.AutoScriptPreviewButton.setEnabled(True)
             else:
                 self.AutoScriptStatusLabel.setText("未设置")
                 self.AutoScriptStatusLabel.setStyleSheet("color: #969696;")
-                self.AutoScriptPreviewButton.setEnabled(False)
-        dlg.deleteLater()
-
-    @Slot()
-    def onPreviewAutoScript(self):
-        if not self.__auto_script:
-            return
-        from gui.ALAutoScriptPrevDialog import ALAutoScriptPreviewDialog
-        dlg = ALAutoScriptPreviewDialog(self, self.__auto_script)
-        dlg.exec()
-        dlg.deleteLater()
+        Dlg.deleteLater()
 
     @Slot()
     def onAutoScriptHelp(
@@ -323,5 +324,3 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
         QDesktopServices.openUrl(
             QUrl("https://www.autolibrary.kenanzhu.com/manuals/autoscript")
         )
-
-

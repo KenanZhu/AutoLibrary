@@ -46,7 +46,6 @@ class JSONWriter:
         self.__json_data = json_data.copy() if json_data is not None else {}
         self.__write()
 
-
     def __write(
         self
     ):
@@ -63,7 +62,6 @@ class JSONWriter:
         except Exception as e:
             raise Exception(f"写入文件时发生未知错误: {e}") from e
 
-
     def write(
         self
     ) -> bool:
@@ -73,7 +71,6 @@ class JSONWriter:
         except:
             return False
         return True
-
 
     def path(
         self

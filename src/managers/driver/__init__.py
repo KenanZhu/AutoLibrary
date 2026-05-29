@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 """
-    Driver managers module for the AutoLibrary project.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
 
-    Here are the classes and modules in this package:
-    - WebBrowserDetector: Web browser detector class.
-    - WebDriverDownloader: Web driver downloader class.
-    - WebDriverManager: Web driver manager class.
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
 """

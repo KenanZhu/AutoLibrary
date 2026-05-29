@@ -63,13 +63,11 @@ class ALSeatFrame(QFrame):
             self.toggleSelection()
             self.clicked.emit(self.__seat_number)
 
-
     def isSelected(
         self
     ):
 
         return self.__is_selected
-
 
     def toggleSelection(self):
 

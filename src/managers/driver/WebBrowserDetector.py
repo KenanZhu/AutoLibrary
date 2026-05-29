@@ -41,6 +41,7 @@ class WebBrowserArch(Enum):
     MACX86_64 = 6
     MACARM = 7
 
+
 @dataclass
 class WebBrowserInfo:
     """
@@ -69,7 +70,6 @@ class WebBrowserArchDetector:
     ):
 
         pass
-
 
     def detect(
         self
@@ -122,7 +122,6 @@ class WebBrowserDetector:
 
         self.browser_arch = WebBrowserArchDetector().detect()
         self.browser_infos : list[WebBrowserInfo] = []
-
 
     def detect(
         self

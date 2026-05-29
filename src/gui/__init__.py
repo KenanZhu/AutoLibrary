@@ -1,19 +1,9 @@
+# -*- coding: utf-8 -*-
 """
-    GUI module for the AutoLibrary project.
+Copyright (c) 2026 KenanZhu.
+All rights reserved.
 
-    Here are the classes and modules in this package:
-    - ALMainWindow: Main window class.
-    - ALAboutDialog: About dialog class.
-    - ALConfigWidget: Configuration widget class.
-    - ALSeatFrame: Seat frame class.
-    - ALSeatMapView: Seat map view class.
-    - ALSeatMapTable: Seat map table class.
-    - ALSeatMapSelectDialog: Seat map select dialog class.
-    - ALTimerTaskAddDialog: Timer task add dialog class.
-    - ALAutoScriptOrchDialog: AutoScript orchestration dialog class.
-    - ALTimerTaskHistoryDialog: Timer task history dialog class.
-    - ALTimerTaskManageWidget: Timer task manage widget class.
-    - ALUserTreeWidget: User tree widget class.
-    - ALMainWorkers: Main workers class.
-    - ALVersionInfo: Version info class.
+This software is provided "as is", without any warranty of any kind.
+You may use, modify, and distribute this file under the terms of the MIT License.
+See the LICENSE file for details.
 """

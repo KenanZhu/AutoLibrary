@@ -83,7 +83,9 @@ jobs:
 
         echo "✓ File replaced: $FILE_PATH"
         echo ""
-        echo "Updated file content ==================="
+        echo "========================================"
+        echo "Updated file content"
+        echo "========================================"
         cat  "$FILE_PATH"
         echo "========================================"
 
@@ -151,3 +153,9 @@ jobs:
         COMMIT_SHA=$(git rev-parse --short HEAD)
         echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
         echo "✓ New commit SHA: $COMMIT_SHA"
+        echo "## Commit Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "========================================" >> $GITHUB_STEP_SUMMARY
+        echo "- Version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Tag: ${{ inputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Commit SHA: $COMMIT_SHA" >> $GITHUB_STEP_SUMMARY

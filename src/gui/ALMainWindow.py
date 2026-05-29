@@ -10,24 +10,37 @@ See the LICENSE file for details.
 import queue
 
 from PySide6.QtCore import (
-    Qt, Signal, Slot, QTimer, QUrl,
-)
-from PySide6.QtWidgets import (
-    QMainWindow, QMenu, QSystemTrayIcon, QMessageBox
+    QTimer,
+    QUrl,
+    Qt,
+    Signal,
+    Slot
 )
 from PySide6.QtGui import (
-    QTextCursor, QCloseEvent, QFont, QIcon, QDesktopServices
+    QCloseEvent,
+    QDesktopServices,
+    QFont,
+    QIcon,
+    QTextCursor
+)
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QMenu,
+    QMessageBox,
+    QSystemTrayIcon
 )
 
 from base.MsgBase import MsgBase
-from utils.ConfigUtils import ConfigUtils
-
-from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
-from gui.resources import ALResource
-from gui.ALConfigWidget import ALConfigWidget
-from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
 from gui.ALAboutDialog import ALAboutDialog
-from gui.ALMainWorkers import TimerTaskWorker, AutoLibWorker
+from gui.ALConfigWidget import ALConfigWidget
+from gui.ALMainWorkers import (
+    AutoLibWorker,
+    TimerTaskWorker
+)
+from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
+from gui.resources import ALResource
+from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
+from managers.config.ConfigUtils import ConfigUtils
 
 
 class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
@@ -59,13 +72,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.startTimerTaskPolling()
         self._showLog("主窗口初始化完成")
 
-
     def modifyUi(
         self
     ):
 
-        self.icon = QIcon(":/res/icon/icons/AutoLibrary_32x32.ico")
-        self.setWindowIcon(self.icon)
+        self.Icon = QIcon(":/res/icons/AutoLibrary_Logo_64.svg")
+        self.setWindowIcon(self.Icon)
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
@@ -90,22 +102,19 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__alTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
         self.__alTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
-
     def onAboutActionTriggered(
         self
     ):
 
-        about_dialog = ALAboutDialog(self)
-        about_dialog.exec()
-
+        AboutDialog = ALAboutDialog(self)
+        AboutDialog.exec()
 
     def onManualActionTriggered(
         self
     ):
 
-        url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
-        QDesktopServices.openUrl(url)
-
+        Url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
+        QDesktopServices.openUrl(Url)
 
     def setupTray(
         self
@@ -114,7 +123,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self._showTrace("操作系统不支持系统托盘功能, 无法创建系统托盘图标", self.TraceLevel.WARNING)
             return
-        self.TrayIcon = QSystemTrayIcon(self.icon, self)
+        self.TrayIcon = QSystemTrayIcon(self.Icon, self)
         self.TrayIcon.setToolTip("AutoLibrary")
 
         self.TrayMenu = QMenu()
@@ -128,7 +137,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayIcon.activated.connect(self.onTrayIconActivated)
         self.TrayIcon.show()
 
-
     def hideToTray(
         self
     ):
@@ -141,7 +149,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             2000
         )
 
-
     def onTrayIconActivated(
         self,
         reason: QSystemTrayIcon.ActivationReason
@@ -149,7 +156,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         if reason == QSystemTrayIcon.DoubleClick:
             self.showNormal()
-
 
     def connectSignals(
         self
@@ -161,7 +167,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.StopButton.clicked.connect(self.onStopButtonClicked)
         self.SendButton.clicked.connect(self.onSendButtonClicked)
         self.MessageEdit.returnPressed.connect(self.onSendButtonClicked)
-
 
     def closeEvent(
         self,
@@ -188,7 +193,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self._showLog("主窗口关闭")
         QMainWindow.closeEvent(self, event)
 
-
     def appendToTextEdit(
         self,
         text: str
@@ -202,7 +206,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         scrollbar = self.MessageIOTextEdit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-
     def startMsgPolling(
         self
     ):
@@ -211,7 +214,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__msg_queue_timer.timeout.connect(self.pollMsgQueue)
         self.__msg_queue_timer.start(100)
 
-
     def startTimerTaskPolling(
         self
     ):
@@ -219,7 +221,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__timer_task_timer = QTimer()
         self.__timer_task_timer.timeout.connect(self.pollTimerTaskQueue)
         self.__timer_task_timer.start(500)
-
 
     def pollTimerTaskQueue(
         self
@@ -253,7 +254,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         except queue.Empty:
             self.__is_running_timer_task = False
             pass
-
 
     def setControlButtons(
         self,

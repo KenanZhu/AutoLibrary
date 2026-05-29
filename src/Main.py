@@ -22,9 +22,9 @@ def main():
 
     app = QApplication(sys.argv)
     translator = QTranslator()
-    if translator.load(":/res/trans/translators/qtbase_zh_CN.ts"):
+    if translator.load(":/res/translators/qtbase_zh_CN.ts"):
         app.installTranslator(translator)
-    app.setStyle('Fusion')
+    app.setStyle("Fusion")
     app.setApplicationName("AutoLibrary")
     if not initializeApp():
         sys.exit(-1)

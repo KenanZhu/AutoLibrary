@@ -4,10 +4,6 @@ name: Build Test
 # It is triggered when a pull request is opened, synchronized, or reopened against the main branch.
 
 on:
-  push:
-    branches:
-      - main
-
   pull_request:
     branches:
       - main
@@ -15,7 +11,6 @@ on:
       - opened
       - synchronize
       - reopened
-  # Allow manual trigger for testing
   workflow_dispatch:
 
 #
@@ -49,11 +44,13 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: '3.13'
+        cache: 'pip'
+        cache-dependency-path: requirements.txt
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirement.txt
+        pip install -r requirements.txt
 
     - name: Solve ddddocr compatibility and copy model files
       run: |
@@ -125,7 +122,7 @@ jobs:
           "    binaries=[],"
           "    datas=["
           "        ('models\\common.onnx', 'ddddocr'),"
-          "        ('src\\gui\\resources\\icons\\AutoLibrary_32x32.ico', 'gui\\resources\\icons'),"
+          "        ('src\\gui\\resources\\icons\\AutoLibrary_Logo_64.ico', 'gui\\resources\\icons'),"
           "    ],"
           "    hiddenimports=[],"
           "    hookspath=[],"
@@ -153,7 +150,7 @@ jobs:
           "    target_arch=None,"
           "    codesign_identity=None,"
           "    entitlements_file=None,"
-          "    icon=['src\\gui\\resources\\icons\\AutoLibrary_32x32.ico'],"
+          "    icon=['src\\gui\\resources\\icons\\AutoLibrary_Logo_64.ico'],"
           ")"
           ""
           "coll = COLLECT("
@@ -169,9 +166,11 @@ jobs:
         $specLines | Out-File -FilePath "Main.spec" -Encoding UTF8
 
         Write-Host "✓ Main.spec (non-single file) generated successfully"
-        Write-Host "`nGenerated Main.spec ============"
+        Write-Host "`n========================================"
+        Write-Host "Generated Main.spec"
+        Write-Host "========================================"
         Get-Content "Main.spec" | Write-Host
-        Write-Host "==================================`n"
+        Write-Host "========================================`n"
       shell: pwsh
 
     - name: Build with PyInstaller
@@ -186,7 +185,7 @@ jobs:
         $distDir = "dist/AutoLibrary-$version"
         $zipName = "AutoLibrary.$tagName-windows-x86_64.zip"
 
-        echo "ZIP_NAME=$zipName" >> $env:GITHUB_OUTPUT
+        "ZIP_NAME=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
         Write-Host "Looking for distribution directory: $distDir"
         if (Test-Path $distDir) {
@@ -212,10 +211,11 @@ jobs:
       run: |
         Write-Host "## Build Test Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
         Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        Write-Host "========================================" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "✓ Pull request build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "- Version: ${{ steps.get_version.outputs.VERSION }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Pull Request #${{ github.event.pull_request.number }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Branch: ${{ github.event.pull_request.head.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        Write-Host "- Pull Request #${{ github.event.pull_request.number || 'N/A' }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        Write-Host "- Branch: ${{ github.event.pull_request.head.ref || github.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
         Write-Host "- Event: ${{ github.event_name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
       shell: pwsh
