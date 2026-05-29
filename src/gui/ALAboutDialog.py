@@ -85,7 +85,7 @@ Commit SHA: {AL_COMMIT_SHA}<br>
 Commit date: {AL_COMMIT_DATE}<br>
 Build date: {AL_BUILD_DATE}<br>
 <br>
-<b style="font-size:14px;">SYSTEM INFORMATION</b><br>
+<b style="font-size:14px;">SYSTEM</b><br>
 Running on: {run_on}<br>
 Processor: {platform.processor()}<br>
 <br>
@@ -94,7 +94,7 @@ Python: {platform.python_version()}<br>
 Qt(PySide6): {self.getQtVersion()}<br>
 Selenium: {selenium_ver}<br>
 <br>
-<b style="font-size:14px;">PROJECT INFORMATION</b><br>
+<b style="font-size:14px;">PROJECT</b><br>
 Website: <a href="https://www.autolibrary.kenanzhu.com" style="text-decoration:none;">https://www.autolibrary.kenanzhu.com</a><br>
 Repository: <a href="https://www.github.com/KenanZhu/AutoLibrary" style="text-decoration:none;">https://www.github.com/KenanZhu/AutoLibrary</a><br>
 <br>
