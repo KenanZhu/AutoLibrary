@@ -136,7 +136,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.setNavigationIcons()
         self.ThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
         self.ThemeInfoLabel.setStyleSheet(
-            "border: 1px solid palette(mid); border-radius: 4px; padding: 4px;"
+            "border: 1px solid #ccc; " \
+            "border-radius: 2px;" \
+            "padding: 5px;"
         )
 
     def setNavigationIcons(
@@ -295,12 +297,12 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         theme, style, custom_theme = self.collectSettings()
-        self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
         _applyCustomTheme(custom_theme, theme)
         self.syncRadioFromNeedTheme(custom_theme)
         theme, _, _ = self.collectSettings()
+        self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
         _applyTheme(theme)
         self.setNavigationIcons()
         self.updateThemeStatus()
