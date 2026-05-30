@@ -94,6 +94,18 @@ def _restartApp(
     QApplication.instance().quit()
     QProcess.startDetached(sys.executable, sys.argv)
 
+def _themeToReadable(
+    theme: str
+) -> str:
+
+    if theme == "dark":
+        return "深色"
+    elif theme == "light":
+        return "浅色"
+    elif theme == "both":
+        return "所有"
+    else:
+        return "未知"
 
 class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
@@ -235,8 +247,14 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         t = self.__theme_cache.get(name)
         if t:
             author = t.get("author", "未知")
+            need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
-            self.ThemeInfoLabel.setText(f"作者：{author}\n简介：{brief}")
+            self.ThemeInfoLabel.setText(
+                f"<b>{name}</b>\n"
+                f"适用于 {_themeToReadable(need_theme)} 主题\n"
+                f"作者：{author}\n"
+                f"{brief}"
+            )
         else:
             self.ThemeInfoLabel.setText("")
 
@@ -360,12 +378,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         self.ThemeComboBox.blockSignals(True)
-        if self.__original_custom_theme:
-            idx = self.ThemeComboBox.findText(self.__original_custom_theme)
-            if idx >= 0:
-                self.ThemeComboBox.setCurrentIndex(idx)
-        else:
-            self.ThemeComboBox.setCurrentIndex(0)
+        self.ThemeComboBox.setCurrentIndex(0)
         self.ThemeComboBox.blockSignals(False)
         if self.__original_theme == "light":
             self.LightThemeRadio.setChecked(True)
@@ -373,27 +386,13 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             self.DarkThemeRadio.setChecked(True)
         else:
             self.SystemThemeRadio.setChecked(True)
-        self.saveAndApply()
+        self.updateThemeInfo()
 
     @Slot()
     def onCancelButtonClicked(
         self
     ):
 
-        self.ThemeComboBox.blockSignals(True)
-        if self.__original_custom_theme:
-            idx = self.ThemeComboBox.findText(self.__original_custom_theme)
-            if idx >= 0:
-                self.ThemeComboBox.setCurrentIndex(idx)
-        else:
-            self.ThemeComboBox.setCurrentIndex(0)
-        self.ThemeComboBox.blockSignals(False)
-        if self.__original_theme == "light":
-            self.LightThemeRadio.setChecked(True)
-        elif self.__original_theme == "dark":
-            self.DarkThemeRadio.setChecked(True)
-        else:
-            self.SystemThemeRadio.setChecked(True)
         self.close()
 
     @Slot()
