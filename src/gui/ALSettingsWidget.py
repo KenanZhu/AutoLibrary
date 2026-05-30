@@ -69,31 +69,6 @@ def _applyThemeByName(
     except Exception:
         _clearQss()
 
-def _loadQss(
-    file_path: str
-) -> str:
-
-    if not file_path or not os.path.isfile(file_path):
-        return ""
-    try:
-        with open(file_path, "r", encoding="utf-8") as fh:
-            return fh.read()
-    except Exception:
-        return ""
-
-def _applyQss(
-    file_path: str
-):
-
-    app : QApplication | None = QApplication.instance()
-    if not app:
-        return
-    qss = _loadQss(file_path)
-    if qss:
-        app.setStyleSheet(qss)
-    else:
-        _clearQss()
-
 def _applyTheme(
     theme: str
 ):
@@ -173,6 +148,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         self.BrowseQssButton.clicked.connect(self.onImportThemeButtonClicked)
+        self.ThemeComboBox.currentTextChanged.connect(self.onThemeComboBoxChanged)
         self.ResetQssButton.clicked.connect(self.onResetQssButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
@@ -233,6 +209,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
         self.updateThemeStatus()
+        self._updateThemeInfo()
 
     def updateThemeStatus(
         self
@@ -240,9 +217,25 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         name = self.ThemeComboBox.currentText()
         if name and name != "默认":
-            self.QssStatusLabel.setText(f"已加载主题：{name}")
+            self.QssStatusLabel.setText(f"当前使用 {name} 主题。")
         else:
-            self.QssStatusLabel.setText("当前使用程序默认外观。")
+            self.QssStatusLabel.setText("当前使用 默认 主题。")
+
+    def _updateThemeInfo(
+        self
+    ):
+
+        name = self.ThemeComboBox.currentText()
+        if not name or name == "默认":
+            self.ThemeInfoLabel.setText("")
+            return
+        t = self.__theme_cache.get(name)
+        if t:
+            author = t.get("author", "未知")
+            brief = t.get("brief", "没有相关简介")
+            self.ThemeInfoLabel.setText(f"作者：{author}\n简介：{brief}")
+        else:
+            self.ThemeInfoLabel.setText("")
 
     def _syncRadioFromNeedTheme(
         self,
@@ -287,6 +280,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         _applyTheme(theme)
         self.setNavigationIcons()
         self.updateThemeStatus()
+        self._updateThemeInfo()
         self.__original_style = self.currentStyleKey()
 
     def maybeRestart(
@@ -341,12 +335,20 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
             self.updateThemeStatus()
+            self._updateThemeInfo()
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "导入失败 - AutoLibrary",
                 f"无法导入主题文件：{e}"
             )
+
+    @Slot()
+    def onThemeComboBoxChanged(
+        self
+    ):
+
+        self._updateThemeInfo()
 
     @Slot()
     def onResetQssButtonClicked(

@@ -283,14 +283,14 @@
             </item>
             <item>
              <widget class="QLineEdit" name="QssPathEdit">
-              <property name="visible">
-               <bool>false</bool>
-              </property>
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>25</height>
                </size>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
               </property>
               <property name="placeholderText">
                <string>选择或输入 QSS 样式表文件路径...</string>
@@ -301,16 +301,32 @@
              <widget class="QPushButton" name="BrowseQssButton">
               <property name="minimumSize">
                <size>
-                <width>60</width>
+                <width>25</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>25</width>
                 <height>25</height>
                </size>
               </property>
               <property name="text">
-               <string>导入</string>
+               <string>...</string>
               </property>
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="ThemeInfoLabel">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="QssActionLayout">
@@ -319,14 +335,14 @@
             </property>
             <item>
              <widget class="QPushButton" name="ApplyQssButton">
-              <property name="visible">
-               <bool>false</bool>
-              </property>
               <property name="minimumSize">
                <size>
                 <width>80</width>
                 <height>25</height>
                </size>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
               </property>
               <property name="text">
                <string>应用样式</string>
@@ -364,7 +380,7 @@
           <item>
            <widget class="QLabel" name="QssStatusLabel">
             <property name="text">
-             <string>当前使用程序默认外观。</string>
+             <string>当前使用程序 默认 外观。</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>

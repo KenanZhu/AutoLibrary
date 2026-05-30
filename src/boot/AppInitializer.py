@@ -15,7 +15,6 @@ from PySide6.QtWidgets import QApplication
 from gui.ALSettingsWidget import (
     _setActiveStyleName,
     _applyTheme,
-    _applyQss,
 )
 from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
@@ -80,7 +79,6 @@ def _initializeAppearance(
     cfg = configInstance()
     saved_style = cfg.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
     saved_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
-    saved_qss = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, "")
     saved_custom_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
     app.setStyle(saved_style)
     _setActiveStyleName(saved_style)
@@ -89,9 +87,7 @@ def _initializeAppearance(
             from managers.theme.ThemeManager import instance as themeInstance
             themeInstance().applyTheme(saved_custom_theme)
         except Exception:
-            _applyQss(saved_qss)
-    else:
-        _applyQss(saved_qss)
+            pass
     _applyTheme(saved_theme)
 
 def initializeApp(
