@@ -81,9 +81,17 @@ def _initializeAppearance(
     saved_style = cfg.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
     saved_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
     saved_qss = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, "")
+    saved_custom_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
     app.setStyle(saved_style)
     _setActiveStyleName(saved_style)
-    _applyQss(saved_qss)
+    if saved_custom_theme:
+        try:
+            from managers.theme.ThemeManager import instance as themeInstance
+            themeInstance().applyTheme(saved_custom_theme)
+        except Exception:
+            _applyQss(saved_qss)
+    else:
+        _applyQss(saved_qss)
     _applyTheme(saved_theme)
 
 def initializeApp(

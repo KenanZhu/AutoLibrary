@@ -71,6 +71,7 @@ class CfgKey:
             THEME = ConfigPath(ConfigType.GLOBAL, "appearance.theme")
             STYLE = ConfigPath(ConfigType.GLOBAL, "appearance.style")
             CUSTOM_QSS = ConfigPath(ConfigType.GLOBAL, "appearance.custom_qss")
+            CUSTOM_THEME = ConfigPath(ConfigType.GLOBAL, "appearance.custom_theme")
 
     class TIMERTASK:
         ROOT = ConfigPath(ConfigType.TIMERTASK, "")

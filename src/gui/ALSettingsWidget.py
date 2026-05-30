@@ -24,6 +24,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
     QFileDialog,
     QMessageBox,
     QStyleFactory,
@@ -31,6 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 import managers.config.ConfigManager as ConfigManager
+from managers.theme.ThemeManager import instance as themeInstance
 
 from gui.resources.ui.Ui_ALSettingsWidget import Ui_ALSettingsWidget
 from interfaces.ConfigProvider import (
@@ -55,6 +57,18 @@ def _clearQss(
     app : QApplication | None = QApplication.instance()
     if app:
         app.setStyleSheet("")
+
+def _applyThemeByName(
+    name: str
+):
+
+    if not name:
+        _clearQss()
+        return
+    try:
+        themeInstance().applyTheme(name)
+    except Exception:
+        _clearQss()
 
 def _loadQss(
     file_path: str
@@ -129,6 +143,15 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.NavigationList.setCurrentRow(0)
         self.populateStyles()
         self.setNavigationIcons()
+        self.QssPathEdit.hide()
+        self.ApplyQssButton.hide()
+        self.ResetQssButton.setText("重置主题")
+        self.CustomQssHintLabel.setText("选择一个主题，或导入新的主题文件：")
+        self.ThemeComboBox = QComboBox(self.CustomQssGroupBox)
+        self.ThemeComboBox.setObjectName("ThemeComboBox")
+        self.ThemeComboBox.setMinimumSize(160, 25)
+        self.QssPathLayout.insertWidget(0, self.ThemeComboBox)
+        self.ThemeStatusLabel = self.QssStatusLabel
 
     def setNavigationIcons(
         self
@@ -157,8 +180,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self
     ):
 
-        self.BrowseQssButton.clicked.connect(self.onBrowseQssButtonClicked)
-        self.ApplyQssButton.clicked.connect(self.onApplyQssButtonClicked)
+        self.BrowseQssButton.clicked.connect(self.onImportThemeButtonClicked)
+        self.ThemeComboBox.currentTextChanged.connect(self.onThemeComboBoxChanged)
         self.ResetQssButton.clicked.connect(self.onResetQssButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
@@ -199,7 +222,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
         style = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
-        custom_qss = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, "")
+        custom_theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
         self.__original_style = self.currentStyleKey()
         if theme == "light":
             self.LightThemeRadio.setChecked(True)
@@ -211,19 +234,22 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         if index < 0:
             index = 0
         self.StyleComboBox.setCurrentIndex(index)
-        self.QssPathEdit.setText(custom_qss)
-        self.updateQssStatus(custom_qss)
+        self.populateThemeList()
+        if custom_theme:
+            idx = self.ThemeComboBox.findText(custom_theme)
+            if idx >= 0:
+                self.ThemeComboBox.setCurrentIndex(idx)
+        self.updateThemeStatus()
 
-    def updateQssStatus(
-        self,
-        qss_path: str
+    def updateThemeStatus(
+        self
     ):
 
-        if qss_path and os.path.isfile(qss_path):
-            filename = os.path.basename(qss_path)
-            self.QssStatusLabel.setText(f"已加载自定义样式文件：{filename}")
+        name = self.ThemeComboBox.currentText()
+        if name:
+            self.ThemeStatusLabel.setText(f"已加载主题：{name}")
         else:
-            self.QssStatusLabel.setText("当前使用程序默认外观。")
+            self.ThemeStatusLabel.setText("当前使用程序默认外观。")
 
     def collectSettings(
         self
@@ -236,21 +262,21 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         else:
             theme = "system"
         style = self.StyleComboBox.currentText()
-        custom_qss = self.QssPathEdit.text().strip()
-        return theme, style, custom_qss
+        custom_theme = self.ThemeComboBox.currentText()
+        return theme, style, custom_theme
 
     def saveAndApply(
         self
     ):
 
-        theme, style, custom_qss = self.collectSettings()
+        theme, style, custom_theme = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
-        self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, custom_qss)
-        _applyQss(custom_qss)
+        self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
+        _applyThemeByName(custom_theme)
         _applyTheme(theme)
         self.setNavigationIcons()
-        self.updateQssStatus(custom_qss)
+        self.updateThemeStatus()
         self.__original_style = self.currentStyleKey()
 
     def maybeRestart(
@@ -269,49 +295,75 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             return True
         return False
 
+    def populateThemeList(
+        self
+    ):
+
+        self.ThemeComboBox.blockSignals(True)
+        self.ThemeComboBox.clear()
+        self.ThemeComboBox.addItem("")
+        self.__theme_cache = {}
+        themes = themeInstance().listThemes()
+        for t in themes:
+            name = t.get("name", f"未知主题 {len(self.__theme_cache)+1}")
+            if name:
+                self.__theme_cache[name] = t
+                self.ThemeComboBox.addItem(name)
+        self.ThemeComboBox.blockSignals(False)
+
     @Slot()
-    def onBrowseQssButtonClicked(
+    def onImportThemeButtonClicked(
         self
     ):
 
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "选择 QSS 样式文件 - AutoLibrary",
-            self.QssPathEdit.text(),
-            "QSS 样式表文件 (*.qss);;所有文件 (*)"
+            "导入主题 - AutoLibrary",
+            "",
+            "主题文件 (*.altheme *.qss);;所有文件 (*)"
         )
-        if file_path:
-            self.QssPathEdit.setText(file_path)
+        if not file_path:
+            return
+        try:
+            name = themeInstance().importTheme(file_path)
+            self.populateThemeList()
+            idx = self.ThemeComboBox.findText(name)
+            if idx >= 0:
+                self.ThemeComboBox.setCurrentIndex(idx)
+            _applyThemeByName(name)
+            self.updateThemeStatus()
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "导入失败 - AutoLibrary",
+                f"无法导入主题文件：{e}"
+            )
 
     @Slot()
-    def onApplyQssButtonClicked(
+    def onThemeComboBoxChanged(
         self
     ):
 
-        qss_path = self.QssPathEdit.text().strip()
-        if not qss_path:
-            QMessageBox.warning(
-                self,
-                "提示 - AutoLibrary",
-                "请先选择或输入 QSS 样式表文件路径。"
-            )
-            return
-        if not os.path.isfile(qss_path):
-            QMessageBox.warning(
-                self,
-                "警告 - AutoLibrary",
-                f"未找到指定的样式文件：\n{qss_path}"
-            )
-            return
-        _applyQss(qss_path)
-        self.updateQssStatus(qss_path)
+        name = self.ThemeComboBox.currentText()
+        if name:
+            _applyThemeByName(name)
+            t = self.__theme_cache.get(name)
+            if t:
+                need_theme = t.get("need_theme", "both")
+                if need_theme == "light":
+                    self.LightThemeRadio.setChecked(True)
+                elif need_theme == "dark":
+                    self.DarkThemeRadio.setChecked(True)
+        else:
+            _clearQss()
+        self.updateThemeStatus()
 
     @Slot()
     def onResetQssButtonClicked(
         self
     ):
 
-        self.QssPathEdit.clear()
+        self.ThemeComboBox.setCurrentIndex(0)
         _clearQss()
         if self.LightThemeRadio.isChecked():
             _applyTheme("light")
@@ -320,7 +372,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         else:
             _applyTheme("system")
         self.setNavigationIcons()
-        self.updateQssStatus("")
+        self.updateThemeStatus()
 
     @Slot()
     def onCancelButtonClicked(

@@ -58,7 +58,8 @@ class ConfigTemplate:
                     "appearance": {
                         "theme": "system",
                         "style": "Fusion",
-                        "custom_qss": ""
+                        "custom_qss": "",
+                        "custom_theme": ""
                     }
                 }
             case ConfigType.BULLETIN:
