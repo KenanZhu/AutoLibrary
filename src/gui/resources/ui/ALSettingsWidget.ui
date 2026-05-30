@@ -320,8 +320,20 @@
           </item>
           <item>
            <widget class="QLabel" name="ThemeInfoLabel">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>60</height>
+             </size>
+            </property>
             <property name="text">
              <string/>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::TextFormat::RichText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignTop</property>
             </property>
             <property name="wordWrap">
              <bool>true</bool>

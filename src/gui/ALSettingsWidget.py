@@ -134,6 +134,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.NavigationList.setCurrentRow(0)
         self.populateStyles()
         self.setNavigationIcons()
+        self.ThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
 
     def setNavigationIcons(
         self
@@ -250,9 +251,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
             self.ThemeInfoLabel.setText(
-                f"<b>{name}</b>\n"
-                f"适用于 {_themeToReadable(need_theme)} 主题\n"
-                f"作者：{author}\n"
+                f"<b>{name}</b><br>"
+                f"适用于 {_themeToReadable(need_theme)} 主题<br>"
+                f"作者：{author}<br>"
                 f"{brief}"
             )
         else:
