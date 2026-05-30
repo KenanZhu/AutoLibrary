@@ -24,7 +24,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
-    QComboBox,
     QFileDialog,
     QMessageBox,
     QStyleFactory,
@@ -143,15 +142,6 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.NavigationList.setCurrentRow(0)
         self.populateStyles()
         self.setNavigationIcons()
-        self.QssPathEdit.hide()
-        self.ApplyQssButton.hide()
-        self.ResetQssButton.setText("重置主题")
-        self.CustomQssHintLabel.setText("选择一个主题，或导入新的主题文件：")
-        self.ThemeComboBox = QComboBox(self.CustomQssGroupBox)
-        self.ThemeComboBox.setObjectName("ThemeComboBox")
-        self.ThemeComboBox.setMinimumSize(160, 25)
-        self.QssPathLayout.insertWidget(0, self.ThemeComboBox)
-        self.ThemeStatusLabel = self.QssStatusLabel
 
     def setNavigationIcons(
         self
@@ -247,9 +237,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         name = self.ThemeComboBox.currentText()
         if name:
-            self.ThemeStatusLabel.setText(f"已加载主题：{name}")
+            self.QssStatusLabel.setText(f"已加载主题：{name}")
         else:
-            self.ThemeStatusLabel.setText("当前使用程序默认外观。")
+            self.QssStatusLabel.setText("当前使用程序默认外观。")
 
     def collectSettings(
         self
