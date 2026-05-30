@@ -50,24 +50,27 @@ def _setActiveStyleName(
     global _active_style_name
     _active_style_name = name
 
-def _clearQss(
+def _clearCustomTheme(
+    theme: str
 ):
 
     app : QApplication | None = QApplication.instance()
     if app:
         app.setStyleSheet("")
+    _applyTheme(theme)
 
-def _applyThemeByName(
-    name: str
+def _applyCustomTheme(
+    name: str,
+    fallback_theme: str = "system"
 ):
 
     if not name:
-        _clearQss()
+        _clearCustomTheme(fallback_theme)
         return
     try:
         themeInstance().applyTheme(name)
     except Exception:
-        _clearQss()
+        _clearCustomTheme(fallback_theme)
 
 def _applyTheme(
     theme: str
@@ -274,7 +277,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
-        _applyThemeByName(custom_theme)
+        _applyCustomTheme(custom_theme, theme)
         self._syncRadioFromNeedTheme(custom_theme)
         theme, _, _ = self.collectSettings()
         _applyTheme(theme)
