@@ -11,12 +11,6 @@
  */
 
 /* ---- Global ---- */
-QWidget {
-    background-color: #0f1a2e;
-    color: #d0daf0;
-    selection-background-color: #2dd4bf;
-    selection-color: #0f1119;
-}
 QMainWindow::separator {
     background-color: #1c2840;
     width: 1px;
@@ -66,7 +60,7 @@ QPushButton {
 	border-width: 1px;
 	border-radius: 5px;
 	color: #d0daf0;
-	padding: 2px;
+	padding: 4px 12px;
 	background-color: #1c2840;
 }
 QPushButton:hover {

@@ -223,11 +223,11 @@ class ALAutoScriptEditDialog(QDialog):
         self.ZoomLabel = QLabel(f"{self._fontSize}px")
         self.ZoomLabel.setFixedHeight(25)
         self.OrchBtn = QPushButton("编排")
-        self.OrchBtn.setFixedHeight(25)
+        self.OrchBtn.setFixedSize(80, 25)
         self.OrchBtn.setToolTip("可视化生成 AutoScript 代码并插入到光标位置")
         ToolbarLayout.addWidget(self.OrchBtn)
         self.DebugBtn = QPushButton("▶ 调试运行")
-        self.DebugBtn.setFixedHeight(25)
+        self.DebugBtn.setFixedSize(80, 25)
         self.DebugBtn.setToolTip("使用右侧模拟数据执行脚本，查看目标变量变化")
         ToolbarLayout.addWidget(self.DebugBtn)
         Sep = QFrame()
@@ -265,7 +265,9 @@ class ALAutoScriptEditDialog(QDialog):
             QDialogButtonBox.StandardButton.Cancel
         )
         self.BtnBox.button(QDialogButtonBox.StandardButton.Ok).setText("确定")
+        self.BtnBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 25)
         self.BtnBox.button(QDialogButtonBox.StandardButton.Cancel).setText("取消")
+        self.BtnBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 25)
         Layout.addWidget(self.BtnBox)
 
     def createButtonPanel(
