@@ -26,7 +26,6 @@ from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
     QMessageBox,
-    QStyle,
     QStyleFactory,
     QWidget
 )
@@ -39,6 +38,16 @@ from interfaces.ConfigProvider import (
     ConfigProvider
 )
 
+
+_active_style_name = ""
+
+
+def _setActiveStyleName(
+    name: str
+):
+
+    global _active_style_name
+    _active_style_name = name
 
 def _clearQss(
 ):
@@ -76,6 +85,7 @@ def _applyTheme(
     theme: str
 ):
 
+    global _active_style_name
     app : QApplication | None = QApplication.instance()
     if not app:
         return
@@ -85,7 +95,7 @@ def _applyTheme(
         app.styleHints().setColorScheme(Qt.ColorScheme.Light)
     else:
         app.styleHints().setColorScheme(Qt.ColorScheme.Unknown)
-    app.setStyle(QStyleFactory.create(app.style().objectName()))
+    app.setStyle(QStyleFactory.create(_active_style_name))
 
 def _restartApp(
 ):
@@ -104,7 +114,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
         super().__init__(parent)
         self.__cfg_mgr: ConfigProvider = ConfigManager.instance()
-        self.__original_style: QStyle | None = None
+        self.__original_style: str = ""
 
         self.setupUi(self)
         self.modifyUi()
@@ -136,6 +146,12 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         self.StyleComboBox.clear()
         self.StyleComboBox.addItems(QStyleFactory.keys())
+
+    def currentStyleKey(
+        self
+    ) -> str:
+
+        return _active_style_name
 
     def connectSignals(
         self
@@ -184,7 +200,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
         style = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
         custom_qss = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, "")
-        self.__original_style = QApplication.instance().style()
+        self.__original_style = self.currentStyleKey()
         if theme == "light":
             self.LightThemeRadio.setChecked(True)
         elif theme == "dark":
@@ -192,10 +208,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         else:
             self.SystemThemeRadio.setChecked(True)
         index = self.StyleComboBox.findText(style)
-        if index >= 0:
-            self.StyleComboBox.setCurrentIndex(index)
-        else:
-            self.StyleComboBox.setCurrentIndex(0)
+        if index < 0:
+            index = 0
+        self.StyleComboBox.setCurrentIndex(index)
         self.QssPathEdit.setText(custom_qss)
         self.updateQssStatus(custom_qss)
 
@@ -205,7 +220,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         if qss_path and os.path.isfile(qss_path):
-            self.QssStatusLabel.setText(f"已加载自定义样式文件：{qss_path}")
+            filename = os.path.basename(qss_path)
+            self.QssStatusLabel.setText(f"已加载自定义样式文件：{filename}")
         else:
             self.QssStatusLabel.setText("当前使用程序默认外观。")
 
@@ -219,7 +235,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             theme = "dark"
         else:
             theme = "system"
-        style = QStyleFactory.create(self.StyleComboBox.currentText())
+        style = self.StyleComboBox.currentText()
         custom_qss = self.QssPathEdit.text().strip()
         return theme, style, custom_qss
 
@@ -229,16 +245,13 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         theme, style, custom_qss = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
-        self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style.name())
+        self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, custom_qss)
-        if custom_qss and os.path.isfile(custom_qss):
-            _applyQss(custom_qss)
-        else:
-            _clearQss()
+        _applyQss(custom_qss)
         _applyTheme(theme)
         self.setNavigationIcons()
         self.updateQssStatus(custom_qss)
-        self.__original_style = QApplication.instance().style()
+        self.__original_style = self.currentStyleKey()
 
     def maybeRestart(
         self
@@ -322,7 +335,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         _, style, _ = self.collectSettings()
-        style_changed = self.__original_style.name() != style.name()
+        style_changed = self.__original_style != style
         self.saveAndApply()
         if style_changed:
             self.maybeRestart()
@@ -333,7 +346,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         _, style, _ = self.collectSettings()
-        style_changed = self.__original_style.name() != style.name()
+        style_changed = self.__original_style != style
         self.saveAndApply()
         if style_changed:
             self.maybeRestart()

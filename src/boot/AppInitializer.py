@@ -12,7 +12,11 @@ import os
 from PySide6.QtCore import QStandardPaths, QDir
 from PySide6.QtWidgets import QApplication
 
-from gui.ALSettingsWidget import _applyTheme
+from gui.ALSettingsWidget import (
+    _setActiveStyleName,
+    _applyTheme,
+    _applyQss,
+)
 from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.driver.WebDriverManager import instance as webdriverInstance
@@ -76,7 +80,10 @@ def _initializeAppearance(
     cfg = configInstance()
     saved_style = cfg.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
     saved_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
+    saved_qss = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_QSS, "")
     app.setStyle(saved_style)
+    _setActiveStyleName(saved_style)
+    _applyQss(saved_qss)
     _applyTheme(saved_theme)
 
 def initializeApp(
