@@ -89,7 +89,10 @@ def readThemeInfo(
         if "info.json" not in zf.namelist():
             raise ValueError("无效的 .altheme: 缺少 info.json")
         with zf.open("info.json") as fh:
-            return json.loads(fh.read().decode("utf-8"))
+            info = json.loads(fh.read().decode("utf-8"))
+        if "name" not in info:
+            raise ValueError("无效的 .altheme: info.json 缺少 'name' 字段")
+        return info
 
 
 def wrapQssToAtheme(

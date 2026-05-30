@@ -20,6 +20,7 @@ from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.driver.WebDriverManager import instance as webdriverInstance
 from managers.log.LogManager import instance as logInstance
+from managers.theme.ThemeManager import instance as themeInstance
 
 
 def _initializeLogManager(
@@ -82,12 +83,12 @@ def _initializeAppearance(
     saved_custom_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
     app.setStyle(saved_style)
     _setActiveStyleName(saved_style)
+    logger = logInstance().getLogger("AppInitializer")
     if saved_custom_theme:
         try:
-            from managers.theme.ThemeManager import instance as themeInstance
             themeInstance().applyTheme(saved_custom_theme)
         except Exception:
-            pass
+            logger.warning("无法应用自定义主题 '%s',回退到默认外观", saved_custom_theme)
     _applyTheme(saved_theme)
 
 def initializeApp(

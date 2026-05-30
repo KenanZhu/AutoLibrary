@@ -31,7 +31,10 @@ from PySide6.QtWidgets import (
 )
 
 import managers.config.ConfigManager as ConfigManager
-from managers.theme.ThemeManager import instance as themeInstance
+from managers.theme.ThemeManager import (
+    ThemeManager,
+    instance as themeInstance
+)
 
 from gui.resources.ui.Ui_ALSettingsWidget import Ui_ALSettingsWidget
 from interfaces.ConfigProvider import (
@@ -49,28 +52,6 @@ def _setActiveStyleName(
 
     global _active_style_name
     _active_style_name = name
-
-def _clearCustomTheme(
-    theme: str
-):
-
-    app : QApplication | None = QApplication.instance()
-    if app:
-        app.setStyleSheet("")
-    _applyTheme(theme)
-
-def _applyCustomTheme(
-    name: str,
-    fallback_theme: str = "system"
-):
-
-    if not name:
-        _clearCustomTheme(fallback_theme)
-        return
-    try:
-        themeInstance().applyTheme(name)
-    except Exception:
-        _clearCustomTheme(fallback_theme)
 
 def _applyTheme(
     theme: str
@@ -93,19 +74,6 @@ def _restartApp(
 
     QApplication.instance().quit()
     QProcess.startDetached(sys.executable, sys.argv)
-
-def _themeToReadable(
-    theme: str
-) -> str:
-
-    if theme == "dark":
-        return "深色"
-    elif theme == "light":
-        return "浅色"
-    elif theme == "both":
-        return "所有"
-    else:
-        return "未知"
 
 class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
@@ -136,8 +104,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.setNavigationIcons()
         self.ThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
         self.ThemeInfoLabel.setStyleSheet(
-            "border: 1px solid #ccc; " \
-            "border-radius: 2px;" \
+            "border: 1px solid palette(mid);"\
+            "border-radius: 2px;"\
             "padding: 5px;"
         )
 
@@ -256,7 +224,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
             self.ThemeInfoLabel.setText(
-                f"<b>{name}</b> - 适用于 <i>{_themeToReadable(need_theme)}</i> 主题<br>"
+                f"<b>{name}</b> - 适用于 <i>{ThemeManager.themeToReadable(need_theme)}</i> 主题<br>"
                 f"作者：{author}<br><br>"
                 f"{brief}"
             )
@@ -299,7 +267,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         theme, style, custom_theme = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
-        _applyCustomTheme(custom_theme, theme)
+        themeInstance().applyThemeOrClear(custom_theme, theme)
         self.syncRadioFromNeedTheme(custom_theme)
         theme, _, _ = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
@@ -391,6 +359,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             self.DarkThemeRadio.setChecked(True)
         else:
             self.SystemThemeRadio.setChecked(True)
+        themeInstance().clearTheme(self.__original_theme)
         self.updateThemeInfo()
 
     @Slot()

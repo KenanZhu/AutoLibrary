@@ -20,7 +20,8 @@ from managers.config.ConfigManager import instance as configInstance
 from utils.ThemeUtils import (
     packTheme,
     readThemeInfo,
-    unpackTheme
+    unpackTheme,
+    wrapQssToAtheme
 )
 
 
@@ -85,14 +86,10 @@ class ThemeManager:
         ext = os.path.splitext(source_path)[1].lower()
         if ext == ".qss":
             name = os.path.splitext(os.path.basename(source_path))[0]
-            info = {
-                "name": name,
-                "author": "未知",
-                "need_theme": "both",
-                "brief": "没有相关简介"
-            }
             dest_path = os.path.join(self.__themes_dir, name + ".altheme")
-            packTheme(source_path, info, dest_path)
+            if os.path.exists(dest_path):
+                raise ValueError(f"主题 '{name}' 已存在")
+            wrapQssToAtheme(source_path, dest_path, "both")
             return name
         elif ext == ".altheme":
             with zipfile.ZipFile(source_path, "r") as zf:
@@ -102,6 +99,8 @@ class ThemeManager:
             name = info.get("name", os.path.splitext(os.path.basename(source_path))[0])
             safe_name = os.path.basename(name)
             dest_path = os.path.join(self.__themes_dir, safe_name + ".altheme")
+            if os.path.exists(dest_path):
+                raise ValueError(f"主题 '{safe_name}' 已存在")
             shutil.copy2(source_path, dest_path)
             return safe_name
         else:
@@ -176,25 +175,108 @@ class ThemeManager:
         filepath = os.path.join(self.__themes_dir, name + ".altheme")
         if not os.path.isfile(filepath):
             raise FileNotFoundError(filepath)
-        info = readThemeInfo(filepath)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            unpackTheme(filepath, tmpdir)
-            qss_path = os.path.join(tmpdir, "theme.qss")
-            if os.path.isfile(qss_path):
-                with open(qss_path, "r", encoding="utf-8") as fh:
-                    qss = fh.read()
-                app = QApplication.instance()
-                if app:
-                    app.setStyleSheet(qss)
+        with self.__lock:
+            info = readThemeInfo(filepath)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                unpackTheme(filepath, tmpdir)
+                qss_path = os.path.join(tmpdir, "theme.qss")
+                if os.path.isfile(qss_path):
+                    with open(qss_path, "r", encoding="utf-8") as fh:
+                        qss = fh.read()
+                    app = QApplication.instance()
+                    if app:
+                        app.setStyleSheet(qss)
+            app = QApplication.instance()
+            if app:
+                need_theme = info.get("need_theme", "both")
+                if need_theme == "dark":
+                    app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+                elif need_theme == "light":
+                    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+            self.__current_theme_name = name
+
+    def clearTheme(
+        self,
+        theme: str
+    ):
+        """
+            Clear the current QSS stylesheet and apply the given color scheme.
+
+            Args:
+                theme (str): The color scheme to apply after clearing
+                             ("light", "dark", or "system").
+        """
+
         app = QApplication.instance()
         if app:
-            need_theme = info.get("need_theme", "both")
-            if need_theme == "dark":
-                app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-            elif need_theme == "light":
-                app.styleHints().setColorScheme(Qt.ColorScheme.Light)
-        with self.__lock:
-            self.__current_theme_name = name
+            app.setStyleSheet("")
+        self._applyColorScheme(theme)
+
+    def applyThemeOrClear(
+        self,
+        name: str,
+        fallback_theme: str = "system"
+    ):
+        """
+            Apply a custom theme by name, or clear to fallback if empty.
+
+            Args:
+                name (str): The theme name to apply, or empty to clear.
+                fallback_theme (str): Color scheme to use if name is empty
+                                      or if the theme fails to apply.
+        """
+
+        if not name:
+            self.clearTheme(fallback_theme)
+            return
+        try:
+            self.applyTheme(name)
+        except Exception:
+            self.clearTheme(fallback_theme)
+
+    def _applyColorScheme(
+        self,
+        theme: str
+    ):
+        """
+            Set the Qt application color scheme.
+
+            Args:
+                theme (str): "dark", "light", or any other value for system default.
+        """
+
+        app = QApplication.instance()
+        if not app:
+            return
+        if theme == "dark":
+            app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+        elif theme == "light":
+            app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+        else:
+            app.styleHints().setColorScheme(Qt.ColorScheme.Unknown)
+
+    @staticmethod
+    def themeToReadable(
+        need_theme: str
+    ) -> str:
+        """
+            Convert a need_theme code to human-readable Chinese text.
+
+            Args:
+                need_theme (str): "dark", "light", "both", or other.
+
+            Returns:
+                str: Readable Chinese label.
+        """
+
+        if need_theme == "dark":
+            return "深色"
+        elif need_theme == "light":
+            return "浅色"
+        elif need_theme == "both":
+            return "所有"
+        else:
+            return "未知"
 
     def currentThemeName(
         self
