@@ -14,15 +14,35 @@ import threading
 import zipfile
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import (
+    QApplication,
+    QStyleFactory
+)
 
 from managers.config.ConfigManager import instance as configInstance
+from managers.log.LogManager import instance as logInstance
 from utils.ThemeUtils import (
     packTheme,
     readThemeInfo,
     unpackTheme,
     wrapQssToAtheme
 )
+
+
+_active_style_name = "Fusion"
+
+
+def setActiveStyle(
+    style_name: str
+):
+
+    global _active_style_name
+    _active_style_name = style_name
+
+def getActiveStyle(
+) -> str:
+
+    return _active_style_name
 
 
 class ThemeManager:
@@ -45,6 +65,21 @@ class ThemeManager:
         self.__lock = threading.Lock()
         self.__current_theme_name = ""
         os.makedirs(self.__themes_dir, exist_ok=True)
+
+    @staticmethod
+    def _colorSchemeFor(
+        theme: str
+    ) -> Qt.ColorScheme:
+        """
+            Map a theme identifier to the corresponding Qt color scheme.
+        """
+
+        if theme == "dark":
+            return Qt.ColorScheme.Dark
+        elif theme == "light":
+            return Qt.ColorScheme.Light
+        else:
+            return Qt.ColorScheme.Unknown
 
     def themesDir(
         self
@@ -101,6 +136,14 @@ class ThemeManager:
             dest_path = os.path.join(self.__themes_dir, safe_name + ".altheme")
             if os.path.exists(dest_path):
                 raise ValueError(f"主题 '{safe_name}' 已存在")
+            # Check for name collision with existing themes by the same author
+            new_author = info.get("author", "")
+            for existing in self.listThemes():
+                if (existing.get("name", "") == safe_name
+                    and existing.get("author", "") == new_author):
+                    raise ValueError(
+                        f"主题名称 '{safe_name}' (作者 '{new_author}') 已存在"
+                    )
             shutil.copy2(source_path, dest_path)
             return safe_name
         else:
@@ -120,6 +163,7 @@ class ThemeManager:
         """
 
         themes = []
+        seen_keys = set()
         if not os.path.isdir(self.__themes_dir):
             return themes
         for filename in sorted(os.listdir(self.__themes_dir)):
@@ -127,9 +171,27 @@ class ThemeManager:
                 filepath = os.path.join(self.__themes_dir, filename)
                 try:
                     info = readThemeInfo(filepath)
+                    with zipfile.ZipFile(filepath, "r") as zf:
+                        if "theme.qss" not in zf.namelist():
+                            raise ValueError("缺少 theme.qss")
+                    name = info.get("name", "")
+                    author = info.get("author", "")
+                    key = (name, author)
+                    if key in seen_keys:
+                        logInstance().getLogger("ThemeManager").warning(
+                            f"主题名称 '{name}' (作者 '{author}') 重复 (文件 '{filename}') 已跳过"
+                        )
+                        continue
+                    seen_keys.add(key)
                     themes.append(info)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logInstance().getLogger("ThemeManager").warning(
+                        f"无法读取主题文件 '{filename}'，已跳过: {e}"
+                    )
+            else:
+                logInstance().getLogger("ThemeManager").warning(
+                    f"未知文件类型 '{filename}'，已跳过"
+                )
         return themes
 
     def removeTheme(
@@ -152,7 +214,7 @@ class ThemeManager:
                 os.remove(filepath)
                 if self.__current_theme_name == name:
                     self.__current_theme_name = ""
-                    self._clearQss()
+                    self.clearTheme("system")
 
     def applyTheme(
         self,
@@ -186,13 +248,17 @@ class ThemeManager:
                     app = QApplication.instance()
                     if app:
                         app.setStyleSheet(qss)
+                else:
+                    raise ValueError(
+                        f"主题 '{name}' 的 .altheme 文件中缺少 theme.qss"
+                    )
             app = QApplication.instance()
             if app:
                 need_theme = info.get("need_theme", "both")
-                if need_theme == "dark":
-                    app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-                elif need_theme == "light":
-                    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+                app.styleHints().setColorScheme(
+                    ThemeManager._colorSchemeFor(need_theme)
+                )
+                app.setStyle(QStyleFactory.create(_active_style_name))
             self.__current_theme_name = name
 
     def clearTheme(
@@ -208,98 +274,14 @@ class ThemeManager:
         """
 
         app = QApplication.instance()
-        if app:
-            app.setStyleSheet("")
-        self._applyColorScheme(theme)
-
-    def applyThemeOrClear(
-        self,
-        name: str,
-        fallback_theme: str = "system"
-    ):
-        """
-            Apply a custom theme by name, or clear to fallback if empty.
-
-            Args:
-                name (str): The theme name to apply, or empty to clear.
-                fallback_theme (str): Color scheme to use if name is empty
-                                      or if the theme fails to apply.
-        """
-
-        if not name:
-            self.clearTheme(fallback_theme)
-            return
-        try:
-            self.applyTheme(name)
-        except Exception:
-            self.clearTheme(fallback_theme)
-
-    def _applyColorScheme(
-        self,
-        theme: str
-    ):
-        """
-            Set the Qt application color scheme.
-
-            Args:
-                theme (str): "dark", "light", or any other value for system default.
-        """
-
-        app = QApplication.instance()
         if not app:
             return
-        if theme == "dark":
-            app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-        elif theme == "light":
-            app.styleHints().setColorScheme(Qt.ColorScheme.Light)
-        else:
-            app.styleHints().setColorScheme(Qt.ColorScheme.Unknown)
+        app.setStyleSheet("")
+        app.styleHints().setColorScheme(
+            ThemeManager._colorSchemeFor(theme)
+        )
+        app.setStyle(QStyleFactory.create(_active_style_name))
 
-    @staticmethod
-    def themeToReadable(
-        need_theme: str
-    ) -> str:
-        """
-            Convert a need_theme code to human-readable Chinese text.
-
-            Args:
-                need_theme (str): "dark", "light", "both", or other.
-
-            Returns:
-                str: Readable Chinese label.
-        """
-
-        if need_theme == "dark":
-            return "深色"
-        elif need_theme == "light":
-            return "浅色"
-        elif need_theme == "both":
-            return "所有"
-        else:
-            return "未知"
-
-    def currentThemeName(
-        self
-    ) -> str:
-        """
-            Get the name of the currently active theme.
-
-            Returns:
-                str: Current theme name, or empty string if none is active.
-        """
-
-        return self.__current_theme_name
-
-    def _clearQss(
-        self
-    ):
-        """
-            Clear the current QSS stylesheet from the application.
-        """
-
-        app = QApplication.instance()
-        if app:
-            app.setStyleSheet("")
 
 # ThemeManager singleton instance.
 _theme_manager_instance = None

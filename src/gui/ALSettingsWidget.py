@@ -31,8 +31,9 @@ from PySide6.QtWidgets import (
 )
 
 import managers.config.ConfigManager as ConfigManager
-from managers.theme.ThemeManager import (
-    ThemeManager,
+from managers.log.LogManager import instance as logInstance
+from managers.theme.ThemeManager import(
+    getActiveStyle,
     instance as themeInstance
 )
 
@@ -43,37 +44,41 @@ from interfaces.ConfigProvider import (
 )
 
 
-_active_style_name = ""
-
-
-def _setActiveStyleName(
-    name: str
+def _applyCustomTheme(
+    name: str,
+    fallback_theme: str = "system"
 ):
 
-    global _active_style_name
-    _active_style_name = name
-
-def _applyTheme(
-    theme: str
-):
-
-    global _active_style_name
-    app : QApplication | None = QApplication.instance()
-    if not app:
+    if not name:
+        themeInstance().clearTheme(fallback_theme)
         return
-    if theme == "dark":
-        app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-    elif theme == "light":
-        app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+    try:
+        themeInstance().applyTheme(name)
+    except Exception as e:
+        logInstance().getLogger("ALSettingsWidget").warning(
+            f"无法应用自定义主题 '{name}'，回退到 {fallback_theme} 外观: {e}"
+        )
+        themeInstance().clearTheme(fallback_theme)
+
+def _themeToReadable(
+    need_theme: str
+) -> str:
+
+    if need_theme == "dark":
+        return "深色"
+    elif need_theme == "light":
+        return "浅色"
+    elif need_theme == "both":
+        return "所有"
     else:
-        app.styleHints().setColorScheme(Qt.ColorScheme.Unknown)
-    app.setStyle(QStyleFactory.create(_active_style_name))
+        return "未知"
 
 def _restartApp(
 ):
 
     QApplication.instance().quit()
     QProcess.startDetached(sys.executable, sys.argv)
+
 
 class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
@@ -126,12 +131,6 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.StyleComboBox.clear()
         self.StyleComboBox.addItems(QStyleFactory.keys())
 
-    def currentStyleKey(
-        self
-    ) -> str:
-
-        return _active_style_name
-
     def connectSignals(
         self
     ):
@@ -181,7 +180,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         custom_theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
         self.__original_theme = theme
         self.__original_custom_theme = custom_theme
-        self.__original_style = self.currentStyleKey()
+        self.__original_style = getActiveStyle()
         if theme == "light":
             self.LightThemeRadio.setChecked(True)
         elif theme == "dark":
@@ -224,7 +223,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
             self.ThemeInfoLabel.setText(
-                f"<b>{name}</b> - 适用于 <i>{ThemeManager.themeToReadable(need_theme)}</i> 主题<br>"
+                f"<b>{name}</b> - 适用于 <i>{_themeToReadable(need_theme)}</i> 主题<br>"
                 f"作者：{author}<br><br>"
                 f"{brief}"
             )
@@ -267,15 +266,18 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         theme, style, custom_theme = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
-        themeInstance().applyThemeOrClear(custom_theme, theme)
+        _applyCustomTheme(custom_theme, theme)
         self.syncRadioFromNeedTheme(custom_theme)
+        # Re-read theme after syncRadioFromNeedTheme — the radio may have
+        # changed to match the custom theme's need_theme
         theme, _, _ = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
-        _applyTheme(theme)
         self.setNavigationIcons()
         self.updateThemeStatus()
         self.updateThemeInfo()
-        self.__original_style = self.currentStyleKey()
+        self.__original_theme = theme
+        self.__original_custom_theme = custom_theme if custom_theme else ""
+        self.__original_style = getActiveStyle()
 
     def maybeRestart(
         self
@@ -351,7 +353,14 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         self.ThemeComboBox.blockSignals(True)
-        self.ThemeComboBox.setCurrentIndex(0)
+        if self.__original_custom_theme:
+            idx = self.ThemeComboBox.findText(self.__original_custom_theme)
+            if idx >= 0:
+                self.ThemeComboBox.setCurrentIndex(idx)
+            else:
+                self.ThemeComboBox.setCurrentIndex(0)
+        else:
+            self.ThemeComboBox.setCurrentIndex(0)
         self.ThemeComboBox.blockSignals(False)
         if self.__original_theme == "light":
             self.LightThemeRadio.setChecked(True)
@@ -359,7 +368,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             self.DarkThemeRadio.setChecked(True)
         else:
             self.SystemThemeRadio.setChecked(True)
-        themeInstance().clearTheme(self.__original_theme)
+        _applyCustomTheme(self.__original_custom_theme, self.__original_theme)
+        self.updateThemeStatus()
         self.updateThemeInfo()
 
     @Slot()
