@@ -9,6 +9,8 @@ See the LICENSE file for details.
 """
 from copy import deepcopy
 
+import qtawesome as qta
+
 from PySide6.QtCore import (
     QDate,
     QSize,
@@ -20,7 +22,6 @@ from PySide6.QtCore import (
 from PySide6.QtGui import (
     QColor,
     QFont,
-    QIcon,
     QSyntaxHighlighter,
     QTextCharFormat,
 )
@@ -215,8 +216,8 @@ class ALAutoScriptEditDialog(QDialog):
         self.ZoomOutBtn = QPushButton("－")
         self.ZoomOutBtn.setFixedSize(25, 25)
         self.ZoomResetBtn = QPushButton("")
-        self.ZoomResetBtn.setIcon(QIcon(":/res/icons/Reset.svg"))
-        self.ZoomResetBtn.setIconSize(QSize(20, 20))
+        self.ZoomResetBtn.setIcon(qta.icon("fa5s.undo", color=self._iconColor()))
+        self.ZoomResetBtn.setIconSize(QSize(14, 14))
         self.ZoomResetBtn.setFixedSize(25, 25)
         self.ZoomResetBtn.setToolTip("重置缩放")
         self.ZoomLabel = QLabel(f"{self._fontSize}px")
@@ -240,8 +241,8 @@ class ALAutoScriptEditDialog(QDialog):
         ToolbarLayout.addWidget(self.ZoomLabel)
         ToolbarLayout.addStretch()
         self.CopyBtn = QPushButton("")
-        self.CopyBtn.setIcon(QIcon(":/res/icons/Copy.svg"))
-        self.CopyBtn.setIconSize(QSize(20, 20))
+        self.CopyBtn.setIcon(qta.icon("fa5s.copy", color=self._iconColor()))
+        self.CopyBtn.setIconSize(QSize(14, 14))
         self.CopyBtn.setFixedSize(25, 25)
         self.CopyBtn.setToolTip("复制脚本")
         ToolbarLayout.addWidget(self.CopyBtn)
@@ -536,6 +537,14 @@ class ALAutoScriptEditDialog(QDialog):
             widget.setValue(float(value))
         else:
             widget.setText(str(value))
+
+    def _iconColor(
+        self
+    ) -> str:
+
+        return QApplication.instance().palette().color(
+            QApplication.instance().palette().ColorRole.WindowText
+        ).name()
 
     def connectSignals(
         self

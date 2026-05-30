@@ -10,10 +10,13 @@ See the LICENSE file for details.
 import os
 
 from PySide6.QtCore import QStandardPaths, QDir
+from PySide6.QtWidgets import QApplication
 
-from managers.log.LogManager import instance as logInstance
+from gui.ALSettingsWidget import _applyTheme
+from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.driver.WebDriverManager import instance as webdriverInstance
+from managers.log.LogManager import instance as logInstance
 
 
 def _initializeLogManager(
@@ -64,13 +67,25 @@ def _initializeWebDriverManager(
     webdriverInstance(driver_dir)
     return True
 
+def _initializeAppearance(
+):
+
+    app = QApplication.instance()
+    if not app:
+        return
+    cfg = configInstance()
+    saved_style = cfg.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
+    saved_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
+    app.setStyle(saved_style)
+    _applyTheme(saved_theme)
+
 def initializeApp(
 ) -> bool:
     """
         Initialize the application components
 
         Order:
-            LogManager -> ConfigManager -> WebDriverManager
+            LogManager -> ConfigManager -> WebDriverManager -> Appearance
     """
 
     if not _initializeLogManager():
@@ -79,4 +94,5 @@ def initializeApp(
         return False
     if not _initializeWebDriverManager():
         return False
+    _initializeAppearance()
     return True

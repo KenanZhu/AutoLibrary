@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
 from base.MsgBase import MsgBase
 from gui.ALAboutDialog import ALAboutDialog
 from gui.ALConfigWidget import ALConfigWidget
+from gui.ALSettingsWidget import ALSettingsWidget
 from gui.ALMainWorkers import (
     AutoLibWorker,
     TimerTaskWorker
@@ -60,6 +61,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.__alTimerTaskManageWidget = None
         self.__alConfigWidget = None
+        self.__alSettingsWidget = None
         self.__auto_lib_thread = None
         self.__current_timer_task_thread = None
         self.__is_running_timer_task = False
@@ -81,6 +83,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
+        self.SettingsAction.triggered.connect(self.onSettingsActionTriggered)
 
         # initialize timer task widget, but not show it
         try:
@@ -125,7 +128,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             return
         self.TrayIcon = QSystemTrayIcon(self.Icon, self)
         self.TrayIcon.setToolTip("AutoLibrary")
-
         self.TrayMenu = QMenu()
         self.TrayMenu.addAction("显示主窗口", self.showNormal)
         self.TrayMenu.addAction("显示定时窗口", self.onTimerTaskManageWidgetButtonClicked)
@@ -190,6 +192,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__alConfigWidget:
             self.__alConfigWidget.close()
             # the config widget is already deleted in the 'self.onConfigWidgetClosed'
+        if self.__alSettingsWidget:
+            self.__alSettingsWidget.close()
+            # the settings widget is already deleted in the 'self.onSettingsWidgetClosed'
         self._showLog("主窗口关闭")
         QMainWindow.closeEvent(self, event)
 
@@ -301,6 +306,31 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.setControlButtons(True, None, None)
         self._showLog("配置窗口已关闭,配置文件路径已更新")
+
+    @Slot()
+    def onSettingsWidgetClosed(
+        self
+    ):
+
+        if self.__alSettingsWidget:
+            self.__alSettingsWidget.settingsWidgetIsClosed.disconnect(self.onSettingsWidgetClosed)
+            self.__alSettingsWidget.deleteLater()
+            self.__alSettingsWidget = None
+        self.SettingsAction.setEnabled(True)
+
+    @Slot()
+    def onSettingsActionTriggered(
+        self
+    ):
+
+        if self.__alSettingsWidget is None:
+            self.__alSettingsWidget = ALSettingsWidget(self)
+            self.__alSettingsWidget.settingsWidgetIsClosed.connect(self.onSettingsWidgetClosed)
+        self.__alSettingsWidget.show()
+        self.__alSettingsWidget.raise_()
+        self.__alSettingsWidget.activateWindow()
+        self.SettingsAction.setEnabled(False)
+        self._showLog("打开全局设置窗口")
 
     @Slot(dict)
     def onTimerTaskIsReady(

@@ -281,6 +281,12 @@ font: 700 9pt;</string>
    <property name="nativeMenuBar">
     <bool>true</bool>
    </property>
+   <widget class="QMenu" name="ToolsMenu">
+    <property name="title">
+     <string>工具</string>
+    </property>
+    <addaction name="SettingsAction"/>
+   </widget>
    <widget class="QMenu" name="HelpMenu">
     <property name="mouseTracking">
      <bool>true</bool>
@@ -291,6 +297,7 @@ font: 700 9pt;</string>
     <addaction name="ManualAction"/>
     <addaction name="AboutAction"/>
    </widget>
+   <addaction name="ToolsMenu"/>
    <addaction name="HelpMenu"/>
   </widget>
   <widget class="QStatusBar" name="StatusBar">
@@ -306,6 +313,11 @@ font: 700 9pt;</string>
   <action name="AboutAction">
    <property name="text">
     <string>关于</string>
+   </property>
+  </action>
+  <action name="SettingsAction">
+   <property name="text">
+    <string>全局设置</string>
    </property>
   </action>
  </widget>

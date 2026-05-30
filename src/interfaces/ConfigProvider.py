@@ -66,6 +66,12 @@ class CfgKey:
                 CURRENT = ConfigPath(ConfigType.GLOBAL, "automation.user_path.current")
                 PATHS = ConfigPath(ConfigType.GLOBAL, "automation.user_path.paths")
 
+        class APPEARANCE:
+            ROOT = ConfigPath(ConfigType.GLOBAL, "appearance")
+            THEME = ConfigPath(ConfigType.GLOBAL, "appearance.theme")
+            STYLE = ConfigPath(ConfigType.GLOBAL, "appearance.style")
+            CUSTOM_QSS = ConfigPath(ConfigType.GLOBAL, "appearance.custom_qss")
+
     class TIMERTASK:
         ROOT = ConfigPath(ConfigType.TIMERTASK, "")
         TIMER_TASKS = ConfigPath(ConfigType.TIMERTASK, "timer_tasks")
