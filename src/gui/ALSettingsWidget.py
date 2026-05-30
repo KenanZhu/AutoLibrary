@@ -127,6 +127,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
         super().__init__(parent)
         self.__cfg_mgr: ConfigProvider = ConfigManager.instance()
+        self.__original_theme: str = ""
+        self.__original_custom_theme: str = ""
         self.__original_style: str = ""
 
         self.setupUi(self)
@@ -171,7 +173,6 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         self.BrowseQssButton.clicked.connect(self.onImportThemeButtonClicked)
-        self.ThemeComboBox.currentTextChanged.connect(self.onThemeComboBoxChanged)
         self.ResetQssButton.clicked.connect(self.onResetQssButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
@@ -213,6 +214,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
         style = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
         custom_theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
+        self.__original_theme = theme
+        self.__original_custom_theme = custom_theme
         self.__original_style = self.currentStyleKey()
         if theme == "light":
             self.LightThemeRadio.setChecked(True)
@@ -236,10 +239,23 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         name = self.ThemeComboBox.currentText()
-        if name:
+        if name and name != "默认":
             self.QssStatusLabel.setText(f"已加载主题：{name}")
         else:
             self.QssStatusLabel.setText("当前使用程序默认外观。")
+
+    def _syncRadioFromNeedTheme(
+        self,
+        name: str
+    ):
+
+        t = self.__theme_cache.get(name)
+        if t:
+            need_theme = t.get("need_theme", "both")
+            if need_theme == "light":
+                self.LightThemeRadio.setChecked(True)
+            elif need_theme == "dark":
+                self.DarkThemeRadio.setChecked(True)
 
     def collectSettings(
         self
@@ -253,6 +269,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             theme = "system"
         style = self.StyleComboBox.currentText()
         custom_theme = self.ThemeComboBox.currentText()
+        if custom_theme == "默认":
+            custom_theme = ""
         return theme, style, custom_theme
 
     def saveAndApply(
@@ -264,6 +282,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
         _applyThemeByName(custom_theme)
+        self._syncRadioFromNeedTheme(custom_theme)
+        theme, _, _ = self.collectSettings()
         _applyTheme(theme)
         self.setNavigationIcons()
         self.updateThemeStatus()
@@ -291,11 +311,11 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         self.ThemeComboBox.blockSignals(True)
         self.ThemeComboBox.clear()
-        self.ThemeComboBox.addItem("")
+        self.ThemeComboBox.addItem("默认")
         self.__theme_cache = {}
         themes = themeInstance().listThemes()
         for t in themes:
-            name = t.get("name", f"未知主题 {len(self.__theme_cache)+1}")
+            name = t.get("name", "")
             if name:
                 self.__theme_cache[name] = t
                 self.ThemeComboBox.addItem(name)
@@ -320,7 +340,6 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             idx = self.ThemeComboBox.findText(name)
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
-            _applyThemeByName(name)
             self.updateThemeStatus()
         except Exception as e:
             QMessageBox.warning(
@@ -330,45 +349,31 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             )
 
     @Slot()
-    def onThemeComboBoxChanged(
-        self
-    ):
-
-        name = self.ThemeComboBox.currentText()
-        if name:
-            _applyThemeByName(name)
-            t = self.__theme_cache.get(name)
-            if t:
-                need_theme = t.get("need_theme", "both")
-                if need_theme == "light":
-                    self.LightThemeRadio.setChecked(True)
-                elif need_theme == "dark":
-                    self.DarkThemeRadio.setChecked(True)
-        else:
-            _clearQss()
-        self.updateThemeStatus()
-
-    @Slot()
     def onResetQssButtonClicked(
         self
     ):
 
         self.ThemeComboBox.setCurrentIndex(0)
-        _clearQss()
-        if self.LightThemeRadio.isChecked():
-            _applyTheme("light")
-        elif self.DarkThemeRadio.isChecked():
-            _applyTheme("dark")
-        else:
-            _applyTheme("system")
-        self.setNavigationIcons()
-        self.updateThemeStatus()
 
     @Slot()
     def onCancelButtonClicked(
         self
     ):
 
+        self.ThemeComboBox.blockSignals(True)
+        if self.__original_custom_theme:
+            idx = self.ThemeComboBox.findText(self.__original_custom_theme)
+            if idx >= 0:
+                self.ThemeComboBox.setCurrentIndex(idx)
+        else:
+            self.ThemeComboBox.setCurrentIndex(0)
+        self.ThemeComboBox.blockSignals(False)
+        if self.__original_theme == "light":
+            self.LightThemeRadio.setChecked(True)
+        elif self.__original_theme == "dark":
+            self.DarkThemeRadio.setChecked(True)
+        else:
+            self.SystemThemeRadio.setChecked(True)
         self.close()
 
     @Slot()
