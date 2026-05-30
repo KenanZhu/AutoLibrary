@@ -151,8 +151,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         self.BrowseQssButton.clicked.connect(self.onImportThemeButtonClicked)
-        self.ThemeComboBox.currentTextChanged.connect(self.onThemeComboBoxChanged)
-        self.ResetQssButton.clicked.connect(self.onResetQssButtonClicked)
+        self.ThemeComboBox.currentIndexChanged.connect(self.onThemeComboBoxChanged)
+        self.ResetThemeButton.clicked.connect(self.onResetThemeButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
@@ -212,7 +212,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
         self.updateThemeStatus()
-        self._updateThemeInfo()
+        self.updateThemeInfo()
 
     def updateThemeStatus(
         self
@@ -224,7 +224,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         else:
             self.QssStatusLabel.setText("当前使用 默认 主题。")
 
-    def _updateThemeInfo(
+    def updateThemeInfo(
         self
     ):
 
@@ -240,7 +240,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         else:
             self.ThemeInfoLabel.setText("")
 
-    def _syncRadioFromNeedTheme(
+    def syncRadioFromNeedTheme(
         self,
         name: str
     ):
@@ -278,12 +278,12 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
         _applyCustomTheme(custom_theme, theme)
-        self._syncRadioFromNeedTheme(custom_theme)
+        self.syncRadioFromNeedTheme(custom_theme)
         theme, _, _ = self.collectSettings()
         _applyTheme(theme)
         self.setNavigationIcons()
         self.updateThemeStatus()
-        self._updateThemeInfo()
+        self.updateThemeInfo()
         self.__original_style = self.currentStyleKey()
 
     def maybeRestart(
@@ -338,7 +338,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
             self.updateThemeStatus()
-            self._updateThemeInfo()
+            self.updateThemeInfo()
         except Exception as e:
             QMessageBox.warning(
                 self,
@@ -348,17 +348,32 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
     @Slot()
     def onThemeComboBoxChanged(
-        self
+        self,
+        index: int
     ):
 
-        self._updateThemeInfo()
+        self.updateThemeInfo()
 
     @Slot()
-    def onResetQssButtonClicked(
+    def onResetThemeButtonClicked(
         self
     ):
 
-        self.ThemeComboBox.setCurrentIndex(0)
+        self.ThemeComboBox.blockSignals(True)
+        if self.__original_custom_theme:
+            idx = self.ThemeComboBox.findText(self.__original_custom_theme)
+            if idx >= 0:
+                self.ThemeComboBox.setCurrentIndex(idx)
+        else:
+            self.ThemeComboBox.setCurrentIndex(0)
+        self.ThemeComboBox.blockSignals(False)
+        if self.__original_theme == "light":
+            self.LightThemeRadio.setChecked(True)
+        elif self.__original_theme == "dark":
+            self.DarkThemeRadio.setChecked(True)
+        else:
+            self.SystemThemeRadio.setChecked(True)
+        self.saveAndApply()
 
     @Slot()
     def onCancelButtonClicked(
