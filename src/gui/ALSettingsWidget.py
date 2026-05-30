@@ -135,6 +135,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.populateStyles()
         self.setNavigationIcons()
         self.ThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
+        self.ThemeInfoLabel.setStyleSheet(
+            "border: 1px solid palette(mid); border-radius: 4px; padding: 4px;"
+        )
 
     def setNavigationIcons(
         self
