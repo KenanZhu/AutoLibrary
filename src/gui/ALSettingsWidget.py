@@ -252,7 +252,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             brief = t.get("brief", "没有相关简介")
             self.ThemeInfoLabel.setText(
                 f"<b>{name}</b><br>"
-                f"适用于 {_themeToReadable(need_theme)} 主题<br>"
+                f" - 适用于 {_themeToReadable(need_theme)} 主题<br>"
                 f"作者：{author}<br>"
                 f"{brief}"
             )
