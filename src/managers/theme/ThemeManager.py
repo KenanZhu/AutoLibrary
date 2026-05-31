@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QStyleFactory
 )
 
+from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.log.LogManager import instance as logInstance
 from utils.ThemeUtils import (
@@ -119,35 +120,36 @@ class ThemeManager:
         if not os.path.isfile(source_path):
             raise FileNotFoundError(source_path)
         ext = os.path.splitext(source_path)[1].lower()
-        if ext == ".qss":
-            name = os.path.splitext(os.path.basename(source_path))[0]
-            dest_path = os.path.join(self.__themes_dir, name + ".altheme")
-            if os.path.exists(dest_path):
-                raise ValueError(f"主题 '{name}' 已存在")
-            wrapQssToAtheme(source_path, dest_path, "both")
-            return name
-        elif ext == ".altheme":
-            with zipfile.ZipFile(source_path, "r") as zf:
-                if "theme.qss" not in zf.namelist():
-                    raise ValueError("无效的 .altheme: 缺少 theme.qss")
-            info = readThemeInfo(source_path)
-            name = info.get("name", os.path.splitext(os.path.basename(source_path))[0])
-            safe_name = os.path.basename(name)
-            dest_path = os.path.join(self.__themes_dir, safe_name + ".altheme")
-            if os.path.exists(dest_path):
-                raise ValueError(f"主题 '{safe_name}' 已存在")
-            # Check for name collision with existing themes by the same author
-            new_author = info.get("author", "")
-            for existing in self.listThemes():
-                if (existing.get("name", "") == safe_name
-                    and existing.get("author", "") == new_author):
-                    raise ValueError(
-                        f"主题名称 '{safe_name}' (作者 '{new_author}') 已存在"
-                    )
-            shutil.copy2(source_path, dest_path)
-            return safe_name
-        else:
-            raise ValueError(f"不支持的文件类型: {ext}")
+        with self.__lock:
+            if ext == ".qss":
+                name = os.path.splitext(os.path.basename(source_path))[0]
+                dest_path = os.path.join(self.__themes_dir, name + ".altheme")
+                if os.path.exists(dest_path):
+                    raise ValueError(f"主题 '{name}' 已存在")
+                wrapQssToAtheme(source_path, dest_path, "both")
+                return name
+            elif ext == ".altheme":
+                with zipfile.ZipFile(source_path, "r") as zf:
+                    if "theme.qss" not in zf.namelist():
+                        raise ValueError("无效的 .altheme: 缺少 theme.qss")
+                info = readThemeInfo(source_path)
+                name = info.get("name", os.path.splitext(os.path.basename(source_path))[0])
+                safe_name = os.path.basename(name)
+                dest_path = os.path.join(self.__themes_dir, safe_name + ".altheme")
+                if os.path.exists(dest_path):
+                    raise ValueError(f"主题 '{safe_name}' 已存在")
+                # Check for name collision with existing themes by the same author
+                new_author = info.get("author", "")
+                for existing in self.listThemes():
+                    if (existing.get("name", "") == safe_name
+                        and existing.get("author", "") == new_author):
+                        raise ValueError(
+                            f"主题名称 '{safe_name}' (作者 '{new_author}') 已存在"
+                        )
+                shutil.copy2(source_path, dest_path)
+                return safe_name
+            else:
+                raise ValueError(f"不支持的文件类型: {ext}")
 
     def listThemes(
         self
@@ -214,7 +216,10 @@ class ThemeManager:
                 os.remove(filepath)
                 if self.__current_theme_name == name:
                     self.__current_theme_name = ""
-                    self.clearTheme("system")
+                    saved_theme = configInstance().get(
+                        CfgKey.GLOBAL.APPEARANCE.THEME, "system"
+                    )
+                    self.clearTheme(saved_theme)
 
     def applyTheme(
         self,

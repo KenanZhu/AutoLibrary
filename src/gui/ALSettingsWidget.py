@@ -34,6 +34,7 @@ import managers.config.ConfigManager as ConfigManager
 from managers.log.LogManager import instance as logInstance
 from managers.theme.ThemeManager import(
     getActiveStyle,
+    setActiveStyle,
     instance as themeInstance
 )
 
@@ -47,18 +48,20 @@ from interfaces.ConfigProvider import (
 def _applyCustomTheme(
     name: str,
     fallback_theme: str = "system"
-):
+) -> bool:
 
     if not name:
         themeInstance().clearTheme(fallback_theme)
-        return
+        return True
     try:
         themeInstance().applyTheme(name)
+        return True
     except Exception as e:
         logInstance().getLogger("ALSettingsWidget").warning(
             f"无法应用自定义主题 '{name}'，回退到 {fallback_theme} 外观: {e}"
         )
         themeInstance().clearTheme(fallback_theme)
+        return False
 
 def _themeToReadable(
     need_theme: str
@@ -266,7 +269,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         theme, style, custom_theme = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
-        _applyCustomTheme(custom_theme, theme)
+        setActiveStyle(style)
+        if not _applyCustomTheme(custom_theme, theme):
+            self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
         self.syncRadioFromNeedTheme(custom_theme)
         # Re-read theme after syncRadioFromNeedTheme — the radio may have
         # changed to match the custom theme's need_theme
