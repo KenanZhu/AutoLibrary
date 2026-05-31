@@ -7,7 +7,7 @@
  * See the LICENSE file for details.
  *
  *
- * AutoLibrary Official Style Theme : BlueForest
+ * AutoLibrary Official Theme : BlueForest
  */
 
 /* ---- Global ---- */
@@ -116,6 +116,94 @@ QPlainTextEdit,
 QTextEdit {
     background-color: #0a1020;
 }
+QLineEdit:disabled,
+QPlainTextEdit:disabled,
+QTextEdit:disabled,
+QSpinBox:disabled,
+QDoubleSpinBox:disabled,
+QDateEdit:disabled,
+QTimeEdit:disabled {
+    background-color: #162038;
+    color: #5568a0;
+    border-color: #1c2840;
+}
+
+/* ---- Spin Button Arrows ---- */
+QSpinBox::up-button,
+QDoubleSpinBox::up-button,
+QDateEdit::up-button,
+QTimeEdit::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 10px;
+    border-left: 1px solid #253250;
+    border-bottom: 1px solid #253250;
+    border-top-right-radius: 4px;
+}
+QSpinBox::up-button:hover,
+QDoubleSpinBox::up-button:hover,
+QDateEdit::up-button:hover,
+QTimeEdit::up-button:hover {
+    background-color: #1c2840;
+}
+QSpinBox::up-arrow,
+QDoubleSpinBox::up-arrow,
+QDateEdit::up-arrow,
+QTimeEdit::up-arrow {
+    /* image: none; */
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid #7888b8;
+    margin-top: 2px;
+}
+QSpinBox::down-button,
+QDoubleSpinBox::down-button,
+QDateEdit::down-button,
+QTimeEdit::down-button {
+    width: 10px;
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    border-left: 1px solid #253250;
+    border-bottom-right-radius: 4px;
+}
+QSpinBox::down-button:hover,
+QDoubleSpinBox::down-button:hover,
+QDateEdit::down-button:hover,
+QTimeEdit::down-button:hover {
+    background-color: #1c2840;
+}
+QSpinBox::down-arrow,
+QDoubleSpinBox::down-arrow,
+QDateEdit::down-arrow,
+QTimeEdit::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #7888b8;
+    margin-bottom: 2px;
+}
+QSpinBox::up-button:disabled,
+QDoubleSpinBox::up-button:disabled,
+QDateEdit::up-button:disabled,
+QTimeEdit::up-button:disabled,
+QSpinBox::down-button:disabled,
+QDoubleSpinBox::down-button:disabled,
+QDateEdit::down-button:disabled,
+QTimeEdit::down-button:disabled {
+    background-color: #162038;
+}
+QSpinBox::up-arrow:disabled,
+QDoubleSpinBox::up-arrow:disabled,
+QDateEdit::up-arrow:disabled,
+QTimeEdit::up-arrow:disabled {
+    border-bottom-color: #5568a0;
+}
+QSpinBox::down-arrow:disabled,
+QDoubleSpinBox::down-arrow:disabled,
+QDateEdit::down-arrow:disabled,
+QTimeEdit::down-arrow:disabled {
+    border-top-color: #5568a0;
+}
 
 /* ---- Combo Box ---- */
 QComboBox {
@@ -158,6 +246,11 @@ QComboBox QAbstractItemView {
     selection-color: #0f1119;
     outline: none;
 }
+QComboBox:disabled {
+    background-color: #162038;
+    color: #5568a0;
+    border-color: #1c2840;
+}
 
 /* ---- Check Box / Radio Button ---- */
 QCheckBox,
@@ -192,6 +285,47 @@ QCheckBox::indicator:disabled,
 QRadioButton::indicator:disabled {
     border-color: #253250;
     background-color: #162038;
+}
+QCheckBox::indicator:checked:hover,
+QRadioButton::indicator:checked:hover {
+    border-color: #a0f0e8;
+}
+
+/* Tree / List / Table Widget CheckBox Indicator */
+QTreeWidget::indicator,
+QListWidget::indicator,
+QTableWidget::indicator {
+    border: 2px solid #5568a0;
+    border-radius: 3px;
+    background-color: #162038;
+}
+QTreeWidget::indicator:hover,
+QListWidget::indicator:hover,
+QTableWidget::indicator:hover {
+    border-color: #a0f0e8;
+}
+QTreeWidget::indicator:checked,
+QListWidget::indicator:checked,
+QTableWidget::indicator:checked {
+    background-color: #2dd4bf;
+    border-color: #2dd4bf;
+}
+QTreeWidget::indicator:checked:hover,
+QListWidget::indicator:checked:hover,
+QTableWidget::indicator:checked:hover {
+    border-color: #a0f0e8;
+}
+QTreeWidget::indicator:disabled,
+QListWidget::indicator:disabled,
+QTableWidget::indicator:disabled {
+    background-color: #1c2840;
+    border-color: #334478;
+}
+QTreeWidget::indicator:indeterminate,
+QListWidget::indicator:indeterminate,
+QTableWidget::indicator:indeterminate {
+    background-color: #2dd4bf;
+    border-color: #a0f0e8;
 }
 
 /* ---- Group Box ---- */
@@ -238,10 +372,6 @@ QTabBar::tab:selected {
     color: #2dd4bf;
     border-bottom: 2px solid #2dd4bf;
 }
-QTabBar::tab:hover:!selected {
-    background-color: #1c2840;
-    color: #d0daf0;
-}
 
 /* ---- List / Tree ---- */
 QListWidget,
@@ -268,16 +398,12 @@ QTableWidget::item:selected {
     background-color: #2dd4bf;
     color: #0f1119;
 }
-QListWidget::item:hover:!selected,
-QTreeWidget::item:hover:!selected {
-    background-color: #1c2840;
-}
 QHeaderView::section {
     background-color: #0f1628;
     border: none;
     border-right: 1px solid #253250;
     border-bottom: 1px solid #253250;
-    padding: 6px 10px;
+    padding: 5px 10px;
     color: #8b9ad0;
     font-weight: bold;
 }
@@ -350,6 +476,12 @@ QSlider::handle:horizontal {
 QSlider::sub-page:horizontal {
     background-color: #2dd4bf;
     border-radius: 3px;
+}
+QSlider::handle:horizontal:disabled {
+    background-color: #5568a0;
+}
+QSlider::sub-page:horizontal:disabled {
+    background-color: #5568a0;
 }
 
 /* ---- Tool Tip ---- */
