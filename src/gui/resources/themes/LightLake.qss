@@ -21,11 +21,11 @@ QMainWindow::separator {
 QMenuBar {
     background-color: #dce4ee;
     border-bottom: 1px solid #c0cdda;
-    padding: 2px 6px;
+    padding: 2px 5px;
     color: #1a2740;
 }
 QMenuBar::item {
-    padding: 4px 10px;
+    padding: 2px 10px;
     border-radius: 4px;
 }
 QMenuBar::item:selected {
@@ -150,7 +150,6 @@ QSpinBox::up-arrow,
 QDoubleSpinBox::up-arrow,
 QDateEdit::up-arrow,
 QTimeEdit::up-arrow {
-    /* image: none; */
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
     border-bottom: 5px solid #6a7898;
@@ -176,7 +175,6 @@ QSpinBox::down-arrow,
 QDoubleSpinBox::down-arrow,
 QDateEdit::down-arrow,
 QTimeEdit::down-arrow {
-    image: none;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
     border-top: 5px solid #6a7898;
@@ -255,7 +253,7 @@ QComboBox:disabled {
 /* ---- Check Box / Radio Button ---- */
 QCheckBox,
 QRadioButton {
-    spacing: 8px;
+    spacing: 5px;
     color: #1a2740;
 }
 QCheckBox::indicator,
@@ -263,8 +261,13 @@ QRadioButton::indicator {
     border-style: solid;
     border-color: #90a4c4;
     border-width: 2px;
-    border-radius: 3px;
     background-color: #ffffff;
+}
+QCheckBox::indicator {
+    border-radius: 3px;
+}
+QRadioButton::indicator {
+    border-radius: 7px;
 }
 QCheckBox::indicator:hover,
 QRadioButton::indicator:hover {
@@ -273,9 +276,6 @@ QRadioButton::indicator:hover {
 QCheckBox::indicator:checked {
     background-color: #0ea58a;
     border-color: #0ea58a;
-}
-QRadioButton::indicator {
-    border-radius: 10px;
 }
 QRadioButton::indicator:checked {
     background-color: #0ea58a;
@@ -330,20 +330,14 @@ QTableWidget::indicator:indeterminate {
 
 /* ---- Group Box ---- */
 QGroupBox {
+    margin-top: 5px;
+    padding-top: 15px;
+    color: #4a6080;
+    font-weight: bold;
     border-style: solid;
     border-color: #c0cdda;
     border-width: 1px;
-    border-radius: 6px;
-    margin-top: 12px;
-    padding-top: 14px;
-    color: #1a2740;
-    font-weight: bold;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 12px;
-    padding: 0 6px;
-    color: #4a6080;
+    border-radius: 5px;
 }
 
 /* ---- Tab ---- */
@@ -372,10 +366,6 @@ QTabBar::tab:selected {
     color: #0ea58a;
     border-bottom: 2px solid #0ea58a;
 }
-QTabBar::tab:hover:!selected {
-    background-color: #d5dde8;
-    color: #1a2740;
-}
 
 /* ---- List / Tree ---- */
 QListWidget,
@@ -393,18 +383,10 @@ QTableWidget {
 QListWidget::item,
 QTreeWidget::item,
 QTableWidget::item {
-    padding: 5px 10px;
-    border: none;
-}
-QListWidget::item:selected,
-QTreeWidget::item:selected,
-QTableWidget::item:selected {
-    background-color: #0ea58a;
-    color: #ffffff;
+    padding: 5px 5px;
 }
 QHeaderView::section {
     background-color: #dce4ee;
-    border: none;
     border-right: 1px solid #c0cdda;
     border-bottom: 1px solid #c0cdda;
     padding: 5px 10px;

@@ -56,7 +56,7 @@
       </size>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <property name="movable">
       <bool>true</bool>
@@ -1956,13 +1956,13 @@
            <widget class="QPushButton" name="ExportConfigButton">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>120</width>
               <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>100</width>
+              <width>120</width>
               <height>25</height>
              </size>
             </property>
