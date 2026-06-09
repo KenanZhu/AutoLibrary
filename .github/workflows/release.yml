@@ -21,8 +21,10 @@ name: Release
 #       Commits version changes to release branch and creates the release tag.
 
 # 4. Build:
-#       Compiles the application for Windows platform using PyInstaller, and
-#       archives the built artifacts as 'AutoLibrary.<tag_name>-windows-x86_64.zip'.
+#       Compiles the application for Windows and macOS platforms using PyInstaller, and
+#       archives the built artifacts.
+#       - Windows: AutoLibrary.<tag_name>-windows-x86_64.zip
+#       - macOS:   AutoLibrary.<tag_name>-macos-arm64.dmg
 
 # 5. Release:
 #       Creates GitHub release with generated artifacts and release notes
@@ -181,10 +183,16 @@ jobs:
       contents: write
 
     steps:
-    - name: Download artifacts
+    - name: Download Windows artifacts
       uses: actions/download-artifact@v6
       with:
         name: AutoLibrary.${{ needs.extract-version.outputs.tag_name }}-windows-x86_64
+        path: artifacts/
+
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: AutoLibrary.${{ needs.extract-version.outputs.tag_name }}-macos-arm64
         path: artifacts/
 
     - name: Create release
@@ -195,6 +203,7 @@ jobs:
         name: AutoLibrary ${{ needs.extract-version.outputs.tag_name }}
         files: |
           artifacts/AutoLibrary.${{ needs.extract-version.outputs.tag_name }}-windows-x86_64.zip
+          artifacts/AutoLibrary.${{ needs.extract-version.outputs.tag_name }}-macos-arm64.dmg
         draft: false
         prerelease: ${{ needs.extract-version.outputs.is_rc == 'true' }}
         generate_release_notes: true
