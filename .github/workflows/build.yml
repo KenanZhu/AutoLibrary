@@ -254,14 +254,14 @@ jobs:
     - name: Upload build summary
       if: ${{ inputs.is_test == 'true' }}
       run: |
-        Write-Host "## Build Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-        Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "========================================" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "✓ Build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Version: ${{ steps.get_version.outputs.VERSION }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Event: ${{ github.event_name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Ref: ${{ github.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "## Build Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+        "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "========================================" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "✓ Build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Version: ${{ steps.get_version.outputs.VERSION }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Event: ${{ github.event_name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Ref: ${{ github.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
       shell: pwsh
 
   #
