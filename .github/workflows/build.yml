@@ -1,7 +1,10 @@
 name: Build
 
-# This workflow compiles the application for Windows platform using PyInstaller, and
-# archives the built artifacts as 'AutoLibrary.<tag_name>-windows-x86_64.zip'.
+# This workflow compiles the application for Windows and macOS platforms using
+# PyInstaller, and archives the built artifacts.
+#
+# - Windows: AutoLibrary.<tag_name>-windows-x86_64.zip
+# - macOS:   AutoLibrary.<tag_name>-macos-arm64.dmg
 #
 # It is triggered when called by the release workflow.
 
@@ -251,12 +254,310 @@ jobs:
     - name: Upload build summary
       if: ${{ inputs.is_test == 'true' }}
       run: |
-        Write-Host "## Build Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-        Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "========================================" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "✓ Build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Version: ${{ steps.get_version.outputs.VERSION }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Event: ${{ github.event_name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-        Write-Host "- Ref: ${{ github.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "## Build Summary" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+        "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "========================================" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "✓ Build test completed successfully!" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Version: ${{ steps.get_version.outputs.VERSION }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Tag: ${{ steps.get_version.outputs.TAG_NAME }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Event: ${{ github.event_name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+        "- Ref: ${{ github.ref }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
       shell: pwsh
+
+  #
+  # Build macOS
+  #
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.ref }}
+
+    - name: Download build version of ALVersionInfo.py
+      uses: actions/download-artifact@v6
+      with:
+        name: updated-version-info-for-build
+        path: src/gui/
+
+    - name: Get version info
+      id: get_version
+      run: |
+        is_test="${{ inputs.is_test }}"
+        if [ "$is_test" = "true" ]; then
+          version="test"
+          tag_name="test"
+          echo "✓ Mode: Test Build"
+        else
+          version="${{ inputs.version }}"
+          tag_name="${{ inputs.tag_name }}"
+
+          if [ -z "$version" ]; then
+            version="test"
+            tag_name="test"
+            echo "✓ Mode: Independent Build (No inputs provided)"
+          fi
+        fi
+
+        echo "✓ Tag: $tag_name"
+        echo "✓ Version: $version"
+
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "TAG_NAME=$tag_name" >> $GITHUB_OUTPUT
+
+    - name: Verify 'ALVersionInfo.py' was updated
+      run: |
+        version_info_file="src/gui/ALVersionInfo.py"
+        echo "Verifying $version_info_file content:"
+        echo "========================================"
+        cat "$version_info_file"
+        echo "========================================"
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
+        cache: 'pip'
+        cache-dependency-path: requirements.txt
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Solve ddddocr compatibility and copy model files
+      run: |
+        ddddocr_path=$(python -c "import ddddocr, os; print(os.path.dirname(ddddocr.__file__))")
+        echo "ddddocr package location: $ddddocr_path"
+
+        init_file="$ddddocr_path/__init__.py"
+        if [ -f "$init_file" ]; then
+          echo "Fixing ddddocr compatibility in: $init_file"
+          # macOS 使用 BSD sed，要求 -i 后跟备份后缀名（空字符串 = 不备份）
+          sed -i '' 's/Image\.ANTIALIAS/Image.Resampling.LANCZOS/g' "$init_file"
+          echo "✓ Fixed: Image.ANTIALIAS -> Image.Resampling.LANCZOS"
+        else
+          echo "✗ ddddocr __init__.py not found"
+          exit 1
+        fi
+
+        mkdir -p models
+        echo "✓ Created models directory"
+
+        # 多路径 fallback 搜索 ONNX 模型，提升 ddddocr 版本兼容性
+        onnx_source=""
+        onnx_dest="models/common.onnx"
+        candidate_paths=(
+          "$ddddocr_path/common.onnx"
+          "$ddddocr_path/models/common.onnx"
+          "$ddddocr_path/ddddocr/common.onnx"
+        )
+        for candidate in "${candidate_paths[@]}"; do
+          if [ -f "$candidate" ]; then
+            onnx_source="$candidate"
+            break
+          fi
+        done
+        # 若以上候选均未命中，回退到全包搜索
+        if [ -z "$onnx_source" ]; then
+          echo "⚠ 未在已知路径找到 ONNX 模型，回退到全包搜索..."
+          onnx_source=$(find "$ddddocr_path" -name "*.onnx" -type f 2>/dev/null | head -1)
+        fi
+
+        if [ -n "$onnx_source" ] && [ -f "$onnx_source" ]; then
+          cp "$onnx_source" "$onnx_dest"
+          echo "✓ ONNX model copied: $onnx_source -> $onnx_dest"
+        else
+          echo "✗ ONNX model not found in ddddocr package"
+          echo "  Searched directory: $ddddocr_path"
+          ls -la "$ddddocr_path/" || true
+          exit 1
+        fi
+
+        if [ -f "$onnx_dest" ]; then
+          file_size=$(du -h "$onnx_dest" | cut -f1)
+          echo "✓ Model file verified: $onnx_dest (Size: $file_size)"
+        else
+          echo "✗ Failed to copy model file"
+          exit 1
+        fi
+
+    - name: Compile Qt Resource files
+      run: |
+        cd batchs
+        bash compile_rc.sh
+
+    - name: Compile Qt UI files
+      run: |
+        cd batchs
+        bash compile_ui.sh
+
+    - name: Generate 'Main.spec'
+      env:
+        APP_VERSION: ${{ steps.get_version.outputs.VERSION }}
+      run: |
+        version="$APP_VERSION"
+        exe_name="AutoLibrary-$version"
+        echo "Generating Main.spec for version: $version"
+        echo "App name: $exe_name"
+
+        printf '%s\n' \
+          '# -*- mode: python ; coding: utf-8 -*-' \
+          '' \
+          'a = Analysis(' \
+          "    ['src/Main.py']," \
+          '    pathex=[],' \
+          '    binaries=[],' \
+          '    datas=[' \
+          "        ('models/common.onnx', 'ddddocr')," \
+          "        ('src/gui/resources/icons/AutoLibrary_Logo_64.ico', 'gui/resources/icons')," \
+          '    ],' \
+          '    hiddenimports=[],' \
+          '    hookspath=[],' \
+          '    hooksconfig={},' \
+          '    runtime_hooks=[],' \
+          '    excludes=[],' \
+          '    noarchive=False,' \
+          '    optimize=0,' \
+          ')' \
+          'pyz = PYZ(a.pure)' \
+          '' \
+          'exe = EXE(' \
+          '    pyz,' \
+          '    a.scripts,' \
+          '    [],' \
+          '    exclude_binaries=True,' \
+          "    name='AutoLibrary'," \
+          '    debug=False,' \
+          '    bootloader_ignore_signals=False,' \
+          '    strip=False,' \
+          '    upx=True,' \
+          '    upx_exclude=[],' \
+          '    runtime_tmpdir=None,' \
+          '    console=False,' \
+          '    disable_windowed_traceback=False,' \
+          '    argv_emulation=False,' \
+          '    target_arch=None,' \
+          '    codesign_identity=None,' \
+          '    entitlements_file=None,' \
+          "    icon=['src/gui/resources/icons/AutoLibrary_Logo_64.ico']," \
+          ')' \
+          '' \
+          'coll = COLLECT(' \
+          '    exe,' \
+          '    a.binaries,' \
+          '    a.zipfiles,' \
+          '    a.datas,' \
+          '    strip=False,' \
+          '    upx=True,' \
+          '    upx_exclude=[],' \
+          "    name='${exe_name}'," \
+          ')' \
+          '' \
+          'app = BUNDLE(' \
+          '    coll,' \
+          "    name='AutoLibrary.app'," \
+          "    icon='src/gui/resources/icons/AutoLibrary_Logo.icns'," \
+          "    bundle_identifier='com.kenanzhu.autolibrary'," \
+          '    info_plist={' \
+          "        'NSHighResolutionCapable': 'True'," \
+          "        'CFBundleName': 'AutoLibrary'," \
+          "        'CFBundleDisplayName': 'AutoLibrary'," \
+          "        'CFBundleShortVersionString': '${version}'," \
+          "        'CFBundleVersion': '${version}'," \
+          "        'CFBundleExecutable': 'AutoLibrary'," \
+          "        'NSPrincipalClass': 'NSApplication'," \
+          "        'LSMinimumSystemVersion': '11.0'," \
+          "        'NSRequiresAquaSystemAppearance': 'False'," \
+          "        'NSHumanReadableCopyright': 'Copyright 2025 - 2026 KenanZhu. All rights reserved.'," \
+          '    },' \
+          ')' \
+          > Main.spec
+
+        echo "✓ Main.spec generated successfully"
+        echo ""
+        echo "========================================"
+        echo "Generated Main.spec"
+        echo "========================================"
+        cat Main.spec
+        echo "========================================"
+
+    - name: Build with PyInstaller
+      run: |
+        python -m PyInstaller Main.spec
+
+    - name: Create DMG
+      run: |
+        tag_name="${{ steps.get_version.outputs.TAG_NAME }}"
+        dmg_name="AutoLibrary.$tag_name-macos-arm64.dmg"
+        app_path="dist/AutoLibrary.app"
+
+        if [ ! -d "$app_path" ]; then
+          echo "✗ App bundle not found: $app_path"
+          echo "Files in dist directory:"
+          ls -la dist/
+          exit 1
+        fi
+
+        echo "Creating DMG from: $app_path"
+        xattr -cr "$app_path" 2>/dev/null || true
+
+        tmp_dmg_dir=$(mktemp -d)
+        cp -R "$app_path" "$tmp_dmg_dir/"
+        ln -s /Applications "$tmp_dmg_dir/Applications"
+
+        hdiutil create \
+          -volname "AutoLibrary $tag_name" \
+          -srcfolder "$tmp_dmg_dir" \
+          -ov \
+          -format UDZO \
+          "$dmg_name"
+
+        rm -rf "$tmp_dmg_dir"
+
+        if [ -f "$dmg_name" ]; then
+          dmg_size=$(du -h "$dmg_name" | cut -f1)
+          echo "✓ DMG created: $dmg_name (Size: $dmg_size)"
+        else
+          echo "✗ Failed to create DMG"
+          exit 1
+        fi
+
+        echo "✓ Artifacts ready:"
+        echo "  - $dmg_name"
+        echo "  - $app_path"
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v6
+      with:
+        name: AutoLibrary.${{ steps.get_version.outputs.TAG_NAME }}-macos-arm64
+        path: |
+          AutoLibrary.${{ steps.get_version.outputs.TAG_NAME }}-macos-arm64.dmg
+          dist/AutoLibrary.app/**
+        retention-days: ${{ inputs.is_test == 'true' && 7 || 90 }}
+
+    - name: Upload build summary
+      if: ${{ inputs.is_test == 'true' }}
+      run: |
+        tag_name="${{ steps.get_version.outputs.TAG_NAME }}"
+        version="${{ steps.get_version.outputs.VERSION }}"
+        dmg_name="AutoLibrary.$tag_name-macos-arm64.dmg"
+
+        {
+          echo "## Build Summary (macOS)"
+          echo ""
+          echo "========================================"
+          echo "✓ Build test completed successfully!"
+          echo "- Version: $version"
+          echo "- Tag: $tag_name"
+          echo "- Event: ${{ github.event_name }}"
+          echo "- Ref: ${{ github.ref }}"
+          echo "- DMG: $dmg_name"
+          echo ""
+          echo "### How to test on macOS"
+          echo '1. Download the DMG artifact'
+          echo '2. Open the DMG and drag AutoLibrary.app to /Applications'
+          echo '3. Right-click → Open the app (to bypass Gatekeeper)'
+        } >> $GITHUB_STEP_SUMMARY
