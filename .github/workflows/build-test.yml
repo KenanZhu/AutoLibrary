@@ -263,6 +263,7 @@ jobs:
         init_file="$ddddocr_path/__init__.py"
         if [ -f "$init_file" ]; then
           echo "Fixing ddddocr compatibility in: $init_file"
+          # macOS 使用 BSD sed，要求 -i 后跟备份后缀名（空字符串 = 不备份）
           sed -i '' 's/Image\.ANTIALIAS/Image.Resampling.LANCZOS/g' "$init_file"
           echo "✓ Fixed: Image.ANTIALIAS -> Image.Resampling.LANCZOS"
         else
@@ -273,13 +274,33 @@ jobs:
         mkdir -p models
         echo "✓ Created models directory"
 
-        onnx_source="$ddddocr_path/common.onnx"
+        # 多路径 fallback 搜索 ONNX 模型，提升 ddddocr 版本兼容性
+        onnx_source=""
         onnx_dest="models/common.onnx"
-        if [ -f "$onnx_source" ]; then
+        candidate_paths=(
+          "$ddddocr_path/common.onnx"
+          "$ddddocr_path/models/common.onnx"
+          "$ddddocr_path/ddddocr/common.onnx"
+        )
+        for candidate in "${candidate_paths[@]}"; do
+          if [ -f "$candidate" ]; then
+            onnx_source="$candidate"
+            break
+          fi
+        done
+        # 若以上候选均未命中，回退到全包搜索
+        if [ -z "$onnx_source" ]; then
+          echo "⚠ 未在已知路径找到 ONNX 模型，回退到全包搜索..."
+          onnx_source=$(find "$ddddocr_path" -name "*.onnx" -type f 2>/dev/null | head -1)
+        fi
+
+        if [ -n "$onnx_source" ] && [ -f "$onnx_source" ]; then
           cp "$onnx_source" "$onnx_dest"
-          echo "✓ ONNX model copied to: $onnx_dest"
+          echo "✓ ONNX model copied: $onnx_source -> $onnx_dest"
         else
-          echo "✗ ONNX model not found in ddddocr package: $onnx_source"
+          echo "✗ ONNX model not found in ddddocr package"
+          echo "  Searched directory: $ddddocr_path"
+          ls -la "$ddddocr_path/" || true
           exit 1
         fi
 
@@ -366,7 +387,7 @@ jobs:
           'app = BUNDLE(' \
           '    coll,' \
           "    name='AutoLibrary.app'," \
-          "    icon='src/gui/resources/icons/AutoLibrary_Logo_64.ico'," \
+          "    icon='src/gui/resources/icons/AutoLibrary_Logo.icns'," \
           "    bundle_identifier='com.kenanzhu.autolibrary'," \
           '    info_plist={' \
           "        'NSHighResolutionCapable': 'True'," \
@@ -375,10 +396,10 @@ jobs:
           "        'CFBundleShortVersionString': '${version}'," \
           "        'CFBundleVersion': '${version}'," \
           "        'CFBundleExecutable': 'AutoLibrary'," \
-          "        'CFBundlePackageType': 'APPL'," \
           "        'NSPrincipalClass': 'NSApplication'," \
           "        'LSMinimumSystemVersion': '11.0'," \
           "        'NSRequiresAquaSystemAppearance': 'False'," \
+          "        'NSHumanReadableCopyright': 'Copyright 2025 - 2026 KenanZhu. All rights reserved.'," \
           '    },' \
           ')' \
           > Main.spec
@@ -393,7 +414,7 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller Main.spec
+        python -m PyInstaller Main.spec
 
     - name: Create DMG
       run: |
