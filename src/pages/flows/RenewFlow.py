@@ -61,19 +61,23 @@ class RenewFlow(MsgBase):
             )
         return True
 
-    def execute(
+    def _computeRenewTarget(
         self,
-        username: str,
         record: dict,
         renew_info: dict,
-    ) -> bool:
+    ):
 
-        max_diff = renew_info.get("max_diff", 30)
-        prefer_earlier = renew_info.get("prefer_early", True)
         end_time = record["time"]["end"]
         target_renew_mins = timeStrToMins(end_time) + renew_info.get("expect_duration", 2) * 60
         if not self._validateRenewTime(end_time, target_renew_mins):
-            return False
+            return None
+        return target_renew_mins
+
+    def _ensureExtendButton(
+        self,
+        username: str,
+    ) -> bool:
+
         if not self._shell.waitExtendButton():
             self._showTrace(f"用户 {username} 续约界面加载失败 !", self.TraceLevel.ERROR)
             return False
@@ -83,7 +87,17 @@ class RenewFlow(MsgBase):
                 f"请连接图书馆网络后重试"
             )
             return False
-        self._shell.clickExtendButton()
+        return True
+
+    def _processRenewDialog(
+        self,
+        username: str,
+        record: dict,
+        target_renew_mins: int,
+        max_diff: int,
+        prefer_earlier: bool,
+    ) -> bool:
+
         try:
             with RenewDialog(self._driver) as dialog:
                 if not dialog.waitUntilReady():
@@ -132,3 +146,22 @@ class RenewFlow(MsgBase):
             self._showTrace(f"用户 {username} 续约失败 ! : {e}", self.TraceLevel.ERROR)
             self._shell.refresh()
             return False
+
+    def execute(
+        self,
+        username: str,
+        record: dict,
+        renew_info: dict,
+    ) -> bool:
+
+        max_diff = renew_info.get("max_diff", 30)
+        prefer_earlier = renew_info.get("prefer_early", True)
+        target_renew_mins = self._computeRenewTarget(record, renew_info)
+        if target_renew_mins is None:
+            return False
+        if not self._ensureExtendButton(username):
+            return False
+        self._shell.clickExtendButton()
+        return self._processRenewDialog(
+            username, record, target_renew_mins, max_diff, prefer_earlier,
+        )

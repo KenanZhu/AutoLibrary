@@ -35,7 +35,7 @@ class CheckinFlow(MsgBase):
         self._driver: WebDriver = driver
         self._shell: MainShell = shell
 
-    def execute(
+    def _ensureCheckinButton(
         self,
         username: str,
     ) -> bool:
@@ -49,7 +49,13 @@ class CheckinFlow(MsgBase):
                 self._showTrace(f"签到按钮启用失败 !", self.TraceLevel.ERROR)
                 return False
             self._showTrace("签到按钮已启用")
-        self._shell.clickCheckinButton()
+        return True
+
+    def _processCheckinDialog(
+        self,
+        username: str,
+    ) -> bool:
+
         try:
             with CheckinResultDialog(self._driver) as dialog:
                 result_msg = dialog.getResultMessage()
@@ -87,3 +93,13 @@ class CheckinFlow(MsgBase):
         except (TimeoutException, NoSuchElementException, ElementNotInteractableException):
             self._showTrace("签到时发生未知错误 !", self.TraceLevel.ERROR)
             return False
+
+    def execute(
+        self,
+        username: str,
+    ) -> bool:
+
+        if not self._ensureCheckinButton(username):
+            return False
+        self._shell.clickCheckinButton()
+        return self._processCheckinDialog(username)

@@ -10,6 +10,7 @@ See the LICENSE file for details.
 import os
 import queue
 from selenium import webdriver
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import (
     TimeoutException,
     WebDriverException,
@@ -37,11 +38,11 @@ class AutoLib(MsgBase):
         output_queue: queue.Queue,
         run_config: dict,
     ) -> None:
-        super().__init__(input_queue, output_queue)
 
+        super().__init__(input_queue, output_queue)
         self.__run_config: dict = run_config
         self.__user_config: dict | None = None
-        self.__driver = None
+        self.__driver: WebDriver | None = None
         self.__driver_type: str = ""
         self.__driver_path: str = ""
         self.__login_page: LoginPage = None
@@ -58,7 +59,7 @@ class AutoLib(MsgBase):
         else:
             if not self.__initDriverUrl():
                 self.close()
-                raise Exception("浏览器驱动URL初始化失败 !")
+                raise Exception("浏览器驱动 URL 初始化失败 !")
             self.__initPagesServices()
             self.__initPagesFlows()
 
@@ -67,9 +68,10 @@ class AutoLib(MsgBase):
     ) -> bool:
 
         self._showTrace("正在初始化浏览器驱动......", no_log=True)
-        web_driver_config: dict = self.__run_config.get("web_driver", None)
-        self.__driver_type = web_driver_config.get("driver_type", "none")
-        match self.__driver_type.lower():
+        driver_config: dict = self.__run_config.get("web_driver", None)
+        self.__driver_type = driver_config.get("driver_type", "none")
+        self.__driver_type = self.__driver_type.lower()
+        match self.__driver_type:
             case "edge":
                 driver_options = webdriver.EdgeOptions()
             case "chrome":
@@ -82,10 +84,10 @@ class AutoLib(MsgBase):
                     self.TraceLevel.WARNING,
                 )
                 return False
-        if not web_driver_config:
+        if not driver_config:
             self._showTrace("未配置浏览器驱动参数 !", self.TraceLevel.ERROR)
             return False
-        if web_driver_config.get("headless", False):
+        if driver_config.get("headless", False):
             driver_options.add_argument("--headless")
             driver_options.add_argument("--disable-gpu")
             driver_options.add_argument("--no-sandbox")
@@ -110,11 +112,11 @@ class AutoLib(MsgBase):
                          "AppleWebKit/537.36 (KHTML, like Gecko) "\
                          "Chrome/120.0.0.0 "\
                          "Safari/537.36"
-            if self.__driver_type.lower() == "edge":
+            if self.__driver_type == "edge":
                 user_agent += " Edg/120.0.0.0"
 
         # set options for firefox
-        elif self.__driver_type.lower() == "firefox":
+        elif self.__driver_type == "firefox":
             driver_options.set_preference("dom.webdriver.enabled", False)
             driver_options.set_preference("useAutomationExtension", False)
             user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) "\
@@ -122,14 +124,14 @@ class AutoLib(MsgBase):
         driver_options.add_argument(f"user-agent={user_agent}")
 
         # init browser driver
-        self.__driver_path = web_driver_config.get("driver_path", "")
+        self.__driver_path = driver_config.get("driver_path", "")
         if not self.__driver_path:
             self._showTrace("未配置浏览器驱动路径 !", self.TraceLevel.WARNING)
             return False
         try:
             self.__driver_path = os.path.abspath(self.__driver_path)
             service = None
-            match self.__driver_type.lower():
+            match self.__driver_type:
                 case "edge":
                     service = EdgeService(executable_path=self.__driver_path)
                     self.__driver = webdriver.Edge(service=service, options=driver_options)
@@ -161,7 +163,7 @@ class AutoLib(MsgBase):
             self._showTrace("未配置图书馆参数 !", self.TraceLevel.ERROR)
             return False
         url: str = lib_config.get("host_url") + lib_config.get("login_url")
-        self.__login_page = LoginPage(self.__driver, tracer=self._showTrace)
+        self.__login_page = LoginPage(self._input_queue, self._output_queue, self.__driver)
         self.__driver.set_page_load_timeout(5)
         try:
             self.__driver.get(url)
