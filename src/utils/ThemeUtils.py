@@ -117,7 +117,8 @@ def readThemeQss(
         return zf.read("theme.qss").decode("utf-8")
 
 def validateTheme(
-    altheme_path: str
+    altheme_path: str,
+    check_qss: bool = True
 ) -> dict:
     """
         Validate a .altheme file and return its metadata.
@@ -128,6 +129,8 @@ def validateTheme(
 
         Args:
             altheme_path (str): Path to the .altheme file.
+            check_qss (bool): If False, skip theme.qss existence and
+                              content checks (for list-only operations).
 
         Returns:
             dict: The validated theme metadata dictionary.
@@ -146,14 +149,16 @@ def validateTheme(
         if "theme.qss" not in names:
             raise ValueError("无效的 .altheme: 缺少 theme.qss")
         info_bytes = zf.read("info.json")
-        qss_bytes = zf.read("theme.qss")
+        qss_bytes = zf.read("theme.qss") if check_qss else None  # skip QSS read when only listing
     try:
         info = json.loads(info_bytes.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise ValueError(f"无效的 .altheme: info.json 解析失败 — {e}")
     if "name" not in info or not isinstance(info.get("name"), str) or not info["name"].strip():
         raise ValueError("无效的 .altheme: info.json 缺少有效的 'name' 字段")
-    if "author" not in info or not isinstance(info.get("author"), str):
+    # reject blank author so info.json does not drift from the "未知作者" filename fallback
+    if ("author" not in info or not isinstance(info.get("author"), str)
+            or not info["author"].strip()):
         raise ValueError("无效的 .altheme: info.json 缺少有效的 'author' 字段")
     need_theme = info.get("need_theme", "both")
     if need_theme not in ("light", "dark", "both"):
@@ -163,7 +168,7 @@ def validateTheme(
         )
     if "brief" not in info or not isinstance(info.get("brief"), str):
         raise ValueError("无效的 .altheme: info.json 缺少有效的 'brief' 字段")
-    if not qss_bytes.strip():
+    if check_qss and not qss_bytes.strip():
         raise ValueError("无效的 .altheme: theme.qss 为空")
     return info
 
@@ -191,7 +196,7 @@ def wrapQssToAtheme(
     filename = os.path.splitext(os.path.basename(qss_path))[0]
     info = {
         "name": filename,
-        "author": "未知",
+        "author": "未知作者",
         "need_theme": current_theme,
         "brief": "没有相关简介"
     }

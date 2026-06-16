@@ -139,6 +139,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
     ):
 
         self.BrowseQssButton.clicked.connect(self.onImportThemeButtonClicked)
+        self.RemoveThemeButton.clicked.connect(self.onRemoveThemeButtonClicked)
         self.ThemeComboBox.currentIndexChanged.connect(self.onThemeComboBoxChanged)
         self.ResetThemeButton.clicked.connect(self.onResetThemeButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
@@ -225,7 +226,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         t = self.__theme_cache.get(file)
         if t:
             name = t.get("name", "未知")
-            author = t.get("author", "未知")
+            author = t.get("author", "未知作者")
             need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
             self.ThemeInfoLabel.setText(
@@ -318,12 +319,45 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             author = t.get("author", "")
             if name:
                 self.__theme_cache[file] = t
-                if author and author != "未知":
-                    display = f"{name} ({author})"
-                else:
-                    display = name
-                self.ThemeComboBox.addItem(display, file)
+                self.ThemeComboBox.addItem(name, file)
         self.ThemeComboBox.blockSignals(False)
+
+    @Slot()
+    def onRemoveThemeButtonClicked(
+        self
+    ):
+
+        file = self.ThemeComboBox.currentData()
+        if not file:
+            QMessageBox.information(
+                self,
+                "提示 - AutoLibrary",
+                "请先选择一个主题。"
+            )
+            return
+        t = self.__theme_cache.get(file)
+        name = t.get("name", file) if t else file
+        reply = QMessageBox.question(
+            self,
+            "删除主题 - AutoLibrary",
+            f"确定要删除主题 \"{name}\" 吗？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+        try:
+            themeInstance().removeTheme(file)
+            self.populateThemeList()
+            self.ThemeComboBox.setCurrentIndex(0)
+            self.updateThemeStatus()
+            self.updateThemeInfo()
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "删除失败 - AutoLibrary",
+                f"无法删除主题：{e}"
+            )
 
     @Slot()
     def onImportThemeButtonClicked(

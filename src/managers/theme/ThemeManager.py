@@ -121,7 +121,7 @@ class ThemeManager:
             existing_info = validateTheme(default_path)
             existing_author = existing_info.get("author", "")
         except Exception:
-            self.removeTheme(theme_name)
+            self._removeThemeFile(theme_name)  # caller holds the lock
             raise ValueError(
                 f"主题 '{theme_name}' 已存在但无法通过验证, 已清理该主题文件"
             )
@@ -129,7 +129,7 @@ class ThemeManager:
             raise ValueError(
                 f"主题名称 '{theme_name}' (作者 '{author}') 已存在"
             )
-        safe_author = os.path.basename(author) if author else "未知"
+        safe_author = os.path.basename(author) if author else "未知作者"
         alt_path = os.path.join(
             self.__themes_dir, f"{theme_name}_{safe_author}.altheme"
         )
@@ -168,7 +168,7 @@ class ThemeManager:
         with self.__lock:
             if ext == ".qss":
                 name = os.path.splitext(os.path.basename(source_path))[0]
-                dest_path = self._resolveDestPath(name, "未知")
+                dest_path = self._resolveDestPath(name, "未知作者")
                 wrapQssToAtheme(source_path, dest_path, "both")
                 return os.path.splitext(os.path.basename(dest_path))[0]
             elif ext == ".altheme":
@@ -203,7 +203,7 @@ class ThemeManager:
             if filename.endswith(".altheme"):
                 filepath = os.path.join(self.__themes_dir, filename)
                 try:
-                    info = validateTheme(filepath)
+                    info = validateTheme(filepath, check_qss=False)  # skip QSS read for list scan
                     name = info.get("name", "")
                     author = info.get("author", "")
                     key = (name, author)
@@ -225,6 +225,26 @@ class ThemeManager:
                 )
         return themes
 
+    def _removeThemeFile(
+        self,
+        name: str
+    ):
+        """
+            Remove a theme file without locking.
+
+            The caller must hold self.__lock before invoking this method.
+        """
+
+        filepath = os.path.join(self.__themes_dir, name + ".altheme")
+        if os.path.isfile(filepath):
+            os.remove(filepath)
+            if self.__current_theme_name == name:
+                self.__current_theme_name = ""
+                saved_theme = configInstance().get(
+                    CfgKey.GLOBAL.APPEARANCE.THEME, "system"
+                )
+                self.clearTheme(saved_theme)
+
     def removeTheme(
         self,
         name: str
@@ -239,16 +259,8 @@ class ThemeManager:
                 name (str): The theme name to remove.
         """
 
-        filepath = os.path.join(self.__themes_dir, name + ".altheme")
         with self.__lock:
-            if os.path.isfile(filepath):
-                os.remove(filepath)
-                if self.__current_theme_name == name:
-                    self.__current_theme_name = ""
-                    saved_theme = configInstance().get(
-                        CfgKey.GLOBAL.APPEARANCE.THEME, "system"
-                    )
-                    self.clearTheme(saved_theme)
+            self._removeThemeFile(name)
 
     def applyTheme(
         self,
