@@ -196,7 +196,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.StyleComboBox.setCurrentIndex(index)
         self.populateThemeList()
         if custom_theme:
-            idx = self.ThemeComboBox.findText(custom_theme)
+            idx = self.ThemeComboBox.findData(custom_theme)
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
         self.updateThemeStatus()
@@ -206,8 +206,10 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self
     ):
 
-        name = self.ThemeComboBox.currentText()
-        if name and name != "默认":
+        file = self.ThemeComboBox.currentData()
+        t = self.__theme_cache.get(file) if file else None
+        name = t.get("name", "") if t else ""
+        if name:
             self.QssStatusLabel.setText(f"当前使用 {name} 主题。")
         else:
             self.QssStatusLabel.setText("当前使用 默认 主题。")
@@ -216,12 +218,13 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self
     ):
 
-        name = self.ThemeComboBox.currentText()
-        if not name or name == "默认":
+        file = self.ThemeComboBox.currentData()
+        if not file:
             self.ThemeInfoLabel.setText("")
             return
-        t = self.__theme_cache.get(name)
+        t = self.__theme_cache.get(file)
         if t:
+            name = t.get("name", "未知")
             author = t.get("author", "未知")
             need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
@@ -257,8 +260,8 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         else:
             theme = "system"
         style = self.StyleComboBox.currentText()
-        custom_theme = self.ThemeComboBox.currentText()
-        if custom_theme == "默认":
+        custom_theme = self.ThemeComboBox.currentData() or ""
+        if not custom_theme:
             custom_theme = ""
         return theme, style, custom_theme
 
@@ -306,14 +309,20 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         self.ThemeComboBox.blockSignals(True)
         self.ThemeComboBox.clear()
-        self.ThemeComboBox.addItem("默认")
+        self.ThemeComboBox.addItem("默认", "")
         self.__theme_cache = {}
         themes = themeInstance().listThemes()
         for t in themes:
             name = t.get("name", "")
+            file = t.get("file", name)
+            author = t.get("author", "")
             if name:
-                self.__theme_cache[name] = t
-                self.ThemeComboBox.addItem(name)
+                self.__theme_cache[file] = t
+                if author and author != "未知":
+                    display = f"{name} ({author})"
+                else:
+                    display = name
+                self.ThemeComboBox.addItem(display, file)
         self.ThemeComboBox.blockSignals(False)
 
     @Slot()
@@ -330,9 +339,9 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         if not file_path:
             return
         try:
-            name = themeInstance().importTheme(file_path)
+            file_id = themeInstance().importTheme(file_path)
             self.populateThemeList()
-            idx = self.ThemeComboBox.findText(name)
+            idx = self.ThemeComboBox.findData(file_id)
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
             self.updateThemeStatus()
@@ -359,7 +368,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
 
         self.ThemeComboBox.blockSignals(True)
         if self.__original_custom_theme:
-            idx = self.ThemeComboBox.findText(self.__original_custom_theme)
+            idx = self.ThemeComboBox.findData(self.__original_custom_theme)
             if idx >= 0:
                 self.ThemeComboBox.setCurrentIndex(idx)
             else:

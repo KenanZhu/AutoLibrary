@@ -9,9 +9,7 @@ See the LICENSE file for details.
 """
 import os
 import shutil
-import tempfile
 import threading
-import zipfile
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -23,9 +21,8 @@ from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.log.LogManager import instance as logInstance
 from utils.ThemeUtils import (
-    packTheme,
-    readThemeInfo,
-    unpackTheme,
+    readThemeQss,
+    validateTheme,
     wrapQssToAtheme
 )
 
@@ -94,6 +91,54 @@ class ThemeManager:
 
         return self.__themes_dir
 
+    def _resolveDestPath(
+        self,
+        theme_name: str,
+        author: str
+    ) -> str:
+        """
+            Resolve the destination path for an imported theme.
+
+            If the default {name}.altheme path does not exist, use it directly.
+            If it exists and has a different author, use {name}_{author}.altheme.
+            If it exists and has the same author, raise ValueError.
+
+            Args:
+                theme_name (str): Sanitised theme name.
+                author (str): Theme author string.
+
+            Returns:
+                str: The resolved destination file path.
+
+            Raises:
+                ValueError: If a theme with the same name and author already exists.
+        """
+
+        default_path = os.path.join(self.__themes_dir, theme_name + ".altheme")
+        if not os.path.exists(default_path):
+            return default_path
+        try:
+            existing_info = validateTheme(default_path)
+            existing_author = existing_info.get("author", "")
+        except Exception:
+            self.removeTheme(theme_name)
+            raise ValueError(
+                f"主题 '{theme_name}' 已存在但无法通过验证, 已清理该主题文件"
+            )
+        if existing_author == author:
+            raise ValueError(
+                f"主题名称 '{theme_name}' (作者 '{author}') 已存在"
+            )
+        safe_author = os.path.basename(author) if author else "未知"
+        alt_path = os.path.join(
+            self.__themes_dir, f"{theme_name}_{safe_author}.altheme"
+        )
+        if os.path.exists(alt_path):
+            raise ValueError(
+                f"主题名称 '{theme_name}' (作者 '{author}') 已存在"
+            )
+        return alt_path
+
     def importTheme(
         self,
         source_path: str
@@ -123,31 +168,17 @@ class ThemeManager:
         with self.__lock:
             if ext == ".qss":
                 name = os.path.splitext(os.path.basename(source_path))[0]
-                dest_path = os.path.join(self.__themes_dir, name + ".altheme")
-                if os.path.exists(dest_path):
-                    raise ValueError(f"主题 '{name}' 已存在")
+                dest_path = self._resolveDestPath(name, "未知")
                 wrapQssToAtheme(source_path, dest_path, "both")
-                return name
+                return os.path.splitext(os.path.basename(dest_path))[0]
             elif ext == ".altheme":
-                with zipfile.ZipFile(source_path, "r") as zf:
-                    if "theme.qss" not in zf.namelist():
-                        raise ValueError("无效的 .altheme: 缺少 theme.qss")
-                info = readThemeInfo(source_path)
+                info = validateTheme(source_path)
                 name = info.get("name", os.path.splitext(os.path.basename(source_path))[0])
                 safe_name = os.path.basename(name)
-                dest_path = os.path.join(self.__themes_dir, safe_name + ".altheme")
-                if os.path.exists(dest_path):
-                    raise ValueError(f"主题 '{safe_name}' 已存在")
-                # Check for name collision with existing themes by the same author
                 new_author = info.get("author", "")
-                for existing in self.listThemes():
-                    if (existing.get("name", "") == safe_name
-                        and existing.get("author", "") == new_author):
-                        raise ValueError(
-                            f"主题名称 '{safe_name}' (作者 '{new_author}') 已存在"
-                        )
+                dest_path = self._resolveDestPath(safe_name, new_author)
                 shutil.copy2(source_path, dest_path)
-                return safe_name
+                return os.path.splitext(os.path.basename(dest_path))[0]
             else:
                 raise ValueError(f"不支持的文件类型: {ext}")
 
@@ -172,10 +203,7 @@ class ThemeManager:
             if filename.endswith(".altheme"):
                 filepath = os.path.join(self.__themes_dir, filename)
                 try:
-                    info = readThemeInfo(filepath)
-                    with zipfile.ZipFile(filepath, "r") as zf:
-                        if "theme.qss" not in zf.namelist():
-                            raise ValueError("缺少 theme.qss")
+                    info = validateTheme(filepath)
                     name = info.get("name", "")
                     author = info.get("author", "")
                     key = (name, author)
@@ -185,6 +213,7 @@ class ThemeManager:
                         )
                         continue
                     seen_keys.add(key)
+                    info["file"] = os.path.splitext(filename)[0]
                     themes.append(info)
                 except Exception as e:
                     logInstance().getLogger("ThemeManager").warning(
@@ -243,22 +272,11 @@ class ThemeManager:
         if not os.path.isfile(filepath):
             raise FileNotFoundError(filepath)
         with self.__lock:
-            info = readThemeInfo(filepath)
-            with tempfile.TemporaryDirectory() as tmpdir:
-                unpackTheme(filepath, tmpdir)
-                qss_path = os.path.join(tmpdir, "theme.qss")
-                if os.path.isfile(qss_path):
-                    with open(qss_path, "r", encoding="utf-8") as fh:
-                        qss = fh.read()
-                    app = QApplication.instance()
-                    if app:
-                        app.setStyleSheet(qss)
-                else:
-                    raise ValueError(
-                        f"主题 '{name}' 的 .altheme 文件中缺少 theme.qss"
-                    )
+            info = validateTheme(filepath)
+            qss = readThemeQss(filepath)
             app = QApplication.instance()
             if app:
+                app.setStyleSheet(qss)
                 need_theme = info.get("need_theme", "both")
                 app.styleHints().setColorScheme(
                     ThemeManager._colorSchemeFor(need_theme)
