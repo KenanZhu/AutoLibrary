@@ -111,6 +111,10 @@ class WebDriverManager:
             for driver_info in self.__driver_infos:
                 driver_path = self._getDriverPath(driver_info)
                 if driver_path and driver_path.exists() and driver_path.is_file():
+                    # Repair missing execute permission on Unix
+                    # (zip-extracted drivers from older versions).
+                    if os.name != 'nt' and not os.access(str(driver_path), os.X_OK):
+                        os.chmod(str(driver_path), 0o755)
                     driver_info.driver_path = driver_path
                     driver_info.driver_status = WebDriverStatus.INSTALLED
 
