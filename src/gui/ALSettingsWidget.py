@@ -110,6 +110,13 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.NavigationList.setCurrentRow(0)
         self.populateStyles()
         self.setNavigationIcons()
+        color = QApplication.instance().palette().color(
+            QApplication.instance().palette().ColorRole.WindowText
+        ).name()
+        self.BrowseQssButton.setIcon(qta.icon("fa6s.plus", color=color))
+        self.BrowseQssButton.setText("")
+        self.RemoveThemeButton.setIcon(qta.icon("fa6s.minus", color=color))
+        self.RemoveThemeButton.setText("")
         self.ThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
         self.ThemeInfoLabel.setStyleSheet(
             "border: 1px solid palette(mid);"\
@@ -125,7 +132,7 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         color = app.palette().color(app.palette().ColorRole.WindowText).name()
         item = self.NavigationList.item(0)
         if item:
-            item.setIcon(qta.icon("fa5s.palette", color=color))
+            item.setIcon(qta.icon("fa6s.palette", color=color))
 
     def populateStyles(
         self
