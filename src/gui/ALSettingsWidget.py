@@ -19,8 +19,7 @@ from PySide6.QtCore import (
     Slot
 )
 from PySide6.QtGui import (
-    QCloseEvent,
-    QShowEvent
+    QCloseEvent
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -38,6 +37,7 @@ from managers.theme.ThemeManager import(
     instance as themeInstance
 )
 
+from gui.ALWidgetMixin import CenterOnParentMixin
 from gui.resources.ui.Ui_ALSettingsWidget import Ui_ALSettingsWidget
 from interfaces.ConfigProvider import (
     CfgKey,
@@ -83,7 +83,7 @@ def _restartApp(
     QProcess.startDetached(sys.executable, sys.argv)
 
 
-class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
+class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
 
     settingsWidgetIsClosed = Signal()
 
@@ -101,6 +101,14 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.modifyUi()
         self.connectSignals()
         self.loadSettings()
+
+    def closeEvent(
+        self,
+        event: QCloseEvent
+    ):
+
+        self.settingsWidgetIsClosed.emit()
+        super().closeEvent(event)
 
     def modifyUi(
         self
@@ -152,35 +160,6 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
-
-    def showEvent(
-        self,
-        event: QShowEvent
-    ):
-
-        result = super().showEvent(event)
-        screen_rect = self.screen().geometry()
-        target_pos = self.parent().geometry().center()
-        target_pos.setX(target_pos.x() - self.width()//2)
-        target_pos.setY(target_pos.y() - self.height()//2)
-        if target_pos.x() < 0:
-            target_pos.setX(0)
-        if target_pos.x() + self.width() > screen_rect.width():
-            target_pos.setX(screen_rect.width() - self.width())
-        if target_pos.y() < 0:
-            target_pos.setY(0)
-        if target_pos.y() + self.height() > screen_rect.height():
-            target_pos.setY(screen_rect.height() - self.height())
-        self.move(target_pos)
-        return result
-
-    def closeEvent(
-        self,
-        event: QCloseEvent
-    ):
-
-        self.settingsWidgetIsClosed.emit()
-        super().closeEvent(event)
 
     def loadSettings(
         self
