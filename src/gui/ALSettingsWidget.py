@@ -115,22 +115,23 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
     ):
 
         self.setWindowFlags(Qt.WindowType.Window)
-        self.NavigationList.setCurrentRow(0)
-        self.populateStyles()
         self.setNavigationIcons()
         color = QApplication.instance().palette().color(
             QApplication.instance().palette().ColorRole.WindowText
         ).name()
-        self.BrowseQssButton.setIcon(qta.icon("fa6s.plus", color=color))
-        self.BrowseQssButton.setText("")
-        self.RemoveThemeButton.setIcon(qta.icon("fa6s.minus", color=color))
-        self.RemoveThemeButton.setText("")
-        self.ThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
-        self.ThemeInfoLabel.setStyleSheet(
+        self.ImportCustomThemeButton.setIcon(qta.icon("fa6s.plus", color=color))
+        self.ImportCustomThemeButton.setText("")
+        self.RemoveCustomThemeButton.setIcon(qta.icon("fa6s.minus", color=color))
+        self.RemoveCustomThemeButton.setText("")
+        self.CustomThemeInfoLabel.setTextFormat(Qt.TextFormat.RichText)
+        self.CustomThemeInfoLabel.setStyleSheet(
             "border: 1px solid palette(mid);"\
             "border-radius: 2px;"\
             "padding: 5px;"
         )
+        self.NavigationList.setCurrentRow(0)
+        self.populateStyles()
+        self.populateCustomThemes()
 
     def setNavigationIcons(
         self
@@ -149,14 +150,32 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         self.StyleComboBox.clear()
         self.StyleComboBox.addItems(QStyleFactory.keys())
 
+    def populateCustomThemes(
+        self
+    ):
+
+        self.CustomThemeComboBox.blockSignals(True)
+        self.CustomThemeComboBox.clear()
+        self.CustomThemeComboBox.addItem("默认", "")
+        self.__theme_cache = {}
+        themes = themeInstance().listThemes()
+        for t in themes:
+            name = t.get("name", "")
+            file = t.get("file", name)
+            author = t.get("author", "")
+            if name:
+                self.__theme_cache[file] = t
+                self.CustomThemeComboBox.addItem(name, file)
+        self.CustomThemeComboBox.blockSignals(False)
+
     def connectSignals(
         self
     ):
 
-        self.BrowseQssButton.clicked.connect(self.onImportThemeButtonClicked)
-        self.RemoveThemeButton.clicked.connect(self.onRemoveThemeButtonClicked)
-        self.ThemeComboBox.currentIndexChanged.connect(self.onThemeComboBoxChanged)
-        self.ResetThemeButton.clicked.connect(self.onResetThemeButtonClicked)
+        self.ImportCustomThemeButton.clicked.connect(self.onImportCustomThemeButtonClicked)
+        self.RemoveCustomThemeButton.clicked.connect(self.onRemoveCustomThemeButtonClicked)
+        self.CustomThemeComboBox.currentIndexChanged.connect(self.onCustomThemeComboBoxChanged)
+        self.ResetCustomThemeButton.clicked.connect(self.onResetCustomThemeButtonClicked)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)
@@ -181,33 +200,20 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         if index < 0:
             index = 0
         self.StyleComboBox.setCurrentIndex(index)
-        self.populateThemeList()
         if custom_theme:
-            idx = self.ThemeComboBox.findData(custom_theme)
+            idx = self.CustomThemeComboBox.findData(custom_theme)
             if idx >= 0:
-                self.ThemeComboBox.setCurrentIndex(idx)
-        self.updateThemeStatus()
-        self.updateThemeInfo()
+                self.CustomThemeComboBox.setCurrentIndex(idx)
+        self.updateCustomThemeInfo()
+        self.updateCustomThemeStatus()
 
-    def updateThemeStatus(
+    def updateCustomThemeInfo(
         self
     ):
 
-        file = self.ThemeComboBox.currentData()
-        t = self.__theme_cache.get(file) if file else None
-        name = t.get("name", "") if t else ""
-        if name:
-            self.QssStatusLabel.setText(f"当前使用 {name} 主题。")
-        else:
-            self.QssStatusLabel.setText("当前使用 默认 主题。")
-
-    def updateThemeInfo(
-        self
-    ):
-
-        file = self.ThemeComboBox.currentData()
+        file = self.CustomThemeComboBox.currentData()
         if not file:
-            self.ThemeInfoLabel.setText("")
+            self.CustomThemeInfoLabel.setText("")
             return
         t = self.__theme_cache.get(file)
         if t:
@@ -215,13 +221,25 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             author = t.get("author", "未知作者")
             need_theme = t.get("need_theme", "both")
             brief = t.get("brief", "没有相关简介")
-            self.ThemeInfoLabel.setText(
+            self.CustomThemeInfoLabel.setText(
                 f"<b>{name}</b> - 适用于 <i>{_themeToReadable(need_theme)}</i> 主题<br>"
                 f"作者：{author}<br><br>"
                 f"{brief}"
             )
         else:
-            self.ThemeInfoLabel.setText("")
+            self.CustomThemeInfoLabel.setText("")
+
+    def updateCustomThemeStatus(
+        self
+    ):
+
+        file = self.CustomThemeComboBox.currentData()
+        t = self.__theme_cache.get(file) if file else None
+        name = t.get("name", "") if t else ""
+        if name:
+            self.CustomThemeStatusLabel.setText(f"当前使用 {name} 主题。")
+        else:
+            self.CustomThemeStatusLabel.setText("当前使用 默认 主题。")
 
     def syncRadioFromNeedTheme(
         self,
@@ -247,7 +265,7 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         else:
             theme = "system"
         style = self.StyleComboBox.currentText()
-        custom_theme = self.ThemeComboBox.currentData() or ""
+        custom_theme = self.CustomThemeComboBox.currentData() or ""
         if not custom_theme:
             custom_theme = ""
         return theme, style, custom_theme
@@ -268,8 +286,8 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         theme, _, _ = self.collectSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
         self.setNavigationIcons()
-        self.updateThemeStatus()
-        self.updateThemeInfo()
+        self.updateCustomThemeStatus()
+        self.updateCustomThemeInfo()
         self.__original_theme = theme
         self.__original_custom_theme = custom_theme if custom_theme else ""
         self.__original_style = getActiveStyle()
@@ -290,30 +308,12 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             return True
         return False
 
-    def populateThemeList(
-        self
-    ):
-
-        self.ThemeComboBox.blockSignals(True)
-        self.ThemeComboBox.clear()
-        self.ThemeComboBox.addItem("默认", "")
-        self.__theme_cache = {}
-        themes = themeInstance().listThemes()
-        for t in themes:
-            name = t.get("name", "")
-            file = t.get("file", name)
-            author = t.get("author", "")
-            if name:
-                self.__theme_cache[file] = t
-                self.ThemeComboBox.addItem(name, file)
-        self.ThemeComboBox.blockSignals(False)
-
     @Slot()
-    def onRemoveThemeButtonClicked(
+    def onRemoveCustomThemeButtonClicked(
         self
     ):
 
-        file = self.ThemeComboBox.currentData()
+        file = self.CustomThemeComboBox.currentData()
         if not file:
             QMessageBox.information(
                 self,
@@ -334,10 +334,10 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             return
         try:
             themeInstance().removeTheme(file)
-            self.populateThemeList()
-            self.ThemeComboBox.setCurrentIndex(0)
-            self.updateThemeStatus()
-            self.updateThemeInfo()
+            self.populateCustomThemes()
+            self.CustomThemeComboBox.setCurrentIndex(0)
+            self.updateCustomThemeStatus()
+            self.updateCustomThemeInfo()
         except Exception as e:
             QMessageBox.warning(
                 self,
@@ -346,7 +346,7 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             )
 
     @Slot()
-    def onImportThemeButtonClicked(
+    def onImportCustomThemeButtonClicked(
         self
     ):
 
@@ -360,12 +360,12 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             return
         try:
             file_id = themeInstance().importTheme(file_path)
-            self.populateThemeList()
-            idx = self.ThemeComboBox.findData(file_id)
+            self.populateCustomThemes()
+            idx = self.CustomThemeComboBox.findData(file_id)
             if idx >= 0:
-                self.ThemeComboBox.setCurrentIndex(idx)
-            self.updateThemeStatus()
-            self.updateThemeInfo()
+                self.CustomThemeComboBox.setCurrentIndex(idx)
+            self.updateCustomThemeStatus()
+            self.updateCustomThemeInfo()
         except Exception as e:
             QMessageBox.warning(
                 self,
@@ -374,36 +374,37 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             )
 
     @Slot()
-    def onThemeComboBoxChanged(
+    def onCustomThemeComboBoxChanged(
         self,
         index: int
     ):
 
-        self.updateThemeInfo()
+        self.updateCustomThemeInfo()
+        # no status update, because custom theme is not applied yet.
 
     @Slot()
-    def onResetThemeButtonClicked(
+    def onResetCustomThemeButtonClicked(
         self
     ):
 
-        self.ThemeComboBox.blockSignals(True)
+        self.CustomThemeComboBox.blockSignals(True)
         if self.__original_custom_theme:
-            idx = self.ThemeComboBox.findData(self.__original_custom_theme)
+            idx = self.CustomThemeComboBox.findData(self.__original_custom_theme)
             if idx >= 0:
-                self.ThemeComboBox.setCurrentIndex(idx)
+                self.CustomThemeComboBox.setCurrentIndex(idx)
             else:
-                self.ThemeComboBox.setCurrentIndex(0)
+                self.CustomThemeComboBox.setCurrentIndex(0)
         else:
-            self.ThemeComboBox.setCurrentIndex(0)
-        self.ThemeComboBox.blockSignals(False)
+            self.CustomThemeComboBox.setCurrentIndex(0)
+        self.CustomThemeComboBox.blockSignals(False)
         if self.__original_theme == "light":
             self.LightThemeRadio.setChecked(True)
         elif self.__original_theme == "dark":
             self.DarkThemeRadio.setChecked(True)
         else:
             self.SystemThemeRadio.setChecked(True)
-        self.updateThemeStatus()
-        self.updateThemeInfo()
+        self.updateCustomThemeInfo()
+        self.updateCustomThemeStatus()
 
     @Slot()
     def onCancelButtonClicked(
