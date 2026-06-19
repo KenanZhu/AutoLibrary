@@ -423,7 +423,6 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
             self.DarkThemeRadio.setChecked(True)
         else:
             self.SystemThemeRadio.setChecked(True)
-        _applyCustomTheme(self.__original_custom_theme, self.__original_theme)
         self.updateThemeStatus()
         self.updateThemeInfo()
 
@@ -450,9 +449,5 @@ class ALSettingsWidget(QWidget, Ui_ALSettingsWidget):
         self
     ):
 
-        _, style, _ = self.collectSettings()
-        style_changed = self.__original_style != style
-        self.saveAndApply()
-        if style_changed:
-            self.maybeRestart()
+        self.onApplyButtonClicked() # virtually call apply button clicked
         self.close()
