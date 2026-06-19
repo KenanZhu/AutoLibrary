@@ -68,17 +68,20 @@ def readThemeInfo(
     altheme_path: str
 ) -> dict:
     """
-        Read only the info.json metadata from a .altheme file.
+        Read and validate the info.json metadata from a .altheme file.
+
+        Verifies that all required fields (name, author, need_theme, brief)
+        are present with valid values.
 
         Args:
             altheme_path (str): Path to the .altheme file.
 
         Returns:
-            dict: The theme metadata dictionary.
+            dict: The validated theme metadata dictionary.
 
         Raises:
             FileNotFoundError: If altheme_path does not exist.
-            ValueError: If the .altheme does not contain info.json.
+            ValueError: If info.json is missing or any field is invalid.
     """
 
     if not os.path.isfile(altheme_path):
@@ -87,76 +90,14 @@ def readThemeInfo(
         if "info.json" not in zf.namelist():
             raise ValueError("无效的 .altheme: 缺少 info.json")
         with zf.open("info.json") as fh:
-            info = json.loads(fh.read().decode("utf-8"))
-        if "name" not in info:
-            raise ValueError("无效的 .altheme: info.json 缺少 'name' 字段")
-        return info
-
-def readThemeQss(
-    altheme_path: str
-) -> str:
-    """
-        Read the theme.qss content directly from a .altheme archive.
-
-        Args:
-            altheme_path (str): Path to the .altheme file.
-
-        Returns:
-            str: The QSS stylesheet content.
-
-        Raises:
-            FileNotFoundError: If altheme_path does not exist.
-            ValueError: If theme.qss is missing from the archive.
-    """
-
-    if not os.path.isfile(altheme_path):
-        raise FileNotFoundError(altheme_path)
-    with zipfile.ZipFile(altheme_path, "r") as zf:
-        if "theme.qss" not in zf.namelist():
-            raise ValueError("无效的 .altheme: 缺少 theme.qss")
-        return zf.read("theme.qss").decode("utf-8")
-
-def validateTheme(
-    altheme_path: str,
-    check_qss: bool = True
-) -> dict:
-    """
-        Validate a .altheme file and return its metadata.
-
-        Checks that info.json and theme.qss both exist, info.json
-        contains all required fields with valid values, and theme.qss
-        is a non-empty entry in the archive.
-
-        Args:
-            altheme_path (str): Path to the .altheme file.
-            check_qss (bool): If False, skip theme.qss existence and
-                              content checks (for list-only operations).
-
-        Returns:
-            dict: The validated theme metadata dictionary.
-
-        Raises:
-            FileNotFoundError: If altheme_path does not exist.
-            ValueError: If validation fails for any reason.
-    """
-
-    if not os.path.isfile(altheme_path):
-        raise FileNotFoundError(altheme_path)
-    with zipfile.ZipFile(altheme_path, "r") as zf:
-        names = zf.namelist()
-        if "info.json" not in names:
-            raise ValueError("无效的 .altheme: 缺少 info.json")
-        if "theme.qss" not in names:
-            raise ValueError("无效的 .altheme: 缺少 theme.qss")
-        info_bytes = zf.read("info.json")
-        qss_bytes = zf.read("theme.qss") if check_qss else None  # skip QSS read when only listing
-    try:
-        info = json.loads(info_bytes.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        raise ValueError(f"无效的 .altheme: info.json 解析失败 — {e}")
+            try:
+                info = json.loads(fh.read().decode("utf-8"))
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                raise ValueError(f"无效的 .altheme: info.json 解析失败 — {e}")
     if "name" not in info or not isinstance(info.get("name"), str) or not info["name"].strip():
         raise ValueError("无效的 .altheme: info.json 缺少有效的 'name' 字段")
-    # reject blank author so info.json does not drift from the "未知作者" filename fallback
+    # reject blank author so that info.json does not drift from the
+    # "未知作者" filename fallback used by wrapQssToAtheme
     if ("author" not in info or not isinstance(info.get("author"), str)
             or not info["author"].strip()):
         raise ValueError("无效的 .altheme: info.json 缺少有效的 'author' 字段")
@@ -168,8 +109,58 @@ def validateTheme(
         )
     if "brief" not in info or not isinstance(info.get("brief"), str):
         raise ValueError("无效的 .altheme: info.json 缺少有效的 'brief' 字段")
-    if check_qss and not qss_bytes.strip():
+    return info
+
+def readThemeQss(
+    altheme_path: str
+) -> str:
+    """
+        Read the theme.qss content from a .altheme archive.
+
+        Args:
+            altheme_path (str): Path to the .altheme file.
+
+        Returns:
+            str: The non-empty QSS stylesheet content.
+
+        Raises:
+            FileNotFoundError: If altheme_path does not exist.
+            ValueError: If theme.qss is missing or empty.
+    """
+
+    if not os.path.isfile(altheme_path):
+        raise FileNotFoundError(altheme_path)
+    with zipfile.ZipFile(altheme_path, "r") as zf:
+        if "theme.qss" not in zf.namelist():
+            raise ValueError("无效的 .altheme: 缺少 theme.qss")
+        qss = zf.read("theme.qss").decode("utf-8")
+    if not qss.strip():
         raise ValueError("无效的 .altheme: theme.qss 为空")
+    return qss
+
+def validateTheme(
+    altheme_path: str
+) -> dict:
+    """
+        Fully validate a .altheme file and return its metadata.
+
+        Delegates info validation to readThemeInfo and QSS validation
+        to readThemeQss, then additionally checks that theme.qss is
+        non-empty.
+
+        Args:
+            altheme_path (str): Path to the .altheme file.
+
+        Returns:
+            dict: The validated theme metadata dictionary.
+
+        Raises:
+            FileNotFoundError: If altheme_path does not exist.
+            ValueError: If validation fails for any reason.
+    """
+
+    info = readThemeInfo(altheme_path)
+    readThemeQss(altheme_path)  # validates existence and non-empty
     return info
 
 def wrapQssToAtheme(

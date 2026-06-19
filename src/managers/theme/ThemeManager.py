@@ -21,6 +21,7 @@ from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.log.LogManager import instance as logInstance
 from utils.ThemeUtils import (
+    readThemeInfo,
     readThemeQss,
     validateTheme,
     wrapQssToAtheme
@@ -79,17 +80,21 @@ class ThemeManager:
         else:
             return Qt.ColorScheme.Unknown
 
-    def themesDir(
-        self
-    ) -> str:
+    def _deleteThemeFile(
+        self,
+        name: str
+    ):
         """
-            Get the themes directory path.
+            Delete a theme file in the themes storage directory.
 
-            Returns:
-                str: The absolute path to the themes storage directory.
+            The caller must hold self.__lock before invoking this method.
+
+            **This method ONLY deletes the file**.
         """
 
-        return self.__themes_dir
+        filepath = os.path.join(self.__themes_dir, name + ".altheme")
+        if os.path.isfile(filepath):
+            os.remove(filepath)
 
     def _resolveDestPath(
         self,
@@ -121,7 +126,7 @@ class ThemeManager:
             existing_info = validateTheme(default_path)
             existing_author = existing_info.get("author", "")
         except Exception:
-            self._removeThemeFile(theme_name)  # caller holds the lock
+            self._deleteThemeFile(theme_name)  # caller holds the lock
             raise ValueError(
                 f"主题 '{theme_name}' 已存在但无法通过验证, 已清理该主题文件"
             )
@@ -138,6 +143,18 @@ class ThemeManager:
                 f"主题名称 '{theme_name}' (作者 '{author}') 已存在"
             )
         return alt_path
+
+    def themesDir(
+        self
+    ) -> str:
+        """
+            Get the themes directory path.
+
+            Returns:
+                str: The absolute path to the themes storage directory.
+        """
+
+        return self.__themes_dir
 
     def importTheme(
         self,
@@ -164,16 +181,16 @@ class ThemeManager:
 
         if not os.path.isfile(source_path):
             raise FileNotFoundError(source_path)
-        ext = os.path.splitext(source_path)[1].lower()
+        base_name, ext = os.path.splitext(os.path.basename(source_path))
+        ext = ext.lower()
         with self.__lock:
             if ext == ".qss":
-                name = os.path.splitext(os.path.basename(source_path))[0]
-                dest_path = self._resolveDestPath(name, "未知作者")
+                dest_path = self._resolveDestPath(base_name, "未知作者")
                 wrapQssToAtheme(source_path, dest_path, "both")
                 return os.path.splitext(os.path.basename(dest_path))[0]
             elif ext == ".altheme":
                 info = validateTheme(source_path)
-                name = info.get("name", os.path.splitext(os.path.basename(source_path))[0])
+                name = info.get("name", base_name)
                 safe_name = os.path.basename(name)
                 new_author = info.get("author", "")
                 dest_path = self._resolveDestPath(safe_name, new_author)
@@ -203,7 +220,7 @@ class ThemeManager:
             if filename.endswith(".altheme"):
                 filepath = os.path.join(self.__themes_dir, filename)
                 try:
-                    info = validateTheme(filepath, check_qss=False)  # skip QSS read for list scan
+                    info = validateTheme(filepath)
                     name = info.get("name", "")
                     author = info.get("author", "")
                     key = (name, author)
@@ -225,26 +242,6 @@ class ThemeManager:
                 )
         return themes
 
-    def _removeThemeFile(
-        self,
-        name: str
-    ):
-        """
-            Remove a theme file without locking.
-
-            The caller must hold self.__lock before invoking this method.
-        """
-
-        filepath = os.path.join(self.__themes_dir, name + ".altheme")
-        if os.path.isfile(filepath):
-            os.remove(filepath)
-            if self.__current_theme_name == name:
-                self.__current_theme_name = ""
-                saved_theme = configInstance().get(
-                    CfgKey.GLOBAL.APPEARANCE.THEME, "system"
-                )
-                self.clearTheme(saved_theme)
-
     def removeTheme(
         self,
         name: str
@@ -253,14 +250,21 @@ class ThemeManager:
             Remove a theme by name.
 
             If the removed theme is currently active, clears the QSS
-            stylesheet from the application.
+            stylesheet from the application and reverts to the saved
+            colour scheme.
 
             Args:
                 name (str): The theme name to remove.
         """
 
         with self.__lock:
-            self._removeThemeFile(name)
+            self._deleteThemeFile(name)
+            if self.__current_theme_name == name:
+                self.__current_theme_name = ""
+                saved_theme = configInstance().get(
+                    CfgKey.GLOBAL.APPEARANCE.THEME, "system"
+                )
+                self.clearTheme(saved_theme)
 
     def applyTheme(
         self,
@@ -284,7 +288,7 @@ class ThemeManager:
         if not os.path.isfile(filepath):
             raise FileNotFoundError(filepath)
         with self.__lock:
-            info = validateTheme(filepath)
+            info = readThemeInfo(filepath)
             qss = readThemeQss(filepath)
             app = QApplication.instance()
             if app:
