@@ -7,7 +7,8 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
-from typing import Callable, Optional
+import queue
+from typing import Callable
 
 from selenium.common.exceptions import (
     ElementNotInteractableException,
@@ -19,8 +20,10 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from base.MsgBase import MsgBase
 
-class LoginPage:
+
+class LoginPage(MsgBase):
 
     USERNAME_INPUT   = (By.NAME, "username")
     PASSWORD_INPUT   = (By.NAME, "password")
@@ -36,22 +39,13 @@ class LoginPage:
 
     def __init__(
         self,
+        input_queue: queue.Queue,
+        output_queue: queue.Queue,
         driver: WebDriver,
-        tracer: Optional[Callable[..., None]] = None,
     ) -> None:
 
+        super().__init__(input_queue, output_queue)
         self._driver: WebDriver = driver
-        self._tracer: Optional[Callable[..., None]] = tracer
-
-    def _trace(
-        self,
-        msg: str,
-        level: int = 20,
-        no_log: bool = False,
-    ) -> None:
-
-        if self._tracer:
-            self._tracer(msg, level, no_log)
 
     def navigate(
         self,
@@ -185,7 +179,7 @@ class LoginPage:
     ) -> bool:
 
         for attempt in range(max_attempts):
-            self._trace(
+            self._showTrace(
                 f"用户 {username} 第 {attempt + 1} 次尝试登录......",
                 no_log=True,
             )
@@ -196,16 +190,16 @@ class LoginPage:
                 continue
             if not self.fillCaptcha(captcha_text):
                 continue
-            self._trace("尝试登录...", no_log=True)
+            self._showTrace("尝试登录...", no_log=True)
             if not self.clickLogin():
                 continue
             if self.waitLoginSuccess():
-                self._trace(f"用户 {username} 第 {attempt + 1} 次登录成功 !")
+                self._showTrace(f"用户 {username} 第 {attempt + 1} 次登录成功 !")
                 return True
             else:
-                self._trace(
+                self._showTrace(
                     "登录页面加载失败 ! : "
                     "用户账号或者密码错误/验证码错误, 具体以页面提示为准",
-                    level=40,
+                    level=self.TraceLevel.ERROR,
                 )
         return False

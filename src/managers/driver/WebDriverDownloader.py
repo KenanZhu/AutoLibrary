@@ -360,6 +360,10 @@ class WebDriverDownloader:
                     break
             if not driver_file:
                 raise FileNotFoundError(f"未找到 web driver 文件 : {expected_name}")
+            # Ensure executable permissions on Unix systems (zipfile
+            # extraction does not preserve the execute bit).
+            if os.name != 'nt':
+                os.chmod(driver_file, 0o755)
             progress_callback(100, 100, 0.0, "解压完成")
             self.download_path.unlink()
             self._cleanup(driver_file)

@@ -58,40 +58,105 @@ class ReserveFlow(MsgBase):
         self._driver: WebDriver = driver
         self._shell: MainShell = shell
 
-    def execute(
+    def _loadReserveView(
         self,
+    ) -> ReserveView | None:
+
+        try:
+            return self._shell.gotoReserveView()
+        except (TimeoutException, ElementNotInteractableException) as e:
+            self._showTrace(f"加载预约选座页面失败 ! : {e}", self.TraceLevel.ERROR)
+            return None
+
+    def _selectDate(
+        self,
+        view: ReserveView,
         ctx: ReserveContext,
     ) -> bool:
 
-        submit_reserve = False
-        reserve_success = False
-        have_hover_on_page = False
-
-        try:
-            view = self._shell.gotoReserveView()
-        except (TimeoutException, ElementNotInteractableException) as e:
-            self._showTrace(f"加载预约选座页面失败 ! : {e}", self.TraceLevel.ERROR)
-            return False
         if not view.selectDate(ctx.date):
             self._showTrace(f"选择日期失败 ! : {ctx.date} 不可用", self.TraceLevel.ERROR)
             return False
         self._showTrace(f"日期 {ctx.date} 选择成功 !")
+        return True
+
+    def _selectPlace(
+        self,
+        view: ReserveView,
+    ) -> bool:
+
         if not view.selectPlace("1"):
             self._showTrace("选择预约场所失败 ! : 图书馆 不可用", self.TraceLevel.ERROR)
             return False
         self._showTrace("预约场所 图书馆 选择成功 !")
+        return True
+
+    def _selectFloor(
+        self,
+        view: ReserveView,
+        ctx: ReserveContext,
+    ) -> bool:
+
         if not view.selectFloor(ctx.floor):
             display_floor = ReserveView.FLOOR_MAP.get(ctx.floor, ctx.floor)
             self._showTrace(f"选择楼层失败 ! : {display_floor} 不可用", self.TraceLevel.ERROR)
             return False
         self._showTrace(f"楼层 {ReserveView.FLOOR_MAP.get(ctx.floor)} 选择成功 !")
+        return True
+
+    def _selectRoom(
+        self,
+        view: ReserveView,
+        ctx: ReserveContext,
+    ):
+
         seat_map = view.selectRoom(ctx.room)
         if seat_map is None:
             display_room = ReserveView.ROOM_MAP.get(ctx.room, ctx.room)
             self._showTrace(f"选择房间失败 ! : {display_room} 不可用", self.TraceLevel.ERROR)
-            return False
+            return None
         self._showTrace(f"房间 {ReserveView.ROOM_MAP.get(ctx.room)} 选择成功 !")
-        have_hover_on_page = True
+        return seat_map
+
+    def _processReserveResult(
+        self,
+    ) -> bool:
+
+        with ReserveResultDialog(self._driver) as result:
+            if result.isFailure():
+                self._showTrace("预约失败", self.TraceLevel.ERROR)
+            elif result.isSuccess():
+                details = result.getDetailTexts()
+                if len(details) >= 6:
+                    self._showTrace(
+                        f"\n"
+                        f"      预约成功 !\n"
+                        f"          {details[1]}\n"
+                        f"          {details[2]}\n"
+                        f"          {details[3]}\n"
+                        f"          签到时间 ：{details[5]}"
+                    )
+                else:
+                    self._showTrace(
+                        "\n"
+                        "      预约成功 !\n"
+                        "          未找获取到详细信息"
+                    )
+                return True
+            else:
+                self._showTrace("预约结果加载失败 !", self.TraceLevel.ERROR)
+        return False
+
+    def _selectSeatAndSubmit(
+        self,
+        view: ReserveView,
+        seat_map,
+        ctx: ReserveContext,
+    ) -> tuple[bool, bool]:
+
+        submit_reserve = False
+        reserve_success = False
+
         seat_status = seat_map.selectSeat(ctx.seat_id)
         if seat_status is None:
             self._showTrace(
@@ -111,31 +176,34 @@ class ReserveFlow(MsgBase):
                     try:
                         view.submitReserve()
                         submit_reserve = True
-                        with ReserveResultDialog(self._driver) as result:
-                            if result.isFailure():
-                                self._showTrace("预约失败", self.TraceLevel.ERROR)
-                            elif result.isSuccess():
-                                details = result.getDetailTexts()
-                                if len(details) >= 6:
-                                    self._showTrace(
-                                        f"\n"
-                                        f"      预约成功 !\n"
-                                        f"          {details[1]}\n"
-                                        f"          {details[2]}\n"
-                                        f"          {details[3]}\n"
-                                        f"          签到时间 ：{details[5]}"
-                                    )
-                                else:
-                                    self._showTrace(
-                                        "\n"
-                                        "      预约成功 !\n"
-                                        "          未找获取到详细信息"
-                                    )
-                                reserve_success = True
-                            else:
-                                self._showTrace("预约结果加载失败 !", self.TraceLevel.ERROR)
+                        reserve_success = self._processReserveResult()
                     except (TimeoutException, ElementNotInteractableException):
                         self._showTrace("预约提交失败 !", self.TraceLevel.ERROR)
+        return submit_reserve, reserve_success
+
+    def execute(
+        self,
+        ctx: ReserveContext,
+    ) -> bool:
+
+        # reserve flow pipeline:
+        #   date > place > floor > room > seat (begin/end time) > submit > result
+        view = self._loadReserveView()
+        if view is None:
+            return False
+        if not self._selectDate(view, ctx):
+            return False
+        if not self._selectPlace(view):
+            return False
+        if not self._selectFloor(view, ctx):
+            return False
+        seat_map = self._selectRoom(view, ctx)
+        if seat_map is None:
+            return False
+        have_hover_on_page = True
+        submit_reserve, reserve_success = self._selectSeatAndSubmit(
+            view, seat_map, ctx,
+        )
         if not submit_reserve and have_hover_on_page:
             view.refresh()
         if reserve_success:
