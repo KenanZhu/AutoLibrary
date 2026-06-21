@@ -54,6 +54,11 @@ class ConfigTemplate:
                             "current": 0,
                             "paths": []
                         }
+                    },
+                    "appearance": {
+                        "theme": "system",
+                        "style": "Fusion",
+                        "custom_theme": ""
                     }
                 }
             case ConfigType.BULLETIN:

@@ -43,6 +43,7 @@ from gui.ALTimerTaskAddDialog import (
     ALTimerTaskStatus
 )
 from gui.ALTimerTaskHistoryDialog import ALTimerTaskHistoryDialog
+from gui.ALWidgetMixin import CenterOnParentMixin
 from gui.resources.ui.Ui_ALTimerTaskManageWidget import Ui_ALTimerTaskManageWidget
 from interfaces.ConfigProvider import (
     CfgKey,
@@ -189,7 +190,7 @@ class ALTimerTaskItemWidget(QWidget):
         Menu.exec(self.mapToGlobal(pos))
 
 
-class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
+class ALTimerTaskManageWidget(CenterOnParentMixin, QWidget, Ui_ALTimerTaskManageWidget):
 
     class SortPolicy(Enum):
 
@@ -298,29 +299,6 @@ class ALTimerTaskManageWidget(QWidget, Ui_ALTimerTaskManageWidget):
                 f"保存定时任务配置发生错误 ! : \n{e}"
             )
             return False
-
-    def showEvent(
-        self,
-        event
-    ):
-
-        result = super().showEvent(event)
-
-        screen_rect = self.screen().geometry()
-        target_pos = self.parent().geometry().center()
-        target_pos.setX(target_pos.x() - self.width()//2)
-        target_pos.setY(target_pos.y() - self.height()//2)
-        if target_pos.x() < 0:
-            target_pos.setX(0)
-        if target_pos.x() + self.width() > screen_rect.width():
-            target_pos.setX(screen_rect.width() - self.width())
-        if target_pos.y() < 0:
-            target_pos.setY(0)
-        if target_pos.y() + self.height() > screen_rect.height():
-            target_pos.setY(screen_rect.height() - self.height())
-        self.move(target_pos)
-
-        return result
 
     def closeEvent(
         self,

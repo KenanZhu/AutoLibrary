@@ -10,10 +10,16 @@ See the LICENSE file for details.
 import os
 
 from PySide6.QtCore import QStandardPaths, QDir
+from PySide6.QtWidgets import QApplication
 
-from managers.log.LogManager import instance as logInstance
+from interfaces.ConfigProvider import CfgKey
 from managers.config.ConfigManager import instance as configInstance
 from managers.driver.WebDriverManager import instance as webdriverInstance
+from managers.log.LogManager import instance as logInstance
+from managers.theme.ThemeManager import(
+    setActiveStyle,
+    instance as themeInstance
+)
 
 
 def _initializeLogManager(
@@ -64,13 +70,35 @@ def _initializeWebDriverManager(
     webdriverInstance(driver_dir)
     return True
 
+def _initializeAppearance(
+):
+
+    app = QApplication.instance()
+    if not app:
+        return
+    cfg = configInstance()
+    saved_style = cfg.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
+    saved_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
+    saved_custom_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
+    app.setStyle(saved_style)
+    setActiveStyle(saved_style)
+    logger = logInstance().getLogger("AppInitializer")
+    if saved_custom_theme:
+        try:
+            themeInstance().applyTheme(saved_custom_theme)
+        except Exception:
+            logger.warning("无法应用自定义主题 '%s'，回退到默认外观", saved_custom_theme)
+            themeInstance().clearTheme(saved_theme)
+        return
+    themeInstance().clearTheme(saved_theme)
+
 def initializeApp(
 ) -> bool:
     """
         Initialize the application components
 
         Order:
-            LogManager -> ConfigManager -> WebDriverManager
+            LogManager -> ConfigManager -> WebDriverManager -> Appearance
     """
 
     if not _initializeLogManager():
@@ -79,4 +107,5 @@ def initializeApp(
         return False
     if not _initializeWebDriverManager():
         return False
+    _initializeAppearance()
     return True

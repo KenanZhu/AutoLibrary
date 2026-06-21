@@ -9,6 +9,8 @@ See the LICENSE file for details.
 """
 from copy import deepcopy
 
+import qtawesome as qta
+
 from PySide6.QtCore import (
     QDate,
     QSize,
@@ -20,7 +22,6 @@ from PySide6.QtCore import (
 from PySide6.QtGui import (
     QColor,
     QFont,
-    QIcon,
     QSyntaxHighlighter,
     QTextCharFormat,
 )
@@ -210,23 +211,27 @@ class ALAutoScriptEditDialog(QDialog):
         Layout.setSpacing(3)
         Layout.setContentsMargins(3, 3, 3, 3)
         ToolbarLayout = QHBoxLayout()
-        self.ZoomInBtn = QPushButton("＋")
+        self.ZoomInBtn = QPushButton("")
+        self.ZoomInBtn.setIcon(qta.icon("fa6s.plus", color=self._iconColor()))
+        self.ZoomInBtn.setIconSize(QSize(14, 14))
         self.ZoomInBtn.setFixedSize(25, 25)
-        self.ZoomOutBtn = QPushButton("－")
+        self.ZoomOutBtn = QPushButton("")
+        self.ZoomOutBtn.setIcon(qta.icon("fa6s.minus", color=self._iconColor()))
+        self.ZoomOutBtn.setIconSize(QSize(14, 14))
         self.ZoomOutBtn.setFixedSize(25, 25)
         self.ZoomResetBtn = QPushButton("")
-        self.ZoomResetBtn.setIcon(QIcon(":/res/icons/Reset.svg"))
-        self.ZoomResetBtn.setIconSize(QSize(20, 20))
+        self.ZoomResetBtn.setIcon(qta.icon("fa6s.rotate-left", color=self._iconColor()))
+        self.ZoomResetBtn.setIconSize(QSize(14, 14))
         self.ZoomResetBtn.setFixedSize(25, 25)
         self.ZoomResetBtn.setToolTip("重置缩放")
         self.ZoomLabel = QLabel(f"{self._fontSize}px")
         self.ZoomLabel.setFixedHeight(25)
         self.OrchBtn = QPushButton("编排")
-        self.OrchBtn.setFixedHeight(25)
+        self.OrchBtn.setFixedSize(80, 25)
         self.OrchBtn.setToolTip("可视化生成 AutoScript 代码并插入到光标位置")
         ToolbarLayout.addWidget(self.OrchBtn)
         self.DebugBtn = QPushButton("▶ 调试运行")
-        self.DebugBtn.setFixedHeight(25)
+        self.DebugBtn.setFixedSize(80, 25)
         self.DebugBtn.setToolTip("使用右侧模拟数据执行脚本，查看目标变量变化")
         ToolbarLayout.addWidget(self.DebugBtn)
         Sep = QFrame()
@@ -240,8 +245,8 @@ class ALAutoScriptEditDialog(QDialog):
         ToolbarLayout.addWidget(self.ZoomLabel)
         ToolbarLayout.addStretch()
         self.CopyBtn = QPushButton("")
-        self.CopyBtn.setIcon(QIcon(":/res/icons/Copy.svg"))
-        self.CopyBtn.setIconSize(QSize(20, 20))
+        self.CopyBtn.setIcon(qta.icon("fa6s.copy", color=self._iconColor()))
+        self.CopyBtn.setIconSize(QSize(14, 14))
         self.CopyBtn.setFixedSize(25, 25)
         self.CopyBtn.setToolTip("复制脚本")
         ToolbarLayout.addWidget(self.CopyBtn)
@@ -264,7 +269,9 @@ class ALAutoScriptEditDialog(QDialog):
             QDialogButtonBox.StandardButton.Cancel
         )
         self.BtnBox.button(QDialogButtonBox.StandardButton.Ok).setText("确定")
+        self.BtnBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 25)
         self.BtnBox.button(QDialogButtonBox.StandardButton.Cancel).setText("取消")
+        self.BtnBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 25)
         Layout.addWidget(self.BtnBox)
 
     def createButtonPanel(
@@ -536,6 +543,14 @@ class ALAutoScriptEditDialog(QDialog):
             widget.setValue(float(value))
         else:
             widget.setText(str(value))
+
+    def _iconColor(
+        self
+    ) -> str:
+
+        return QApplication.instance().palette().color(
+            QApplication.instance().palette().ColorRole.WindowText
+        ).name()
 
     def connectSignals(
         self
