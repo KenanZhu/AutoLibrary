@@ -106,7 +106,7 @@ def classification(self, img: bytes):
 
 #### 会有手机端的版本吗？
 
-暂时没有考虑，而且也没有足够的时间和能力开发多平台的版本并测试维护，所以暂时只提供 Windows 版本。
+暂时没有考虑，而且也没有足够的时间和能力开发多平台的版本并测试维护，所以暂时只提供 Windows 和 macOS（Apple Silicon）版本。
 
 #### 后续会有哪些功能？
 
@@ -120,8 +120,8 @@ def classification(self, img: bytes):
 
 #### 其他功能建议？
 
-如果你有其他功能建议，或者遇到了什么功能性，操作上的问题，欢迎提交 Issue 到本项目。
-如果你有足够的开发能力，欢迎为本项目提交 PR，也可以 Fork 本项目，根据自己的需求进行修改和完善。
+如果你有其他功能建议，或者遇到了什么功能性，操作上的问题，欢迎提交 [Issue](https://github.com/KenanZhu/AutoLibrary/issues) 到本项目。
+如果你有足够的开发能力，欢迎为本项目提交 [PR](https://github.com/KenanZhu/AutoLibrary/pulls) ，也可以 Fork 本项目，根据自己的需求进行修改和完善。
 
 ### 联系我
 
