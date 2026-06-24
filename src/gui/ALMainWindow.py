@@ -32,6 +32,8 @@ from PySide6.QtWidgets import (
 
 from base.MsgBase import MsgBase
 from gui.ALAboutDialog import ALAboutDialog
+from gui.ALBulletinDialog import ALBulletinDialog
+from gui.ALBulletinPoller import ALBulletinPoller
 from gui.ALConfigWidget import ALConfigWidget
 from gui.ALSettingsWidget import ALSettingsWidget
 from gui.ALMainWorkers import (
@@ -41,6 +43,7 @@ from gui.ALMainWorkers import (
 from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
 from gui.resources import ALResource
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
+from managers.bulletin.BulletinManager import instance as bulletinInstance
 from managers.config.ConfigUtils import ConfigUtils
 
 
@@ -62,6 +65,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__alTimerTaskManageWidget = None
         self.__alConfigWidget = None
         self.__alSettingsWidget = None
+        self.__alBulletinDialog = None
+        self.__bulletin_poller = ALBulletinPoller(self)
         self.__auto_lib_thread = None
         self.__current_timer_task_thread = None
         self.__is_running_timer_task = False
@@ -72,6 +77,11 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.connectSignals()
         self.startMsgPolling()
         self.startTimerTaskPolling()
+
+        self.__bulletin_poller.start()
+        if bulletinInstance().autoFetch():
+            QTimer.singleShot(1000, self.__bulletin_poller.fetchNow)
+
         self._showLog("主窗口初始化完成")
 
     def modifyUi(
@@ -84,6 +94,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
         self.SettingsAction.triggered.connect(self.onSettingsActionTriggered)
+        if hasattr(self, 'BulletinAction'):
+            self.BulletinAction.triggered.connect(self.onBulletinActionTriggered)
 
         # initialize timer task widget, but not show it
         try:
@@ -131,12 +143,14 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayMenu = QMenu()
         self.TrayMenu.addAction("显示主窗口", self.showNormal)
         self.TrayMenu.addAction("显示定时窗口", self.onTimerTaskManageWidgetButtonClicked)
+        self.TrayMenu.addAction("公告栏", self.onBulletinActionTriggered)
         self.TrayMenu.addAction("最小化到托盘", self.hideToTray)
         self.TrayMenu.addSeparator()
         self.TrayMenu.addAction("退出", self.close)
         self.TrayIcon.setContextMenu(self.TrayMenu)
 
         self.TrayIcon.activated.connect(self.onTrayIconActivated)
+        self.TrayIcon.messageClicked.connect(self.onBulletinActionTriggered)
         self.TrayIcon.show()
 
     def hideToTray(
@@ -170,6 +184,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.SendButton.clicked.connect(self.onSendButtonClicked)
         self.MessageEdit.returnPressed.connect(self.onSendButtonClicked)
 
+        self.__bulletin_poller.newBulletinsDetected.connect(
+            self._onBulletinPollerNewBulletins
+        )
+
     def closeEvent(
         self,
         event: QCloseEvent
@@ -195,6 +213,11 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__alSettingsWidget:
             self.__alSettingsWidget.close()
             # the settings widget is already deleted in the 'self.onSettingsWidgetClosed'
+        if self.__alBulletinDialog:
+            self.__alBulletinDialog.close()
+            # the bulletin dialog is already deleted in the 'self.onBulletinDialogClosed'
+        if self.__bulletin_poller:
+            self.__bulletin_poller.stop()
         self._showLog("主窗口关闭")
         QMainWindow.closeEvent(self, event)
 
@@ -317,6 +340,46 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self.__alSettingsWidget.deleteLater()
             self.__alSettingsWidget = None
         self.SettingsAction.setEnabled(True)
+
+    @Slot()
+    def onBulletinActionTriggered(
+        self
+    ):
+
+        self.__bulletin_poller.setDialogOpen(True)
+        if self.__alBulletinDialog is None:
+            self.__alBulletinDialog = ALBulletinDialog(self)
+            self.__alBulletinDialog.finished.connect(self.onBulletinDialogClosed)
+        self.__alBulletinDialog.show()
+        self.__alBulletinDialog.raise_()
+        self.__alBulletinDialog.activateWindow()
+        self._showLog("打开公告栏窗口")
+
+    @Slot()
+    def onBulletinDialogClosed(
+        self
+    ):
+
+        if self.__alBulletinDialog:
+            self.__alBulletinDialog.finished.disconnect(self.onBulletinDialogClosed)
+            self.__alBulletinDialog.deleteLater()
+            self.__alBulletinDialog = None
+        self.__bulletin_poller.setDialogOpen(False)
+
+    @Slot(int)
+    def _onBulletinPollerNewBulletins(
+        self,
+        count: int
+    ):
+
+        if not hasattr(self, 'TrayIcon'):
+            return
+        self.TrayIcon.showMessage(
+            "公告栏 - AutoLibrary",
+            f"有 {count} 条新公告，点击查看详情。",
+            QSystemTrayIcon.MessageIcon.Information,
+            3000
+        )
 
     @Slot()
     def onSettingsActionTriggered(

@@ -59,6 +59,11 @@ class ConfigTemplate:
                         "theme": "system",
                         "style": "Fusion",
                         "custom_theme": ""
+                    },
+                    "bulletin": {
+                        "auto_fetch": False,
+                        "server_url": "https://api.autolibrary.kenanzhu.com",
+                        "sync_interval": 10
                     }
                 }
             case ConfigType.BULLETIN:
