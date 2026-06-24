@@ -42,12 +42,14 @@ class ALBulletinPoller(QObject):
         self.__timer.timeout.connect(self.__poll)
         self.__worker = None
         self.__dialog_open = False
+        self.__stopped = False
         self.__mgr = bulletinInstance()
 
     def start(
         self
     ):
 
+        self.__stopped = False
         interval_ms = self.__mgr.syncInterval()*60*1000
         self.__timer.start(interval_ms)
 
@@ -55,6 +57,7 @@ class ALBulletinPoller(QObject):
         self
     ):
 
+        self.__stopped = True
         self.__timer.stop()
         self.__cleanupWorker()
 
@@ -88,6 +91,31 @@ class ALBulletinPoller(QObject):
 
         self.__dialog_open = open
 
+    def __disconnectWorker(
+        self,
+        worker: ALBulletinFetchWorker
+    ):
+
+        try:
+            worker.fetchWorkerIsFinished.disconnect(self.__onFetched)
+        except (TypeError, RuntimeError):
+            pass
+        try:
+            worker.fetchWorkerFinishedWithError.disconnect(self.__onError)
+        except (TypeError, RuntimeError):
+            pass
+
+    def __cleanupWorker(
+        self
+    ):
+
+        if self.__worker is None:
+            return
+        self.__disconnectWorker(self.__worker)
+        self.__worker.wait(2000)
+        self.__worker.deleteLater()
+        self.__worker = None
+
     def __doFetch(
         self
     ):
@@ -117,23 +145,30 @@ class ALBulletinPoller(QObject):
         data: dict
     ):
 
-        if self.__worker is None:
+        worker = self.sender()
+        if worker is not self.__worker:
             return
-        self.__worker.fetchWorkerIsFinished.disconnect(self.__onFetched)
-        self.__worker.fetchWorkerFinishedWithError.disconnect(self.__onError)
-        self.__worker.wait(2000)
-        self.__worker.deleteLater()
+        self.__disconnectWorker(worker)
+        worker.wait(2000)
+        worker.deleteLater()
         self.__worker = None
-        old_ids = {b["id"] for b in self.__mgr.bulletins()}
+        old_ids = {str(b.get("id", "")) for b in self.__mgr.bulletins()}
         bulletins = data.get("bulletins", [])
         delete_ids = data.get("delete_ids", [])
         self.__mgr.updateAndMergeBulletins(bulletins, delete_ids)
         self.__mgr.setLastSyncTime(datetime.now().astimezone().isoformat())
-        new_ids = {b["id"] for b in bulletins if b["id"] not in old_ids}
+        delete_id_set = {str(d) for d in delete_ids}
+        new_ids = {
+            str(b.get("id", ""))
+            for b in bulletins
+            if str(b.get("id", "")) and str(b.get("id", "")) not in old_ids
+        }
+        new_ids -= delete_id_set
         if new_ids:
             self.newBulletinsDetected.emit(len(new_ids))
-        interval_ms = self.__mgr.syncInterval()*60*1000
-        self.__timer.start(interval_ms)
+        if not self.__stopped:
+            interval_ms = self.__mgr.syncInterval()*60*1000
+            self.__timer.start(interval_ms)
 
     @Slot(str)
     def __onError(
@@ -141,30 +176,13 @@ class ALBulletinPoller(QObject):
         error_message: str
     ):
 
-        if self.__worker is None:
+        worker = self.sender()
+        if worker is not self.__worker:
             return
-        self.__worker.fetchWorkerIsFinished.disconnect(self.__onFetched)
-        self.__worker.fetchWorkerFinishedWithError.disconnect(self.__onError)
-        self.__worker.wait(2000)
-        self.__worker.deleteLater()
+        self.__disconnectWorker(worker)
+        worker.wait(2000)
+        worker.deleteLater()
         self.__worker = None
-        interval_ms = self.__mgr.syncInterval()*60*1000
-        self.__timer.start(interval_ms)
-
-    def __cleanupWorker(
-        self
-    ):
-
-        if self.__worker is None:
-            return
-        try:
-            self.__worker.fetchWorkerIsFinished.disconnect()
-        except (TypeError, RuntimeError):
-            pass
-        try:
-            self.__worker.fetchWorkerFinishedWithError.disconnect()
-        except (TypeError, RuntimeError):
-            pass
-        self.__worker.wait(2000)
-        self.__worker.deleteLater()
-        self.__worker = None
+        if not self.__stopped:
+            interval_ms = self.__mgr.syncInterval()*60*1000
+            self.__timer.start(interval_ms)

@@ -458,32 +458,64 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             self.BulletinTestStatusLabel.setText("请先输入服务器地址。")
             self.BulletinTestStatusLabel.setStyleSheet("color: red;")
             return
+        if hasattr(self, '__bulletin_test_worker') and self.__bulletin_test_worker is not None:
+            return
         self.BulletinTestButton.setEnabled(False)
         self.BulletinTestStatusLabel.setText("正在测试连接...")
         self.BulletinTestStatusLabel.setStyleSheet("")
-        try:
-            api_url = url.rstrip("/") + "/bulletins"
-            t0 = time.monotonic()
-            response = requests.get(api_url, timeout=5)
-            elapsed_ms = (time.monotonic() - t0) * 1000
-            response.raise_for_status()
-            data = response.json()
-            if data.get("code") == 200:
-                self.BulletinTestStatusLabel.setText(
-                    f"连接成功！响应延迟 {elapsed_ms:.0f} ms"
-                )
-                self.BulletinTestStatusLabel.setStyleSheet("color: green;")
-            else:
-                self.BulletinTestStatusLabel.setText(
-                    f"服务器返回异常: [{data.get('code', '?')}] {data.get('msg', '未知错误')}"
-                )
-                self.BulletinTestStatusLabel.setStyleSheet("color: red;")
-        except Exception as e:
-            self.BulletinTestStatusLabel.setText(f"连接失败：{e}")
-            self.BulletinTestStatusLabel.setStyleSheet("color: red;")
-        finally:
-            self.BulletinTestButton.setEnabled(True)
-            QTimer.singleShot(3000, self.clearBulletinTestStatus)
+        self.__bulletin_test_t0 = time.monotonic()
+        from gui.ALBulletinDialog import ALBulletinFetchWorker
+        api_url = url.rstrip("/") + "/bulletins"
+        self.__bulletin_test_worker = ALBulletinFetchWorker(
+            self, api_url, {"date": "", "time": "", "range_hour": "1"}
+        )
+        self.__bulletin_test_worker.fetchWorkerIsFinished.connect(
+            self.__onBulletinTestFetched
+        )
+        self.__bulletin_test_worker.fetchWorkerFinishedWithError.connect(
+            self.__onBulletinTestError
+        )
+        self.__bulletin_test_worker.start()
+
+    @Slot(dict)
+    def __onBulletinTestFetched(
+        self,
+        data: dict
+    ):
+
+        self.__bulletin_test_worker.fetchWorkerIsFinished.disconnect(
+            self.__onBulletinTestFetched
+        )
+        self.__bulletin_test_worker.fetchWorkerFinishedWithError.disconnect(
+            self.__onBulletinTestError
+        )
+        self.__bulletin_test_worker.deleteLater()
+        self.__bulletin_test_worker = None
+        elapsed_ms = (time.monotonic() - self.__bulletin_test_t0) * 1000
+        self.BulletinTestStatusLabel.setText(
+            f"连接成功！响应延迟 {elapsed_ms:.0f} ms"
+        )
+        self.BulletinTestStatusLabel.setStyleSheet("color: green;")
+        self.BulletinTestButton.setEnabled(True)
+        QTimer.singleShot(3000, self.clearBulletinTestStatus)
+
+    @Slot(str)
+    def __onBulletinTestError(
+        self,
+        error_message: str
+    ):
+
+        self.__bulletin_test_worker.fetchWorkerIsFinished.disconnect(
+            self.__onBulletinTestFetched
+        )
+        self.__bulletin_test_worker.fetchWorkerFinishedWithError.disconnect(
+            self.__onBulletinTestError
+        )
+        self.__bulletin_test_worker.deleteLater()
+        self.__bulletin_test_worker = None
+        self.BulletinTestStatusLabel.setText(f"连接失败：{error_message}")
+        self.BulletinTestStatusLabel.setStyleSheet("color: red;")
+        self.BulletinTestButton.setEnabled(True)
 
     @Slot()
     def onCancelButtonClicked(

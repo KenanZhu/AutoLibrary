@@ -110,7 +110,7 @@ class ConfigManager:
                 config_data = JSONReader(config_path).data()
                 self.__config_data[config_type.value] = config_data
                 return
-            except:
+            except Exception:
                 pass
         self.__config_data[config_type.value] = ConfigTemplate(config_type).template()
         JSONWriter(config_path, self.__config_data[config_type.value])

@@ -9,7 +9,7 @@ See the LICENSE file for details.
 """
 import threading
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from interfaces.ConfigProvider import (
@@ -118,13 +118,18 @@ class BulletinManager:
         """
             Get auto-sync interval in minutes.
 
-            Values below 1 are clamped to 5 minutes.
+            Values below 1 are clamped upward. Non-integer or missing
+            values fall back to the default of 10 minutes.
 
             Returns:
                 int: Sync interval (minutes), minimum 1.
         """
 
         interval = self.__cfg.get(CfgKey.GLOBAL.BULLETIN.SYNC_INTERVAL, 10)
+        try:
+            interval = int(interval)
+        except (ValueError, TypeError):
+            return 10
         if interval < 1:
             return 5
         return interval
@@ -142,6 +147,26 @@ class BulletinManager:
         base = self.serverUrl().rstrip("/")
         return f"{base}/bulletins"
 
+    @staticmethod
+    def _ensureAware(
+        dt_value: datetime
+    ) -> datetime:
+
+        if dt_value.tzinfo is None:
+            return dt_value.replace(tzinfo=timezone.utc)
+        return dt_value
+
+    @staticmethod
+    def _parseBulletinDateTime(
+        b: dict
+    ) -> datetime:
+
+        raw = b.get("dateTime", "")
+        if not raw:
+            raise ValueError("empty dateTime")
+        dt_value = datetime.fromisoformat(raw)
+        return BulletinManager._ensureAware(dt_value)
+
     def isFirstSync(
         self
     ) -> bool:
@@ -152,9 +177,10 @@ class BulletinManager:
                 bool: True if no cached bulletins or no last sync time.
         """
 
-        last = self.lastSyncTime()
-        bulletins = self.bulletins()
-        return last is None or not bulletins
+        with self.__lock:
+            last = self.lastSyncTime()
+            bulletins = self.bulletins()
+            return last is None or not bulletins
 
     def shouldFullSync(
         self
@@ -169,14 +195,17 @@ class BulletinManager:
                 bool: True if a full sync should be performed.
         """
 
-        last = self.lastSyncTime()
-        if last is None:
-            return True
-        try:
-            last_dt = datetime.fromisoformat(last)
-            return (datetime.now().astimezone() - last_dt) > timedelta(hours=1)
-        except (ValueError, TypeError):
-            return True
+        with self.__lock:
+            last = self.lastSyncTime()
+            if last is None:
+                return True
+            try:
+                last_dt = datetime.fromisoformat(last)
+                last_dt = self._ensureAware(last_dt)
+                now = datetime.now(timezone.utc).astimezone()
+                return (now - last_dt) > timedelta(hours=1)
+            except (ValueError, TypeError):
+                return True
 
     def getSyncDateTimeAndRange(
         self
@@ -184,25 +213,35 @@ class BulletinManager:
         """
             Calculate the date / time / range_hour query parameters.
 
+            Falls back to a first-sync (7-day window) on any parsing error.
+
             Returns:
                 dict: Keys "date", "time", "range_hour" for the API request.
         """
 
-        if self.isFirstSync():
-            start_date = datetime.now() - timedelta(days=7)
-            range_hour = str(24 * (7 + 1))
-        elif self.shouldFullSync():
-            bulletins = self.bulletins()
-            earliest = min(bulletins, key=lambda x: x.get("dateTime", ""))
-            start_date = datetime.fromisoformat(earliest["dateTime"])
-            diff = datetime.now().astimezone() - start_date
-            range_hour = str(int(diff.total_seconds() / 3600) + 1)
-        else:
-            bulletins = self.bulletins()
-            latest = max(bulletins, key=lambda x: x.get("dateTime", ""))
-            start_date = datetime.fromisoformat(latest["dateTime"])
-            diff = datetime.now().astimezone() - start_date
-            range_hour = str(int(diff.total_seconds() / 3600) + 1)
+        now = datetime.now(timezone.utc).astimezone()
+        try:
+            if self.isFirstSync():
+                start_date = now - timedelta(days=7)
+                range_hour = str(24 * 8)
+            elif self.shouldFullSync():
+                with self.__lock:
+                    bulletins = self.bulletins()
+                earliest = min(bulletins, key=self._parseBulletinDateTime)
+                start_date = self._parseBulletinDateTime(earliest)
+                diff = now - start_date
+                range_hour = str(int(diff.total_seconds() / 3600) + 1)
+            else:
+                with self.__lock:
+                    bulletins = self.bulletins()
+                latest = max(bulletins, key=self._parseBulletinDateTime)
+                start_date = self._parseBulletinDateTime(latest)
+                diff = now - start_date
+                range_hour = str(int(diff.total_seconds() / 3600) + 1)
+        except (ValueError, TypeError, KeyError):
+            start_date = now - timedelta(days=7)
+            range_hour = str(24 * 8)
+
         return {
             "date": start_date.strftime("%Y-%m-%d"),
             "time": start_date.strftime("%H:%M:%S"),
@@ -219,7 +258,7 @@ class BulletinManager:
 
             New bulletins are added with isNew=True. Existing bulletins
             keep their current isNew state. Entries listed in delete_ids
-            are removed.
+            are removed. Bulletins missing an "id" field are skipped.
 
             Args:
                 new_bulletins (list[dict]): Incoming bulletin list.
@@ -230,22 +269,33 @@ class BulletinManager:
         """
 
         with self.__lock:
-            delete_set = set(delete_ids)
-            bulletins_dict = {b["id"]: b for b in self.bulletins()}
+            delete_set = set(str(d) for d in delete_ids)
+            bulletins_dict = {}
+            for b in self.bulletins():
+                bid = b.get("id")
+                if bid is not None:
+                    bulletins_dict[str(bid)] = b
+
             for bulletin in new_bulletins:
-                bid = bulletin["id"]
+                bid = bulletin.get("id")
+                if bid is None:
+                    continue
+                bid = str(bid)
                 if bid in delete_set:
                     bulletins_dict.pop(bid, None)
                     continue
-                if bid not in bulletins_dict:
-                    bulletin["isNew"] = True
-                else:
-                    bulletin["isNew"] = bulletins_dict[bid].get("isNew", True)
+                bulletin["isNew"] = (
+                    True
+                    if bid not in bulletins_dict
+                    else bulletins_dict[bid].get("isNew", True)
+                )
                 bulletins_dict[bid] = bulletin
+
             for bid in delete_set:
                 bulletins_dict.pop(bid, None)
+
             result = list(bulletins_dict.values())
-            result.sort(key=lambda x: int(x["id"]))
+            result.sort(key=lambda x: str(x.get("id", "")))
             self.setBulletins(result)
             return result
 
@@ -263,7 +313,7 @@ class BulletinManager:
         with self.__lock:
             bulletins = self.bulletins()
             for b in bulletins:
-                if b["id"] == bulletin_id:
+                if str(b.get("id", "")) == str(bulletin_id):
                     b["isNew"] = False
                     self.setBulletins(bulletins)
                     break

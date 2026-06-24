@@ -130,7 +130,11 @@ class ALBulletinItemWidget(QWidget):
         self.ItemWidgetLayout.addLayout(self.BulletinTitleLayout)
         self.BulletinInfoLayout = QHBoxLayout()
         self.BulletinDateLabel = QLabel()
-        date_time = datetime.fromisoformat(self.__bulletin.get("dateTime", ""))
+        try:
+            raw_dt = self.__bulletin.get("dateTime", "")
+            date_time = datetime.fromisoformat(raw_dt) if raw_dt else datetime.now()
+        except (ValueError, TypeError):
+            date_time = datetime.now()
         self.BulletinDateLabel.setText(date_time.strftime("%Y-%m-%d %H:%M:%S"))
         self.BulletinDateLabel.setStyleSheet("color: #969696; font-size: 11px;")
         self.BulletinInfoLayout.addWidget(self.BulletinDateLabel)
@@ -258,7 +262,11 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
     ):
 
         self.BulletinTitleLabel.setText(bulletin.get("title", "无标题"))
-        date_time = datetime.fromisoformat(bulletin.get("dateTime", ""))
+        try:
+            raw_dt = bulletin.get("dateTime", "")
+            date_time = datetime.fromisoformat(raw_dt) if raw_dt else datetime.now()
+        except (ValueError, TypeError):
+            date_time = datetime.now()
         self.BulletinDateLabel.setText(date_time.strftime("%Y-%m-%d %H:%M:%S"))
         self.BulletinAuthorLabel.setText(bulletin.get("author", "未知"))
         if bulletin.get("isEdited", False):
@@ -306,12 +314,15 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         data: dict
     ):
 
-        if self.__fetch_worker:
-            self.__fetch_worker.wait(2000)
-            self.__fetch_worker.fetchWorkerIsFinished.disconnect(self.onBulletinsFetched)
-            self.__fetch_worker.fetchWorkerFinishedWithError.disconnect(self.onBulletinsFetchError)
-            self.__fetch_worker.deleteLater()
-            self.__fetch_worker = None
+        worker = self.sender()
+        if worker is not self.__fetch_worker:
+            return
+        worker.fetchWorkerIsFinished.disconnect(self.onBulletinsFetched)
+        worker.fetchWorkerFinishedWithError.disconnect(self.onBulletinsFetchError)
+        worker.wait(2000)
+        worker.deleteLater()
+        self.__fetch_worker = None
+
         bulletins = data.get("bulletins", [])
         delete_ids = data.get("delete_ids", [])
         merged = self.__bulletin_mgr.updateAndMergeBulletins(bulletins, delete_ids)
@@ -336,12 +347,15 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         error_message: str
     ):
 
-        if self.__fetch_worker:
-            self.__fetch_worker.wait(2000)
-            self.__fetch_worker.fetchWorkerIsFinished.disconnect(self.onBulletinsFetched)
-            self.__fetch_worker.fetchWorkerFinishedWithError.disconnect(self.onBulletinsFetchError)
-            self.__fetch_worker.deleteLater()
-            self.__fetch_worker = None
+        worker = self.sender()
+        if worker is not self.__fetch_worker:
+            return
+        worker.fetchWorkerIsFinished.disconnect(self.onBulletinsFetched)
+        worker.fetchWorkerFinishedWithError.disconnect(self.onBulletinsFetchError)
+        worker.wait(2000)
+        worker.deleteLater()
+        self.__fetch_worker = None
+
         self.SyncButton.setEnabled(True)
         self.SyncButton.setText("重试")
         self.ALSyncStatusLabel.status = ALStatusLabel.Status.FAILURE
@@ -376,7 +390,8 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         if bulletin.get("isNew", False):
             bulletin["isNew"] = False
             widget = self.BulletinListWidget.itemWidget(item)
-            widget.markAsRead()
+            if widget:
+                widget.markAsRead()
             item.setData(Qt.UserRole, bulletin)
             self.__bulletin_mgr.markBulletinAsRead(bulletin["id"])
         self.showBulletin(bulletin)
