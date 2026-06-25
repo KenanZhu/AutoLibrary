@@ -8,6 +8,7 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import os
+import shutil
 import threading
 import packaging.version as ver
 
@@ -19,7 +20,7 @@ from managers.driver.WebBrowserDetector import (
     WebBrowserType, WebBrowserArch, WebBrowserInfo, WebBrowserDetector
 )
 from managers.driver.WebDriverDownloader import (
-    WebDriverArch, WebDriverType,
+    WebDriverArch, WebDriverType, WebDriverExecName,
     ChromeDriverDownloader, FirefoxDriverDownloader, EdgeDriverDownloader
 )
 
@@ -35,9 +36,9 @@ class WebDriverStatus(Enum):
     ERROR = 3
 
 
-class WebDriverInfo:
+class WebDriverCtx:
     """
-        Web driver information.
+        Web browser and driver context.
 
         Attributes:
             driver_type (WebDriverType): Web driver type
@@ -52,8 +53,8 @@ class WebDriverInfo:
         self
     ):
 
-        self.driver_type = None
-        self.driver_arch = None
+        self.driver_type : Optional[WebDriverType] = None
+        self.driver_arch : Optional[WebDriverArch] = None
         self.driver_version = ""
         self.browser_version = ""
         self.driver_path: Optional[Path] = None
@@ -75,7 +76,7 @@ class WebDriverManager:
 
         self.__driver_dir = os.path.abspath(driver_dir)
         self.__browser_detector = WebBrowserDetector()
-        self.__driver_infos: list[WebDriverInfo] = []
+        self.__driver_ctxs: list[WebDriverCtx] = []
         self.__initialized = False
         self.__lock = threading.Lock()
 
@@ -98,7 +99,7 @@ class WebDriverManager:
 
         with self.__lock:
             browser_infos = self.__browser_detector.detect()
-            self.__driver_infos = [
+            self.__driver_ctxs = [
                 self._getDriverInfo(info)
                 for info in browser_infos
             ]
@@ -108,7 +109,7 @@ class WebDriverManager:
     ):
 
         with self.__lock:
-            for driver_info in self.__driver_infos:
+            for driver_info in self.__driver_ctxs:
                 driver_path = self._getDriverPath(driver_info)
                 if driver_path and driver_path.exists() and driver_path.is_file():
                     # Repair missing execute permission on Unix
@@ -198,7 +199,7 @@ class WebDriverManager:
         else:
             raise ValueError(f"不支持的 Web 浏览器类型 : {browser_type}")
 
-    def _mapFirefoxDriverVersion(
+    def _mapFirefoxBrowserVersionToDriver(
         self,
         version: str
     ) -> str:
@@ -241,43 +242,27 @@ class WebDriverManager:
     def _getDriverInfo(
         self,
         browser_info: WebBrowserInfo
-    ) -> WebDriverInfo:
+    ) -> WebDriverCtx:
 
-        driver_info = WebDriverInfo()
-        driver_info.driver_type = self._mapWebBrowserTypeToDriver(browser_info.browser_type)
-        driver_info.driver_arch = self._mapWebBrowserArchToDriver(browser_info.browser_type, browser_info.browser_arch)
+        driver_ctx = WebDriverCtx()
+        driver_ctx.driver_type = self._mapWebBrowserTypeToDriver(browser_info.browser_type)
+        driver_ctx.driver_arch = self._mapWebBrowserArchToDriver(browser_info.browser_type, browser_info.browser_arch)
         if browser_info.browser_type == WebBrowserType.FIREFOX:
-            driver_info.driver_version = self._mapFirefoxDriverVersion(browser_info.browser_version)
+            driver_ctx.driver_version = self._mapFirefoxBrowserVersionToDriver(browser_info.browser_version)
         else:
-            driver_info.driver_version = browser_info.browser_version
-        driver_info.browser_version = browser_info.browser_version
-        return driver_info
+            driver_ctx.driver_version = browser_info.browser_version
+        driver_ctx.browser_version = browser_info.browser_version
+        return driver_ctx
 
     def _getDriverPath(
         self,
-        driver_info: WebDriverInfo
+        driver_ctx: WebDriverCtx
     ) -> Optional[Path]:
 
-        driver_type = driver_info.driver_type
-        driver_arch = driver_info.driver_arch
-        driver_version = driver_info.driver_version
-        if driver_type == WebDriverType.CHROME:
-            driver_name = "chromedriver"
-        elif driver_type == WebDriverType.FIREFOX:
-            driver_name = "geckodriver"
-        elif driver_type == WebDriverType.EDGE:
-            driver_name = "msedgedriver"
-        else:
-            return None
-        is_win = driver_arch in [
-            WebDriverArch.Chrome.WINX86_32,
-            WebDriverArch.Chrome.WINX86_64,
-            WebDriverArch.Firefox.WINX86_32,
-            WebDriverArch.Firefox.WINX86_64,
-            WebDriverArch.Edge.WINX86_32,
-            WebDriverArch.Edge.WINX86_64,
-        ]
-        exe_name = f"{driver_name}.exe" if is_win else driver_name
+        driver_type = driver_ctx.driver_type
+        driver_arch = driver_ctx.driver_arch
+        driver_version = driver_ctx.driver_version
+        exe_name = str(WebDriverExecName(driver_type, driver_arch))
         driver_dir = Path(self.__driver_dir)/driver_type.value/driver_version/driver_arch.value
         driver_path = driver_dir/exe_name
         return driver_path
@@ -289,28 +274,28 @@ class WebDriverManager:
         self._detectBrowsers()
         self._checkDriverStatus()
 
-    def getDriverInfos(
+    def getDriverCtxs(
         self
-    ) -> list[WebDriverInfo]:
+    ) -> list[WebDriverCtx]:
 
         with self.__lock:
-            return self.__driver_infos.copy()
+            return self.__driver_ctxs.copy()
 
-    def getDriverInfo(
+    def getDriverCtx(
         self,
         driver_type: WebDriverType
-    ) -> list[WebDriverInfo]:
+    ) -> list[WebDriverCtx]:
 
         with self.__lock:
             return [
                 info
-                for info in self.__driver_infos
+                for info in self.__driver_ctxs
                 if info.driver_type == driver_type
             ]
 
     def getDriverPath(
         self,
-        driver_info: WebDriverInfo
+        driver_info: WebDriverCtx
     ) -> Optional[Path]:
 
         if driver_info and driver_info.driver_status == WebDriverStatus.INSTALLED:
@@ -319,28 +304,28 @@ class WebDriverManager:
 
     def installDriver(
         self,
-        driver_info: WebDriverInfo,
+        driver_ctx: WebDriverCtx,
         progress_callback: Optional[Callable[[float, int, float, str], None]] = None,
         cancel_event: Optional[threading.Event] = None
     ) -> Optional[Path]:
 
         with self.__lock:
-            if not driver_info:
+            if not driver_ctx:
                 if progress_callback:
                     progress_callback(0, 0, 0, "未找到浏览器信息")
                 else:
                     raise ValueError("未找到浏览器信息")
-            if driver_info and driver_info.driver_status == WebDriverStatus.DOWNLOADING:
+            if driver_ctx and driver_ctx.driver_status == WebDriverStatus.DOWNLOADING:
                 if progress_callback:
-                    progress_callback(0, 0, 0, f"{driver_info.driver_type} 驱动正在下载中")
+                    progress_callback(0, 0, 0, f"{driver_ctx.driver_type} 驱动正在下载中")
                 else:
-                    raise ValueError(f"{driver_info.driver_type} 驱动正在下载中")
+                    raise ValueError(f"{driver_ctx.driver_type} 驱动正在下载中")
         try:
-            if not driver_info:
+            if not driver_ctx:
                 raise ValueError("未找到浏览器信息")
-            driver_arch = driver_info.driver_arch
-            driver_type = driver_info.driver_type
-            driver_version = driver_info.driver_version
+            driver_arch = driver_ctx.driver_arch
+            driver_type = driver_ctx.driver_type
+            driver_version = driver_ctx.driver_version
             downloader = None
             if driver_type == WebDriverType.CHROME:
                 downloader = ChromeDriverDownloader(
@@ -366,68 +351,66 @@ class WebDriverManager:
                 else:
                     raise ValueError(f"不支持的 Web Driver 类型")
             with self.__lock:
-                driver_info.driver_status = WebDriverStatus.DOWNLOADING
+                driver_ctx.driver_status = WebDriverStatus.DOWNLOADING
             driver_path = downloader.download(progress_callback=progress_callback, cancel_event=cancel_event)
             with self.__lock:
                 if driver_path:
-                    driver_info.driver_path = driver_path
-                    driver_info.driver_version = driver_version
-                    driver_info.driver_status = WebDriverStatus.INSTALLED
+                    driver_ctx.driver_path = driver_path
+                    driver_ctx.driver_version = driver_version
+                    driver_ctx.driver_status = WebDriverStatus.INSTALLED
                 else:
-                    driver_info.driver_status = WebDriverStatus.ERROR
+                    driver_ctx.driver_status = WebDriverStatus.ERROR
             return driver_path
         except Exception as e:
             with self.__lock:
-                driver_info.driver_status = WebDriverStatus.ERROR
+                driver_ctx.driver_status = WebDriverStatus.ERROR
             raise e
 
     def cancelDriverDownload(
         self,
-        driver_info: WebDriverInfo
+        driver_ctx: WebDriverCtx
     ) -> bool:
 
-        import shutil
-
         try:
-            driver_path = self._getDriverPath(driver_info)
+            driver_path = self._getDriverPath(driver_ctx)
             if driver_path:
                 download_dir = driver_path.parent
                 if download_dir.exists():
                     shutil.rmtree(download_dir, ignore_errors=True)
             with self.__lock:
-                driver_info.driver_path = None
-                driver_info.driver_status = WebDriverStatus.NOT_INSTALLED
+                driver_ctx.driver_path = None
+                driver_ctx.driver_status = WebDriverStatus.NOT_INSTALLED
             return True
         except Exception:
             return False
 
     def uninstallDriver(
         self,
-        driver_info: WebDriverInfo,
+        driver_ctx: WebDriverCtx,
         progress_callback: Optional[Callable[[int, int, float, str], None]] = None
     ) -> bool:
 
         with self.__lock:
-            if not driver_info:
+            if not driver_ctx:
                 if progress_callback:
                     progress_callback(0, 0, 0, "未找到浏览器信息")
                 else:
                     raise ValueError("未找到浏览器信息")
-            if driver_info.driver_status != WebDriverStatus.INSTALLED:
+            if driver_ctx.driver_status != WebDriverStatus.INSTALLED:
                 if progress_callback:
-                    progress_callback(0, 0, 0, f"{driver_info.driver_type} 驱动未安装")
+                    progress_callback(0, 0, 0, f"{driver_ctx.driver_type} 驱动未安装")
                 else:
-                    raise ValueError(f"{driver_info.driver_type} 驱动未安装")
+                    raise ValueError(f"{driver_ctx.driver_type} 驱动未安装")
         try:
-            driver_path = driver_info.driver_path
+            driver_path = driver_ctx.driver_path
             driver_path.unlink()
             with self.__lock:
-                driver_info.driver_path = None
-                driver_info.driver_status = WebDriverStatus.NOT_INSTALLED
+                driver_ctx.driver_path = None
+                driver_ctx.driver_status = WebDriverStatus.NOT_INSTALLED
             return True
         except Exception:
             with self.__lock:
-                driver_info.driver_status = WebDriverStatus.ERROR
+                driver_ctx.driver_status = WebDriverStatus.ERROR
             raise
 
     def driverDir(

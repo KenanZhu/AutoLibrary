@@ -8,6 +8,7 @@ You may use, modify, and distribute this file under the terms of the MIT License
 See the LICENSE file for details.
 """
 import threading
+from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import (
@@ -33,7 +34,7 @@ from PySide6.QtGui import QCloseEvent
 from managers.driver.WebDriverManager import (
     instance as webdriverInstance,
     WebDriverManager,
-    WebDriverInfo,
+    WebDriverCtx,
     WebDriverType,
     WebDriverStatus
 )
@@ -54,12 +55,12 @@ class DownloadWorker(QThread):
     def __init__(
         self,
         driver_manager: WebDriverManager,
-        driver_info: WebDriverInfo
+        driver_ctx: WebDriverCtx
     ):
         super().__init__()
         self.__driver_manager = driver_manager
-        self.__driver_info = driver_info
-        self.__driver_path = None
+        self.__driver_ctx = driver_ctx
+        self.__driver_path: Optional[Path] = None
         self.__cancelled = False
         self.__cancel_event = threading.Event()
 
@@ -81,7 +82,7 @@ class DownloadWorker(QThread):
                 self.downloadCancelled.emit()
                 return
             self.__driver_path = self.__driver_manager.installDriver(
-                self.__driver_info,
+                self.__driver_ctx,
                 progress_callback=self.onProgress,
                 cancel_event=self.__cancel_event
             )
@@ -140,18 +141,38 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
         """
 
         super().__init__(parent)
-
         self.__driver_dir = driver_dir
         self.__driver_manager: Optional[WebDriverManager] = None
         self.__confirmed = False
-        self.__selected_driver_info: Optional[WebDriverInfo] = None
-        self.__driver_infos: list[WebDriverInfo] = []
+        self.__selected_driver_ctx: Optional[WebDriverCtx] = None
+        self.__driver_ctxs: list[WebDriverCtx] = []
         self.__download_thread: Optional[DownloadWorker] = None
 
         self.setupUi()
         self.connectSignals()
         self.initializeDriverManager()
         self.refreshDriverList()
+
+    def closeEvent(
+        self,
+        event: QCloseEvent
+    ):
+
+        if self.__download_thread and self.__download_thread.isRunning():
+            reply = QMessageBox.question(
+                self,
+                "确认关闭 - AutoLibrary",
+                "驱动正在下载中, 确定要取消并关闭对话框吗 ?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                event.ignore()
+                return
+            self.__download_thread.stop()
+        if not self.__confirmed:
+            self.__selected_driver_ctx = None
+        event.accept()
+        super().closeEvent(event)
 
     def setupUi(
         self
@@ -246,89 +267,42 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
         if not self.__driver_manager:
             return
         self.__driver_manager.refresh()
-        self.__driver_infos = self.__driver_manager.getDriverInfos()
+        self.__driver_ctxs = self.__driver_manager.getDriverCtxs()
         self.DriverComboBox.clear()
         installed = 0
         installed_idx = 0
-        for i, driver_info in enumerate(self.__driver_infos):
-            display_text = f"{driver_info.driver_type.value} - {driver_info.browser_version}"
-            if driver_info.driver_status == WebDriverStatus.INSTALLED:
+        for i, driver_ctx in enumerate(self.__driver_ctxs):
+            display_text = f"{driver_ctx.driver_type.value} - {driver_ctx.browser_version}"
+            if driver_ctx.driver_status == WebDriverStatus.INSTALLED:
                 installed += 1
                 installed_idx = i # get the installed driver index
-                display_text += " : 已安装"
+                display_text += " - 已安装"
             self.DriverComboBox.addItem(display_text)
-        count = len(self.__driver_infos)
+        count = len(self.__driver_ctxs)
         self.BrowserCountLabel.setText(f"检测到 {count} 个可用浏览器，{installed} 个已安装驱动：")
-        if self.__driver_infos:
+        if self.__driver_ctxs:
             self.DriverComboBox.setCurrentIndex(installed_idx)
-
-    def onDriverComboBoxChanged(
-        self,
-        index: int
-    ):
-
-        if not self.__driver_infos or index < 0 or index >= len(self.__driver_infos):
-            return
-        driver_info = self.__driver_infos[index]
-        self.updateDriverInfoDisplay(driver_info)
-        self.updateProgressBarStates(driver_info)
-        self.updateButtonStates(driver_info)
-
-    def closeEvent(
-        self,
-        event: QCloseEvent
-    ):
-
-        if self.__download_thread and self.__download_thread.isRunning():
-            reply = QMessageBox.question(
-                self,
-                "确认关闭 - AutoLibrary",
-                "驱动正在下载中, 确定要取消并关闭对话框吗 ?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-            )
-            if reply == QMessageBox.StandardButton.No:
-                event.ignore()
-                return
-            self.__download_thread.stop()
-        if not self.__confirmed:
-            self.__selected_driver_info = None
-        event.accept()
-        super().closeEvent(event)
-
-    def onThreadFinished(
-        self
-    ):
-
-        if self.__download_thread:
-            self.__download_thread.deleteLater()
-            self.__download_thread = None
-
-    def getSelectedDriverInfo(
-        self
-    ) -> Optional[WebDriverInfo]:
-
-        return self.__selected_driver_info
 
     def updateDriverInfoDisplay(
         self,
-        driver_info: WebDriverInfo
+        driver_ctx: WebDriverCtx
     ):
 
-        if driver_info.driver_type == WebDriverType.CHROME:
+        if driver_ctx.driver_type == WebDriverType.CHROME:
             driver_type = "Google Chrome"
-        elif driver_info.driver_type == WebDriverType.FIREFOX:
+        elif driver_ctx.driver_type == WebDriverType.FIREFOX:
             driver_type = "Mozilla Firefox"
-        elif driver_info.driver_type == WebDriverType.EDGE:
+        elif driver_ctx.driver_type == WebDriverType.EDGE:
             driver_type = "Microsoft Edge"
         else:
             driver_type = "未知"
         self.BrowserTypeLabel.setText(f"类型：{driver_type}")
-        self.VersionLabel.setText(f"版本：{driver_info.driver_version}")
-        if driver_info.driver_path:
-            self.PathLabel.setText(str(driver_info.driver_path))
+        self.VersionLabel.setText(f"版本：{driver_ctx.driver_version}")
+        if driver_ctx.driver_path:
+            self.PathLabel.setText(str(driver_ctx.driver_path))
         else:
             self.PathLabel.setText("未安装")
-        match driver_info.driver_status:
+        match driver_ctx.driver_status:
             case WebDriverStatus.NOT_INSTALLED:
                 self.StatusLabel.status = ALStatusLabel.Status.WAITING
             case WebDriverStatus.INSTALLED:
@@ -340,50 +314,69 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
 
     def updateProgressBarStates(
         self,
-        driver_info: WebDriverInfo
+        driver_ctx: WebDriverCtx
     ):
 
-        if driver_info.driver_status == WebDriverStatus.NOT_INSTALLED:
+        if driver_ctx.driver_status == WebDriverStatus.NOT_INSTALLED:
             self.ProgressBar.setValue(0)
             self.ProgressText.setText("未安装")
-        elif driver_info.driver_status == WebDriverStatus.INSTALLED:
+        elif driver_ctx.driver_status == WebDriverStatus.INSTALLED:
             self.ProgressBar.setValue(100)
             self.ProgressText.setText("已安装")
-        elif driver_info.driver_status == WebDriverStatus.DOWNLOADING:
+        elif driver_ctx.driver_status == WebDriverStatus.DOWNLOADING:
             pass # update  by worker thread
-        elif driver_info.driver_status == WebDriverStatus.ERROR:
+        elif driver_ctx.driver_status == WebDriverStatus.ERROR:
             self.ProgressBar.setValue(0)
             self.ProgressText.setText("下载失败")
 
     def updateButtonStates(
         self,
-        driver_info: WebDriverInfo
+        driver_ctx: WebDriverCtx
     ):
 
-        if driver_info.driver_status == WebDriverStatus.NOT_INSTALLED:
+        if driver_ctx.driver_status == WebDriverStatus.NOT_INSTALLED:
             self.RefreshButton.setEnabled(True)
             self.DeleteButton.setEnabled(False)
             self.DownloadButton.setEnabled(True)
             self.CancelButton.setEnabled(True)
             self.ConfirmButton.setEnabled(False)
-        elif driver_info.driver_status == WebDriverStatus.INSTALLED:
+        elif driver_ctx.driver_status == WebDriverStatus.INSTALLED:
             self.RefreshButton.setEnabled(True)
             self.DownloadButton.setEnabled(False)
             self.DeleteButton.setEnabled(True)
             self.CancelButton.setEnabled(True)
             self.ConfirmButton.setEnabled(True)
-        elif driver_info.driver_status == WebDriverStatus.DOWNLOADING:
+        elif driver_ctx.driver_status == WebDriverStatus.DOWNLOADING:
             self.RefreshButton.setEnabled(False)
             self.DownloadButton.setEnabled(False)
             self.DeleteButton.setEnabled(False)
             self.CancelButton.setEnabled(True)
             self.ConfirmButton.setEnabled(False)
-        elif driver_info.driver_status == WebDriverStatus.ERROR:
+        elif driver_ctx.driver_status == WebDriverStatus.ERROR:
             self.RefreshButton.setEnabled(True)
             self.DownloadButton.setEnabled(True)
             self.DeleteButton.setEnabled(False)
             self.CancelButton.setEnabled(True)
             self.ConfirmButton.setEnabled(False)
+
+    def getSelectedDriverInfo(
+        self
+    ) -> Optional[WebDriverCtx]:
+
+        return self.__selected_driver_ctx
+
+    @Slot(int)
+    def onDriverComboBoxChanged(
+        self,
+        index: int
+    ):
+
+        if not self.__driver_ctxs or index < 0 or index >= len(self.__driver_ctxs):
+            return
+        driver_ctx = self.__driver_ctxs[index]
+        self.updateDriverInfoDisplay(driver_ctx)
+        self.updateProgressBarStates(driver_ctx)
+        self.updateButtonStates(driver_ctx)
 
     @Slot()
     def onRefreshButtonClicked(
@@ -398,9 +391,9 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
     ):
 
         index = self.DriverComboBox.currentIndex()
-        if index < 0 or index >= len(self.__driver_infos):
+        if index < 0 or index >= len(self.__driver_ctxs):
             return
-        driver_info = self.__driver_infos[index]
+        driver_info = self.__driver_ctxs[index]
         if driver_info.driver_status.name != "INSTALLED":
             QMessageBox.information(self, "提示 - AutoLibrary", "该驱动未安装, 无需删除")
             return
@@ -426,9 +419,9 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
 
         self.DriverComboBox.setEnabled(False)
         index = self.DriverComboBox.currentIndex()
-        if index < 0 or index >= len(self.__driver_infos):
+        if index < 0 or index >= len(self.__driver_ctxs):
             return
-        driver_info = self.__driver_infos[index]
+        driver_info = self.__driver_ctxs[index]
         if driver_info.driver_status == WebDriverStatus.INSTALLED:
             return
         driver_info.driver_status = WebDriverStatus.DOWNLOADING # we set this only to update
@@ -444,7 +437,7 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
         self.__download_thread.downloadFinished.connect(self.onDownloadFinished)
         self.__download_thread.downloadError.connect(self.onDownloadError)
         self.__download_thread.downloadCancelled.connect(self.onDownloadCancelled)
-        self.__download_thread.finished.connect(self.onThreadFinished)
+        self.__download_thread.finished.connect(self.onDownloadThreadFinished)
         self.__download_thread.start()
 
     @Slot()
@@ -472,8 +465,8 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
 
         self.DriverComboBox.setEnabled(True)
         index = self.DriverComboBox.currentIndex()
-        if 0 <= index < len(self.__driver_infos):
-            driver_info = self.__driver_infos[index]
+        if 0 <= index < len(self.__driver_ctxs):
+            driver_info = self.__driver_ctxs[index]
             driver_info.driver_status = WebDriverStatus.INSTALLED
             self.updateDriverInfoDisplay(driver_info)
             self.updateProgressBarStates(driver_info)
@@ -487,8 +480,8 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
 
         self.DriverComboBox.setEnabled(True)
         index = self.DriverComboBox.currentIndex()
-        if 0 <= index < len(self.__driver_infos):
-            driver_info = self.__driver_infos[index]
+        if 0 <= index < len(self.__driver_ctxs):
+            driver_info = self.__driver_ctxs[index]
             driver_info.driver_status = WebDriverStatus.ERROR
             self.updateDriverInfoDisplay(driver_info)
             self.updateProgressBarStates(driver_info)
@@ -502,8 +495,8 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
 
         self.DriverComboBox.setEnabled(True)
         index = self.DriverComboBox.currentIndex()
-        if 0 <= index < len(self.__driver_infos):
-            driver_info = self.__driver_infos[index]
+        if 0 <= index < len(self.__driver_ctxs):
+            driver_info = self.__driver_ctxs[index]
             self.__driver_manager.cancelDriverDownload(driver_info)
             driver_info.driver_status = WebDriverStatus.NOT_INSTALLED
             self.updateDriverInfoDisplay(driver_info)
@@ -512,17 +505,26 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
             self.ProgressText.setText("下载已取消")
 
     @Slot()
+    def onDownloadThreadFinished(
+        self
+    ):
+
+        if self.__download_thread:
+            self.__download_thread.deleteLater()
+            self.__download_thread = None
+
+    @Slot()
     def onConfirmButtonClicked(
         self
     ):
 
         index = self.DriverComboBox.currentIndex()
-        if index < 0 or index >= len(self.__driver_infos):
+        if index < 0 or index >= len(self.__driver_ctxs):
             return
-        driver_info = self.__driver_infos[index]
-        if driver_info.driver_status != WebDriverStatus.INSTALLED:
+        driver_ctx = self.__driver_ctxs[index]
+        if driver_ctx.driver_status != WebDriverStatus.INSTALLED:
             return
-        self.__selected_driver_info = driver_info
+        self.__selected_driver_ctx = driver_ctx
         self.__confirmed = True
         self.accept()
 
@@ -542,5 +544,5 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
                 self.__download_thread.cancel()
         else:
             self.__confirmed = False
-            self.__selected_driver_info = None
+            self.__selected_driver_ctx = None
             self.reject()
