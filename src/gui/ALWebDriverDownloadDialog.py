@@ -468,6 +468,8 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
         if 0 <= index < len(self.__driver_ctxs):
             driver_info = self.__driver_ctxs[index]
             driver_info.driver_status = WebDriverStatus.INSTALLED
+            current_text = self.DriverComboBox.itemText(index)
+            self.DriverComboBox.setItemText(index, current_text + " - 已安装")
             self.updateDriverInfoDisplay(driver_info)
             self.updateProgressBarStates(driver_info)
             self.updateButtonStates(driver_info)
