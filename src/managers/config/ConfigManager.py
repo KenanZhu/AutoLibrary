@@ -59,6 +59,11 @@ class ConfigTemplate:
                         "theme": "system",
                         "style": "Fusion",
                         "custom_theme": ""
+                    },
+                    "bulletin": {
+                        "auto_fetch": False,
+                        "server_url": "https://api.autolibrary.kenanzhu.com",
+                        "sync_interval": 10
                     }
                 }
             case ConfigType.BULLETIN:
@@ -105,7 +110,7 @@ class ConfigManager:
                 config_data = JSONReader(config_path).data()
                 self.__config_data[config_type.value] = config_data
                 return
-            except:
+            except Exception:
                 pass
         self.__config_data[config_type.value] = ConfigTemplate(config_type).template()
         JSONWriter(config_path, self.__config_data[config_type.value])

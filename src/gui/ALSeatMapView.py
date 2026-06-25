@@ -85,11 +85,9 @@ class ALSeatMapView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.viewport().installEventFilter(self)
-
         self.SeatsContainerWidget = QWidget()
         self.SeatsContainerLayout = QGridLayout(self.SeatsContainerWidget)
         self.setupSeatMap()
-
         self.ContainerProxy = self.SeatMapGraphicsScene.addWidget(self.SeatsContainerWidget)
         self.ContainerProxy.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
 
