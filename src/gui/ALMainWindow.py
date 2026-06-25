@@ -62,10 +62,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         QMainWindow.__init__(self)
         self.__timer_task_queue = queue.Queue()
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
-        self.__alTimerTaskManageWidget = None
-        self.__alConfigWidget = None
-        self.__alSettingsWidget = None
-        self.__alBulletinDialog = None
+        self.__ALTimerTaskManageWidget = None
+        self.__ALConfigWidget = None
+        self.__ALSettingsWidget = None
+        self.__ALBulletinDialog = None
         self.__bulletin_poller = ALBulletinPoller(self)
         self.__auto_lib_thread = None
         self.__current_timer_task_thread = None
@@ -99,23 +99,23 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         # initialize timer task widget, but not show it
         try:
-            self.__alTimerTaskManageWidget = ALTimerTaskManageWidget(self)
+            self.__ALTimerTaskManageWidget = ALTimerTaskManageWidget(self)
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "错误 - AutoLibrary",
                 f"初始化定时任务功能失败: \n{e}"
             )
-            self.__alTimerTaskManageWidget = None
+            self.__ALTimerTaskManageWidget = None
             self.TimerTaskManageWidgetButton.setEnabled(False)
             self.TimerTaskManageWidgetButton.setToolTip("定时任务功能初始化失败, 请检查配置文件。")
             return
-        self.timerTaskIsRunning.connect(self.__alTimerTaskManageWidget.onTimerTaskIsRunning)
-        self.timerTaskIsExecuted.connect(self.__alTimerTaskManageWidget.onTimerTaskIsExecuted)
-        self.timerTaskIsError.connect(self.__alTimerTaskManageWidget.onTimerTaskIsError)
-        self.__alTimerTaskManageWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
-        self.__alTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
-        self.__alTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
+        self.timerTaskIsRunning.connect(self.__ALTimerTaskManageWidget.onTimerTaskIsRunning)
+        self.timerTaskIsExecuted.connect(self.__ALTimerTaskManageWidget.onTimerTaskIsExecuted)
+        self.timerTaskIsError.connect(self.__ALTimerTaskManageWidget.onTimerTaskIsError)
+        self.__ALTimerTaskManageWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
+        self.__ALTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
+        self.__ALTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
     def onAboutActionTriggered(
         self
@@ -128,8 +128,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        Url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
-        QDesktopServices.openUrl(Url)
+        url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
+        QDesktopServices.openUrl(url)
 
     def setupTray(
         self
@@ -148,7 +148,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayMenu.addSeparator()
         self.TrayMenu.addAction("退出", self.close)
         self.TrayIcon.setContextMenu(self.TrayMenu)
-
         self.TrayIcon.activated.connect(self.onTrayIconActivated)
         self.TrayIcon.messageClicked.connect(self.onBulletinActionTriggered)
         self.TrayIcon.show()
@@ -183,7 +182,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.StopButton.clicked.connect(self.onStopButtonClicked)
         self.SendButton.clicked.connect(self.onSendButtonClicked)
         self.MessageEdit.returnPressed.connect(self.onSendButtonClicked)
-
         self.__bulletin_poller.newBulletinsDetected.connect(
             self._onBulletinPollerNewBulletins
         )
@@ -204,17 +202,17 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__is_running_timer_task:
             self.__current_timer_task_thread.wait(2000)
             self.__current_timer_task_thread.deleteLater()
-        if self.__alTimerTaskManageWidget:
-            self.__alTimerTaskManageWidget.close()
-            self.__alTimerTaskManageWidget.deleteLater()
-        if self.__alConfigWidget:
-            self.__alConfigWidget.close()
+        if self.__ALTimerTaskManageWidget:
+            self.__ALTimerTaskManageWidget.close()
+            self.__ALTimerTaskManageWidget.deleteLater()
+        if self.__ALConfigWidget:
+            self.__ALConfigWidget.close()
             # the config widget is already deleted in the 'self.onConfigWidgetClosed'
-        if self.__alSettingsWidget:
-            self.__alSettingsWidget.close()
+        if self.__ALSettingsWidget:
+            self.__ALSettingsWidget.close()
             # the settings widget is already deleted in the 'self.onSettingsWidgetClosed'
-        if self.__alBulletinDialog:
-            self.__alBulletinDialog.close()
+        if self.__ALBulletinDialog:
+            self.__ALBulletinDialog.close()
             # the bulletin dialog is already deleted in the 'self.onBulletinDialogClosed'
         if self.__bulletin_poller:
             self.__bulletin_poller.stop()
@@ -322,10 +320,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alConfigWidget:
-            self.__alConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
-            self.__alConfigWidget.deleteLater()
-            self.__alConfigWidget = None
+        if self.__ALConfigWidget:
+            self.__ALConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
+            self.__ALConfigWidget.deleteLater()
+            self.__ALConfigWidget = None
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
         self.setControlButtons(True, None, None)
         self._showLog("配置窗口已关闭,配置文件路径已更新")
@@ -335,10 +333,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alSettingsWidget:
-            self.__alSettingsWidget.settingsWidgetIsClosed.disconnect(self.onSettingsWidgetClosed)
-            self.__alSettingsWidget.deleteLater()
-            self.__alSettingsWidget = None
+        if self.__ALSettingsWidget:
+            self.__ALSettingsWidget.settingsWidgetIsClosed.disconnect(self.onSettingsWidgetClosed)
+            self.__ALSettingsWidget.deleteLater()
+            self.__ALSettingsWidget = None
         self.SettingsAction.setEnabled(True)
 
     @Slot()
@@ -347,12 +345,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.__bulletin_poller.setDialogOpen(True)
-        if self.__alBulletinDialog is None:
-            self.__alBulletinDialog = ALBulletinDialog(self)
-            self.__alBulletinDialog.finished.connect(self.onBulletinDialogClosed)
-        self.__alBulletinDialog.show()
-        self.__alBulletinDialog.raise_()
-        self.__alBulletinDialog.activateWindow()
+        if self.__ALBulletinDialog is None:
+            self.__ALBulletinDialog = ALBulletinDialog(self)
+            self.__ALBulletinDialog.finished.connect(self.onBulletinDialogClosed)
+        self.__ALBulletinDialog.show()
+        self.__ALBulletinDialog.raise_()
+        self.__ALBulletinDialog.activateWindow()
         self._showLog("打开公告栏窗口")
 
     @Slot()
@@ -360,10 +358,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alBulletinDialog:
-            self.__alBulletinDialog.finished.disconnect(self.onBulletinDialogClosed)
-            self.__alBulletinDialog.deleteLater()
-            self.__alBulletinDialog = None
+        if self.__ALBulletinDialog:
+            self.__ALBulletinDialog.finished.disconnect(self.onBulletinDialogClosed)
+            self.__ALBulletinDialog.deleteLater()
+            self.__ALBulletinDialog = None
         self.__bulletin_poller.setDialogOpen(False)
 
     @Slot(int)
@@ -386,12 +384,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alSettingsWidget is None:
-            self.__alSettingsWidget = ALSettingsWidget(self)
-            self.__alSettingsWidget.settingsWidgetIsClosed.connect(self.onSettingsWidgetClosed)
-        self.__alSettingsWidget.show()
-        self.__alSettingsWidget.raise_()
-        self.__alSettingsWidget.activateWindow()
+        if self.__ALSettingsWidget is None:
+            self.__ALSettingsWidget = ALSettingsWidget(self)
+            self.__ALSettingsWidget.settingsWidgetIsClosed.connect(self.onSettingsWidgetClosed)
+        self.__ALSettingsWidget.show()
+        self.__ALSettingsWidget.raise_()
+        self.__ALSettingsWidget.activateWindow()
         self.SettingsAction.setEnabled(False)
         self._showLog("打开全局设置窗口")
 
@@ -437,9 +435,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.__alTimerTaskManageWidget.show()
-        self.__alTimerTaskManageWidget.raise_()
-        self.__alTimerTaskManageWidget.activateWindow()
+        self.__ALTimerTaskManageWidget.show()
+        self.__ALTimerTaskManageWidget.raise_()
+        self.__ALTimerTaskManageWidget.activateWindow()
         self.TimerTaskManageWidgetButton.setEnabled(False)
         self._showLog("打开定时任务管理窗口")
 
@@ -448,12 +446,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alConfigWidget is None:
-            self.__alConfigWidget = ALConfigWidget(self)
-            self.__alConfigWidget.configWidgetIsClosed.connect(self.onConfigWidgetClosed)
-        self.__alConfigWidget.show()
-        self.__alConfigWidget.raise_()
-        self.__alConfigWidget.activateWindow()
+        if self.__ALConfigWidget is None:
+            self.__ALConfigWidget = ALConfigWidget(self)
+            self.__ALConfigWidget.configWidgetIsClosed.connect(self.onConfigWidgetClosed)
+        self.__ALConfigWidget.show()
+        self.__ALConfigWidget.raise_()
+        self.__ALConfigWidget.activateWindow()
         self.ConfigButton.setEnabled(False)
         self._showLog("打开配置窗口")
 

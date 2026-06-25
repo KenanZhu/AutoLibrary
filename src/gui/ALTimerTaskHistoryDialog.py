@@ -108,24 +108,24 @@ class ALTimerTaskHistoryDialog(QDialog):
         execute_time = record.get("execute_time", "")
         result = record.get("result", ALTimerTaskStatus.UNKNOWN)
         duration = record.get("duration", 0)
-        ExecuteTimeItem = QTableWidgetItem(execute_time)
-        ExecuteTimeItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.HistoryTableWidget.setItem(row, 0, ExecuteTimeItem)
-        ResultItem = QTableWidgetItem(result.value)
-        ResultItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        execute_time_item = QTableWidgetItem(execute_time)
+        execute_time_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.HistoryTableWidget.setItem(row, 0, execute_time_item)
+        result_item = QTableWidgetItem(result.value)
+        result_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         match result:
             case ALTimerTaskStatus.EXECUTED:
-                ResultItem.setForeground(Qt.GlobalColor.green)
+                result_item.setForeground(Qt.GlobalColor.green)
             case ALTimerTaskStatus.ERROR:
-                ResultItem.setForeground(Qt.GlobalColor.red)
+                result_item.setForeground(Qt.GlobalColor.red)
             case ALTimerTaskStatus.OUTDATED:
-                ResultItem.setForeground(Qt.GlobalColor.red)
+                result_item.setForeground(Qt.GlobalColor.red)
             case _:
-                ResultItem.setForeground(Qt.GlobalColor.black)
-        self.HistoryTableWidget.setItem(row, 1, ResultItem)
-        DurationItem = QTableWidgetItem(f"{duration:.2f}")
-        DurationItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.HistoryTableWidget.setItem(row, 2, DurationItem)
+                result_item.setForeground(Qt.GlobalColor.black)
+        self.HistoryTableWidget.setItem(row, 1, result_item)
+        duration_item = QTableWidgetItem(f"{duration:.2f}")
+        duration_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.HistoryTableWidget.setItem(row, 2, duration_item)
         self.HistoryTableWidget.setRowHeight(row, 25)
 
     @Slot()

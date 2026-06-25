@@ -140,7 +140,6 @@ class ALWebDriverDownloadDialog(CenterOnParentMixin, QDialog):
         """
 
         super().__init__(parent)
-
         self.__driver_dir = driver_dir
         self.__driver_manager: Optional[WebDriverManager] = None
         self.__confirmed = False

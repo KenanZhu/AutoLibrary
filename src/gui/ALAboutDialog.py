@@ -55,9 +55,9 @@ class ALAboutDialog(QDialog, Ui_ALAboutDialog):
         AboutBrowser.setOpenExternalLinks(True)
         AboutBrowser.setLineWrapMode(QTextBrowser.LineWrapMode.NoWrap)
         AboutBrowser.setTextInteractionFlags(Qt.TextBrowserInteraction)
-        BrowserFont = AboutBrowser.font()
-        BrowserFont.setFamilies(["Courier New", "Consolas", "Menlo", "DejaVu Sans Mono", "monospace"])
-        AboutBrowser.setFont(BrowserFont)
+        browser_font = AboutBrowser.font()
+        browser_font.setFamilies(["Courier New", "Consolas", "Menlo", "DejaVu Sans Mono", "monospace"])
+        AboutBrowser.setFont(browser_font)
         self.TabWidget.addTab(AboutBrowser, "关于")
         LicenseBrowser = QTextBrowser()
         LicenseBrowser.setHtml(self.generateLicenseText())
@@ -135,7 +135,6 @@ THE SOFTWARE.</p>"""
         system = platform.system()
         version = platform.version()
         architecture = platform.architecture()[0]
-
         if system == "Windows":
             try:
                 version = platform.win32_ver()[1]
@@ -152,7 +151,6 @@ THE SOFTWARE.</p>"""
                 version = f"{distro.name()} {distro.version()}"
             except ImportError:
                 pass
-
         return {
             'system': system,
             'version': version,

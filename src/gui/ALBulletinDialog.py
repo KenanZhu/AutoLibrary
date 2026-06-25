@@ -103,9 +103,9 @@ class ALBulletinItemWidget(QWidget):
         self.ItemWidgetLayout.setContentsMargins(10, 5, 10, 5)
         self.BulletinTitleLayout = QHBoxLayout()
         self.BulletinTitleLabel = QLabel(self.__bulletin.get("title", "无标题"))
-        titleFont = QFont()
-        titleFont.setBold(True)
-        self.BulletinTitleLabel.setFont(titleFont)
+        title_font = QFont()
+        title_font.setBold(True)
+        self.BulletinTitleLabel.setFont(title_font)
         self.BulletinTitleLayout.addWidget(self.BulletinTitleLabel)
         if self.__bulletin.get("isNew", False):
             self.NewIndicatorLabel = QLabel("新 !")
@@ -184,11 +184,10 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         self.SyncLayout.replaceWidget(
             self.SyncStatusPlaceholder, self.ALSyncStatusLabel
         )
-
-        titleFont = QFont()
-        titleFont.setBold(True)
-        titleFont.setPointSize(15)
-        self.BulletinTitleLabel.setFont(titleFont)
+        title_font = QFont()
+        title_font.setBold(True)
+        title_font.setPointSize(15)
+        self.BulletinTitleLabel.setFont(title_font)
         self.BulletinDateLabel.setStyleSheet("color: #969696;")
         self.BulletinAuthorLabel.setStyleSheet("color: #969696;")
         self.BulletinIsEditedLabel.setStyleSheet("color: #FF9800;")
@@ -322,7 +321,6 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         worker.wait(2000)
         worker.deleteLater()
         self.__fetch_worker = None
-
         bulletins = data.get("bulletins", [])
         delete_ids = data.get("delete_ids", [])
         merged = self.__bulletin_mgr.updateAndMergeBulletins(bulletins, delete_ids)
@@ -355,7 +353,6 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         worker.wait(2000)
         worker.deleteLater()
         self.__fetch_worker = None
-
         self.SyncButton.setEnabled(True)
         self.SyncButton.setText("重试")
         self.ALSyncStatusLabel.status = ALStatusLabel.Status.FAILURE

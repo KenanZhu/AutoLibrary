@@ -35,7 +35,7 @@ class ALAutoScriptOrchDialog(QDialog):
 
         super().__init__(parent)
         self._blocks = []
-        self._varMgr = VariableManager(self)
+        self._var_mgr = VariableManager(self)
 
         self.setupUi()
         self.connectSignals()
@@ -91,7 +91,7 @@ class ALAutoScriptOrchDialog(QDialog):
     ):
 
         Block = ConditionalBlock(
-            len(self._blocks), self._varMgr, parent=self
+            len(self._blocks), self._var_mgr, parent=self
         )
         Block.DeleteBlockBtn.clicked.connect(lambda: self.removeBlock(Block))
         Block.TypeCombo.currentIndexChanged.connect(self.updateBlockTypeRestrictions)

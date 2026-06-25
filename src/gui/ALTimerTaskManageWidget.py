@@ -81,12 +81,12 @@ class ALTimerTaskItemWidget(QWidget):
         self.TaskInfoLayout = QVBoxLayout()
         self.TaskInfoLayout.setSpacing(5)
         TaskNameLabel = QLabel(self.__timer_task["name"])
-        TaskNameLabelFont = TaskNameLabel.font()
-        TaskNameLabelFont.setBold(True)
-        TaskNameLabel.setFont(TaskNameLabelFont)
+        task_name_label_font = TaskNameLabel.font()
+        task_name_label_font.setBold(True)
+        TaskNameLabel.setFont(task_name_label_font)
         TaskNameLabel.setFixedHeight(25)
         self.TaskInfoLayout.addWidget(TaskNameLabel)
-        ExecuteTimeStr = self.__timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
+        execute_time_str = self.__timer_task["execute_time"].strftime("%Y-%m-%d %H:%M:%S")
         if self.__timer_task.get("repeat", False):
             repeat_days = self.__timer_task.get("repeat_days", [])
             repeat_hour = self.__timer_task.get("repeat_hour", 0)
@@ -94,14 +94,14 @@ class ALTimerTaskItemWidget(QWidget):
             repeat_second = self.__timer_task.get("repeat_second", 0)
             if len(repeat_days) == 7:
                 time_str = f"{repeat_hour:02d}:{repeat_minute:02d}:{repeat_second:02d}"
-                ExecuteTimeLabel = QLabel(f"下次执行时间: {ExecuteTimeStr} (每日 {time_str})")
+                ExecuteTimeLabel = QLabel(f"下次执行时间: {execute_time_str} (每日 {time_str})")
             else:
                 day_names = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
                 selected_days = [day_names[d] for d in repeat_days]
                 time_str = f"{repeat_hour:02d}:{repeat_minute:02d}:{repeat_second:02d}"
-                ExecuteTimeLabel = QLabel(f"下次执行时间: {ExecuteTimeStr} (每{','.join(selected_days)} {time_str})")
+                ExecuteTimeLabel = QLabel(f"下次执行时间: {execute_time_str} (每{','.join(selected_days)} {time_str})")
         else:
-            ExecuteTimeLabel = QLabel(f"执行时间: {ExecuteTimeStr}")
+            ExecuteTimeLabel = QLabel(f"执行时间: {execute_time_str}")
         ExecuteTimeLabel.setStyleSheet("color: #969696;")
         ExecuteTimeLabel.setFixedHeight(20)
         self.TaskInfoLayout.addWidget(ExecuteTimeLabel)

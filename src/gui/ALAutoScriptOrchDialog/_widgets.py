@@ -42,18 +42,18 @@ class ConditionRowFrame(QFrame):
 
     def __init__(
         self,
-        varMgr,
-        parentBlockIndex: int = 0,
-        isFirst: bool = False,
+        var_mgr,
+        parent_block_index: int = 0,
+        is_first: bool = False,
         parent = None
     ):
 
         super().__init__(parent)
-        self._varMgr = varMgr
-        self._blockIndex = parentBlockIndex
-        self._isFirst = isFirst
-        self._isBoolMode = False
-        self._rawRhsExpr = ""
+        self._var_mgr = var_mgr
+        self._block_index = parent_block_index
+        self._is_first = is_first
+        self._is_bool_mode = False
+        self._raw_rhs_expr = ""
 
         self.setupUi()
         self.connectSignals()
@@ -69,7 +69,7 @@ class ConditionRowFrame(QFrame):
         Layout = QHBoxLayout(self)
         Layout.setContentsMargins(2, 2, 2, 2)
         Layout.setSpacing(4)
-        if self._isFirst:
+        if self._is_first:
             self.LogicCombo = None
         else:
             self.LogicCombo = makeComboWidget(LOGIC_OPTIONS, min_width=110, parent=self)
@@ -82,11 +82,11 @@ class ConditionRowFrame(QFrame):
         Layout.addWidget(self.LeftVarCombo)
         self.OpCombo = makeComboWidget(COMPARE_OPTIONS, min_width=80, parent=self)
         Layout.addWidget(self.OpCombo)
-        self._CompTypeCombo = makeComboWidget([
+        self.CompTypeCombo = makeComboWidget([
             ("特定值", "literal"),
             ("变量", "variable"),
         ], min_width=70, parent=self)
-        Layout.addWidget(self._CompTypeCombo)
+        Layout.addWidget(self.CompTypeCombo)
         self.RhsStack = QStackedWidget(self)
         self.RhsStack.setFixedHeight(25)
         self.initLiteralStack()
@@ -94,7 +94,7 @@ class ConditionRowFrame(QFrame):
         self.RhsStack.addWidget(self.RhsVarCombo)
         self.RhsStack.setCurrentIndex(0)
         Layout.addWidget(self.RhsStack)
-        if not self._isFirst:
+        if not self._is_first:
             self.DeleteBtn = QPushButton("×", self)
             self.DeleteBtn.setFixedSize(25, 25)
             self.DeleteBtn.setStyleSheet("color: red; font-weight: bold;")
@@ -108,21 +108,21 @@ class ConditionRowFrame(QFrame):
         self
     ):
 
-        wasBool = self._isBoolMode
-        boolName = None
-        if wasBool:
+        was_bool = self._is_bool_mode
+        bool_name = None
+        if was_bool:
             data = self.LeftVarCombo.currentData()
             if data:
-                boolName = data[0]
-        self._varMgr.populateCombo(self.LeftVarCombo)
+                bool_name = data[0]
+        self._var_mgr.populateCombo(self.LeftVarCombo)
         # Append boolean literal sentinels at the end
         self.LeftVarCombo.insertSeparator(self.LeftVarCombo.count())
         self.LeftVarCombo.addItem("true", ("true", "Boolean"))
         self.LeftVarCombo.addItem("false", ("false", "Boolean"))
-        if wasBool and boolName:
+        if was_bool and bool_name:
             for ci in range(self.LeftVarCombo.count()):
                 d = self.LeftVarCombo.itemData(ci)
-                if d and d[0] == boolName:
+                if d and d[0] == bool_name:
                     self.LeftVarCombo.setCurrentIndex(ci)
                     break
 
@@ -130,7 +130,7 @@ class ConditionRowFrame(QFrame):
         self
     ):
 
-        self._varMgr.populateCombo(self.RhsVarCombo)
+        self._var_mgr.populateCombo(self.RhsVarCombo)
 
     def initLiteralStack(
         self
@@ -138,12 +138,12 @@ class ConditionRowFrame(QFrame):
 
         self.LiteralStack = QStackedWidget(self)
         self.LiteralStack.setFixedHeight(25)
-        self._literalWidgets = {}
+        self.literal_widgets = {}
         for vt in getTypeOrder():
             W = makeValueWidget(vt, self.LiteralStack)
-            self._literalWidgets[vt] = W
+            self.literal_widgets[vt] = W
             self.LiteralStack.addWidget(W)
-        self.LiteralStack.setCurrentWidget(self._literalWidgets.get("String"))
+        self.LiteralStack.setCurrentWidget(self.literal_widgets.get("String"))
         self.RhsStack.addWidget(self.LiteralStack)
 
     def connectSignals(
@@ -151,7 +151,7 @@ class ConditionRowFrame(QFrame):
     ):
 
         self.LeftVarCombo.currentIndexChanged.connect(self.onLeftVarChanged)
-        self._CompTypeCombo.currentIndexChanged.connect(self.onCompTypeChanged)
+        self.CompTypeCombo.currentIndexChanged.connect(self.onCompTypeChanged)
 
     def getLogic(
         self
@@ -164,16 +164,16 @@ class ConditionRowFrame(QFrame):
         vartype: str
     ):
 
-        if vartype not in self._literalWidgets:
+        if vartype not in self.literal_widgets:
             vartype = "String"
-        self.LiteralStack.setCurrentWidget(self._literalWidgets[vartype])
+        self.LiteralStack.setCurrentWidget(self.literal_widgets[vartype])
 
     def toScript(
         self
     ) -> str:
 
         data = self.LeftVarCombo.currentData()
-        if self._isBoolMode and data:
+        if self._is_bool_mode and data:
             return data[0]
         if not data:
             return ""
@@ -183,28 +183,28 @@ class ConditionRowFrame(QFrame):
             name = "datenow()"
         elif name == "CURRENT_TIME":
             name = "timenow()"
-        opSym = self.OpCombo.currentData()
-        if self._rawRhsExpr:
-            return f"{name} {opSym} {self._rawRhsExpr}"
-        isVarRef = (self._CompTypeCombo.currentData() == "variable")
-        if isVarRef:
+        op_sym = self.OpCombo.currentData()
+        if self._raw_rhs_expr:
+            return f"{name} {op_sym} {self._raw_rhs_expr}"
+        is_var_ref = (self.CompTypeCombo.currentData() == "variable")
+        if is_var_ref:
             rd = self.RhsVarCombo.currentData()
             if rd:
-                rhsName = rd[0]
-                if rhsName == "CURRENT_DATE":
-                    rhsName = "datenow()"
-                elif rhsName == "CURRENT_TIME":
-                    rhsName = "timenow()"
-                return f"{name} {opSym} {rhsName}"
-            rhsText = self.RhsVarCombo.currentText().strip()
-            if rhsText:
-                return f"{name} {opSym} {rhsText}"
+                rhs_name = rd[0]
+                if rhs_name == "CURRENT_DATE":
+                    rhs_name = "datenow()"
+                elif rhs_name == "CURRENT_TIME":
+                    rhs_name = "timenow()"
+                return f"{name} {op_sym} {rhs_name}"
+            rhs_text = self.RhsVarCombo.currentText().strip()
+            if rhs_text:
+                return f"{name} {op_sym} {rhs_text}"
             return ""
-        w = self._literalWidgets.get(vartype)
+        w = self.literal_widgets.get(vartype)
         if w:
-            rawVal = getValueFromWidget(w)
-            encoded = encodeValueStr(rawVal, vartype)
-            return f"{name} {opSym} {encoded}"
+            raw_val = getValueFromWidget(w)
+            encoded = encodeValueStr(raw_val, vartype)
+            return f"{name} {op_sym} {encoded}"
         return ""
 
     def refreshVarCombos(
@@ -220,19 +220,19 @@ class ConditionRowFrame(QFrame):
         idx
     ):
 
-        self._rawRhsExpr = ""
+        self._raw_rhs_expr = ""
         if idx < 0:
             return
         data = self.LeftVarCombo.itemData(idx)
         if not data:
             return
         name, vartype = data
-        isBool = name in ("true", "false")
-        self._isBoolMode = isBool
-        self.OpCombo.setVisible(not isBool)
-        self._CompTypeCombo.setVisible(not isBool)
-        self.RhsStack.setVisible(not isBool)
-        if not isBool:
+        is_bool = name in ("true", "false")
+        self._is_bool_mode = is_bool
+        self.OpCombo.setVisible(not is_bool)
+        self.CompTypeCombo.setVisible(not is_bool)
+        self.RhsStack.setVisible(not is_bool)
+        if not is_bool:
             self.updateRHSLiteralWidget(vartype)
 
     @Slot(int)
@@ -241,8 +241,8 @@ class ConditionRowFrame(QFrame):
         idx
     ):
 
-        self._rawRhsExpr = ""
-        isVar = (self._CompTypeCombo.currentData() == "variable")
+        self._raw_rhs_expr = ""
+        isVar = (self.CompTypeCombo.currentData() == "variable")
         self.RhsStack.setCurrentIndex(1 if isVar else 0)
         if isVar:
             self.populateRHSVarCombo()
@@ -252,15 +252,15 @@ class ActionStepFrame(QFrame):
 
     def __init__(
         self,
-        varMgr,
-        parentBlockIndex: int = 0,
+        var_mgr,
+        parent_block_index: int = 0,
         parent = None
     ):
 
         super().__init__(parent)
-        self._varMgr = varMgr
-        self._blockIndex = parentBlockIndex
-        self._currentTargetType = "String"
+        self._var_mgr = var_mgr
+        self._block_index = parent_block_index
+        self._current_target_type = "String"
 
         self.setupUi()
         self.connectSignals()
@@ -312,7 +312,7 @@ class ActionStepFrame(QFrame):
         for p in getPresetVars():
             if p["name"] in ("CURRENT_TIME", "CURRENT_DATE"):
                 continue
-            info = self._varMgr.getInfoByName(p["name"])
+            info = self._var_mgr.getInfoByName(p["name"])
             if info:
                 self.TargetCombo.addItem(
                     info["display"],
@@ -324,18 +324,18 @@ class ActionStepFrame(QFrame):
         self
     ):
 
-        self._literalWidgets = {}
-        self._offsetWidgets = {}
+        self.literal_widgets = {}
+        self.offset_widgets = {}
         for vt in getTypeOrder():
-            self._literalWidgets[vt] = makeValueWidget(vt, self.ValueStack)
-            self.ValueStack.addWidget(self._literalWidgets[vt])
+            self.literal_widgets[vt] = makeValueWidget(vt, self.ValueStack)
+            self.ValueStack.addWidget(self.literal_widgets[vt])
             if getArithType(vt):
-                self._offsetWidgets[vt] = makeOffsetWidget(vt, self.ValueStack)
-                self.ValueStack.addWidget(self._offsetWidgets[vt])
+                self.offset_widgets[vt] = makeOffsetWidget(vt, self.ValueStack)
+                self.ValueStack.addWidget(self.offset_widgets[vt])
             else:
                 Lbl = QLabel("(不支持该操作)", self.ValueStack)
                 Lbl.setFixedHeight(25)
-                self._offsetWidgets[vt] = Lbl
+                self.offset_widgets[vt] = Lbl
                 self.ValueStack.addWidget(Lbl)
 
     def connectSignals(
@@ -358,14 +358,14 @@ class ActionStepFrame(QFrame):
     ):
 
         op = self.OpTypeCombo.currentData()
-        isArith = (op in ("add", "sub"))
-        actualType = self._currentTargetType
-        if isArith and actualType in self._offsetWidgets:
-            self.ValueStack.setCurrentWidget(self._offsetWidgets[actualType])
-        elif actualType in self._literalWidgets:
-            self.ValueStack.setCurrentWidget(self._literalWidgets[actualType])
+        is_arith = (op in ("add", "sub"))
+        actual_type = self._current_target_type
+        if is_arith and actual_type in self.offset_widgets:
+            self.ValueStack.setCurrentWidget(self.offset_widgets[actual_type])
+        elif actual_type in self.literal_widgets:
+            self.ValueStack.setCurrentWidget(self.literal_widgets[actual_type])
         else:
-            self.ValueStack.setCurrentWidget(self._literalWidgets.get("String"))
+            self.ValueStack.setCurrentWidget(self.literal_widgets.get("String"))
 
     def toScript(
         self
@@ -380,10 +380,10 @@ class ActionStepFrame(QFrame):
             return "    -- pass"
         if not target:
             return ""
-        rawVal = self.getValueRaw()
-        vartype = self._currentTargetType
+        raw_val = self.getValueRaw()
+        vartype = self._current_target_type
         if op == "set":
-            encoded = encodeValueStr(rawVal, vartype)
+            encoded = encodeValueStr(raw_val, vartype)
             return f"    {target} = {encoded}"
         elif op == "add":
             if vartype == "Date" and hasattr(self.ValueStack.currentWidget(), "getOffsetDays"):
@@ -392,7 +392,7 @@ class ActionStepFrame(QFrame):
             if vartype == "Time" and hasattr(self.ValueStack.currentWidget(), "getOffsetHours"):
                 hours = self.ValueStack.currentWidget().getOffsetHours()
                 return f"    {target} = timeadd({target}, {hours})"
-            return f"    {target} = {target} + {rawVal}"
+            return f"    {target} = {target} + {raw_val}"
         elif op == "sub":
             if vartype == "Date" and hasattr(self.ValueStack.currentWidget(), "getOffsetDays"):
                 days = self.ValueStack.currentWidget().getOffsetDays()
@@ -400,7 +400,7 @@ class ActionStepFrame(QFrame):
             if vartype == "Time" and hasattr(self.ValueStack.currentWidget(), "getOffsetHours"):
                 hours = self.ValueStack.currentWidget().getOffsetHours()
                 return f"    {target} = timeadd({target}, -{hours})"
-            return f"    {target} = {target} - {rawVal}"
+            return f"    {target} = {target} - {raw_val}"
         return ""
 
     def getValueRaw(
@@ -419,15 +419,15 @@ class ActionStepFrame(QFrame):
         self
     ):
 
-        currentData = self.TargetCombo.currentData()
+        current_data = self.TargetCombo.currentData()
         self.populateTargetCombo()
-        if currentData:
+        if current_data:
             for i in range(self.TargetCombo.count()):
                 d = self.TargetCombo.itemData(i)
-                if d and d[0] == currentData[0]:
+                if d and d[0] == current_data[0]:
                     self.TargetCombo.setCurrentIndex(i)
                     break
-        self._varMgr.populateCombo(self.ExistingVarCombo)
+        self._var_mgr.populateCombo(self.ExistingVarCombo)
 
     @Slot(int)
     def onTargetChanged(
@@ -441,7 +441,7 @@ class ActionStepFrame(QFrame):
         if not data:
             return
         _, vartype = data
-        self._currentTargetType = vartype
+        self._current_target_type = vartype
         self.updateValueWidget()
         self.onValueSrcChanged(self.ValueSrcCombo.currentIndex())
 
@@ -459,10 +459,10 @@ class ActionStepFrame(QFrame):
         idx
     ):
 
-        isVar = (self.ValueSrcCombo.currentData() == "variable")
-        self.ValueStack.setVisible(not isVar)
-        self.ExistingVarCombo.setVisible(isVar)
-        if isVar:
-            self._varMgr.populateCombo(self.ExistingVarCombo)
+        is_var = (self.ValueSrcCombo.currentData() == "variable")
+        self.ValueStack.setVisible(not is_var)
+        self.ExistingVarCombo.setVisible(is_var)
+        if is_var:
+            self._var_mgr.populateCombo(self.ExistingVarCombo)
         else:
             self.updateValueWidget()
