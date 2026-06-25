@@ -181,7 +181,7 @@ class WebDriverFileName:
                 raise ValueError(f"不受支持的 web driver 类型 : {self.driver_type}")
 
 
-class WebDriverURL:
+class WebDriverDownloadURL:
     """
         Web driver download URL
     """
@@ -242,7 +242,7 @@ class WebDriverDownloader:
         self.driver_type = driver_type
         self.arch = driver_arch
         self.version = driver_version
-        self.download_url = str(WebDriverURL(self.version, self.driver_type, self.arch))
+        self.download_url = str(WebDriverDownloadURL(self.version, self.driver_type, self.arch))
         self.download_dir = Path(download_dir)/self.driver_type.value/self.version/self.arch.value
         self.download_dir.mkdir(mode=0o0755, parents=True, exist_ok=True)
         self.download_path = self.download_dir/str(WebDriverFileName(self.version, self.driver_type, self.arch))
