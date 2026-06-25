@@ -497,7 +497,7 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         )
         self.BulletinTestStatusLabel.setStyleSheet("color: green;")
         self.BulletinTestButton.setEnabled(True)
-        QTimer.singleShot(3000, self.clearBulletinTestStatus)
+        QTimer.singleShot(3000, self, self.clearBulletinTestStatus)
 
     @Slot(str)
     def __onBulletinTestError(

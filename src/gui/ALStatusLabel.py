@@ -127,7 +127,6 @@ class ALStatusLabel(QLabel):
             case self.Status.WAITING:
                 Pen = Painter.pen()
                 Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
                 Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 Pen.setColor(QColor("#969696")) # grey
                 Painter.setPen(Pen)
@@ -156,7 +155,6 @@ class ALStatusLabel(QLabel):
                 # draw the success green circle
                 Pen = Painter.pen()
                 Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
                 Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 Pen.setColor(QColor("#4CAF50" if self.isDarkMode() else "#00AF50")) # green
                 Painter.setPen(Pen)
@@ -193,7 +191,6 @@ class ALStatusLabel(QLabel):
                 # draw the warning orange circle
                 Pen = Painter.pen()
                 Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
                 Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 Pen.setColor(QColor("#FF9800")) # orange
                 Painter.setPen(Pen)
@@ -223,7 +220,6 @@ class ALStatusLabel(QLabel):
                 # draw the failure red circle
                 Pen = Painter.pen()
                 Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
                 Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 Pen.setColor(QColor("#DC0000")) # red
                 Painter.setPen(Pen)

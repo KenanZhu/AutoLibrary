@@ -332,7 +332,7 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
         self.ALSyncStatusLabel.status = ALStatusLabel.Status.SUCCESS
         self.SyncStatusDetailLabel.setText("同步成功")
         self.SyncStatusDetailLabel.setStyleSheet("color: green;")
-        QTimer.singleShot(3000, self.clearSyncStatus)
+        QTimer.singleShot(3000, self, self.clearSyncStatus)
 
         self.setLastSyncTime(self.__bulletin_mgr.lastSyncTime())
         self.updateBulletinList(merged)
