@@ -164,7 +164,7 @@ class ALBulletinPoller(QObject):
             if str(b.get("id", "")) and str(b.get("id", "")) not in old_ids
         }
         new_ids -= delete_id_set
-        if new_ids:
+        if new_ids and not self.__dialog_open:
             self.newBulletinsDetected.emit(len(new_ids))
         if not self.__stopped:
             interval_ms = self.__mgr.syncInterval()*60*1000

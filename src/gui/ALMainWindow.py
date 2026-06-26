@@ -401,6 +401,13 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
+        if self.__ALTimerTaskManageWidget is None:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                "定时任务功能初始化失败, 请检查配置文件。"
+            )
+            return
         self.__ALTimerTaskManageWidget.show()
         self.__ALTimerTaskManageWidget.raise_()
         self.__ALTimerTaskManageWidget.activateWindow()

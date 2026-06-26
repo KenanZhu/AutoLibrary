@@ -135,4 +135,4 @@ class ALTimerTaskHistoryDialog(QDialog):
 
         self.__history.clear()
         self.HistoryTableWidget.setRowCount(0)
-        self.__task_data["repeat_history"] = self.__history
+        self.__task_data["repeat_history"] = self.__history # = []

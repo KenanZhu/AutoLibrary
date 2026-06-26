@@ -344,10 +344,9 @@ class ALBulletinDialog(QDialog, Ui_ALBulletinDialog):
             return
         bulletin = item.data(Qt.UserRole)
         if bulletin.get("isNew", False):
-            bulletin["isNew"] = False
+            self.__bulletin_mgr.markBulletinAsRead(bulletin["id"])
             widget = self.BulletinListWidget.itemWidget(item)
             if widget:
                 widget.markAsRead()
             item.setData(Qt.UserRole, bulletin)
-            self.__bulletin_mgr.markBulletinAsRead(bulletin["id"])
         self.showBulletin(bulletin)

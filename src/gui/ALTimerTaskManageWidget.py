@@ -515,6 +515,11 @@ class ALTimerTaskManageWidget(CenterOnParentMixin, QWidget, Ui_ALTimerTaskManage
         task: dict
     ):
 
+        # Here we use reference to task data, not copy.
+        # So any change of task data in history dialog will be
+        # reflected in the timer task list
+        # Thus we can emit timerTasksChanged signal to
+        # update config file
         Dialog = ALTimerTaskHistoryDialog(self, task)
         if Dialog.exec() == QDialog.DialogCode.Accepted:
             self.timerTasksChanged.emit()

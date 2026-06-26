@@ -7,6 +7,7 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
+import copy
 import os
 import threading
 
@@ -124,13 +125,13 @@ class ConfigManager:
         with self.__lock:
             config_data = self.__config_data[key.config_type.value]
             if key.key == "":
-                return config_data
+                return copy.deepcopy(config_data)
             keys = key.key.split('.')
             for k in keys[:-1]:
                 config_data = config_data.get(k, None)
                 if config_data is None:
                     return default
-            return config_data.get(keys[-1], default)
+            return copy.deepcopy(config_data.get(keys[-1], default))
 
     def set(
         self,
