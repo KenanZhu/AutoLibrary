@@ -138,5 +138,5 @@ class ALTimerTaskPoller(QObject):
         except (TypeError, RuntimeError):
             pass
         self.__worker.wait(500)
-        self.__worker.delete()
+        self.__worker.deleteLater()
         self.__worker = None
