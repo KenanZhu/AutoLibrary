@@ -322,5 +322,5 @@ class ALTimerTaskAddDialog(QDialog, Ui_ALTimerTaskAddDialog):
     ):
 
         QDesktopServices.openUrl(
-            QUrl("https://www.autolibrary.kenanzhu.com/manuals/autoscript")
+            QUrl("https://manuals.autolibrary.kenanzhu.com/zh/autoscript")
         )

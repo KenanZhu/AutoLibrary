@@ -122,7 +122,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
+        url = QUrl("https://manuals.autolibrary.kenanzhu.com")
         QDesktopServices.openUrl(url)
 
     def setupTray(
