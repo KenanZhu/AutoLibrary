@@ -41,6 +41,7 @@ from managers.theme.ThemeManager import(
     instance as themeInstance
 )
 
+from gui.ALBulletinWorker import ALBulletinFetchWorker
 from gui.ALWidgetMixin import CenterOnParentMixin
 from gui.resources.ui.Ui_ALSettingsWidget import Ui_ALSettingsWidget
 from interfaces.ConfigProvider import (
@@ -196,6 +197,7 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         self
     ):
 
+        # appearance settings
         theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.THEME, "system")
         style = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.STYLE, "Fusion")
         custom_theme = self.__cfg_mgr.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
@@ -218,7 +220,7 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
                 self.CustomThemeComboBox.setCurrentIndex(idx)
         self.updateCustomThemeInfo()
         self.updateCustomThemeStatus()
-
+        # bulletin settings
         bulletin_mgr = bulletinInstance()
         self.__original_bulletin_url = bulletin_mgr.serverUrl()
         self.__original_bulletin_auto_fetch = bulletin_mgr.autoFetch()
@@ -274,9 +276,16 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             elif need_theme == "dark":
                 self.DarkThemeRadio.setChecked(True)
 
-    def collectSettings(
+    def clearBulletinTestStatus(
         self
     ):
+
+        self.BulletinTestStatusLabel.setText("")
+        self.BulletinTestStatusLabel.setStyleSheet("")
+
+    def collectAppearanceSettings(
+        self
+    ) -> tuple[str, str, str]:
 
         if self.LightThemeRadio.isChecked():
             theme = "light"
@@ -290,41 +299,29 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             custom_theme = ""
         return theme, style, custom_theme
 
-    def clearBulletinTestStatus(
+    def collectBulletinSettings(
         self
-    ):
-
-        self.BulletinTestStatusLabel.setText("")
-        self.BulletinTestStatusLabel.setStyleSheet("")
-
-    def saveBulletinSettings(
-        self
-    ):
+    ) -> tuple[str, bool, int]:
 
         url = self.BulletinServerUrlEdit.text().strip()
         auto_fetch = self.BulletinAutoFetchCheck.isChecked()
         sync_interval = self.BulletinSyncIntervalSpin.value()
         if sync_interval < 1:
             sync_interval = 5
-        self.__cfg_mgr.set(CfgKey.GLOBAL.BULLETIN.SERVER_URL, url)
-        self.__cfg_mgr.set(CfgKey.GLOBAL.BULLETIN.AUTO_FETCH, auto_fetch)
-        self.__cfg_mgr.set(CfgKey.GLOBAL.BULLETIN.SYNC_INTERVAL, sync_interval)
-        self.__original_bulletin_url = url
-        self.__original_bulletin_auto_fetch = auto_fetch
-        self.__original_bulletin_sync_interval = sync_interval
+        return url, auto_fetch, sync_interval
 
-    def saveAndApply(
+    def saveAppearanceSettings(
         self
     ):
 
-        theme, style, custom_theme = self.collectSettings()
+        theme, style, custom_theme = self.collectAppearanceSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.STYLE, style)
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, custom_theme)
         setActiveStyle(style)
         if not _applyCustomTheme(custom_theme, theme):
             self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
         self.syncRadioFromNeedTheme(custom_theme)
-        theme, _, _ = self.collectSettings()
+        theme, _, _ = self.collectAppearanceSettings()
         self.__cfg_mgr.set(CfgKey.GLOBAL.APPEARANCE.THEME, theme)
         self.setNavigationIcons()
         self.updateCustomThemeStatus()
@@ -333,7 +330,24 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         self.__original_custom_theme = custom_theme if custom_theme else ""
         self.__original_style = getActiveStyle()
 
+    def saveBulletinSettings(
+        self
+    ):
+
+        url, auto_fetch, sync_interval = self.collectBulletinSettings()
+        self.__cfg_mgr.set(CfgKey.GLOBAL.BULLETIN.SERVER_URL, url)
+        self.__cfg_mgr.set(CfgKey.GLOBAL.BULLETIN.AUTO_FETCH, auto_fetch)
+        self.__cfg_mgr.set(CfgKey.GLOBAL.BULLETIN.SYNC_INTERVAL, sync_interval)
+        self.__original_bulletin_url = url
+        self.__original_bulletin_auto_fetch = auto_fetch
+        self.__original_bulletin_sync_interval = sync_interval
+
+    def saveSettings(
+        self
+    ):
+
         self.saveBulletinSettings()
+        self.saveAppearanceSettings()
 
     def maybeRestart(
         self
@@ -350,6 +364,34 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             _restartApp()
             return True
         return False
+
+    @Slot()
+    def onImportCustomThemeButtonClicked(
+        self
+    ):
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "导入主题 - AutoLibrary",
+            "",
+            "主题文件 (*.altheme *.qss);;所有文件 (*)"
+        )
+        if not file_path:
+            return
+        try:
+            file_id = themeInstance().importTheme(file_path)
+            self.populateCustomThemes()
+            idx = self.CustomThemeComboBox.findData(file_id)
+            if idx >= 0:
+                self.CustomThemeComboBox.setCurrentIndex(idx)
+            self.updateCustomThemeStatus()
+            self.updateCustomThemeInfo()
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "导入失败 - AutoLibrary",
+                f"无法导入主题文件：{e}"
+            )
 
     @Slot()
     def onRemoveCustomThemeButtonClicked(
@@ -386,34 +428,6 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
                 self,
                 "删除失败 - AutoLibrary",
                 f"无法删除主题：{e}"
-            )
-
-    @Slot()
-    def onImportCustomThemeButtonClicked(
-        self
-    ):
-
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "导入主题 - AutoLibrary",
-            "",
-            "主题文件 (*.altheme *.qss);;所有文件 (*)"
-        )
-        if not file_path:
-            return
-        try:
-            file_id = themeInstance().importTheme(file_path)
-            self.populateCustomThemes()
-            idx = self.CustomThemeComboBox.findData(file_id)
-            if idx >= 0:
-                self.CustomThemeComboBox.setCurrentIndex(idx)
-            self.updateCustomThemeStatus()
-            self.updateCustomThemeInfo()
-        except Exception as e:
-            QMessageBox.warning(
-                self,
-                "导入失败 - AutoLibrary",
-                f"无法导入主题文件：{e}"
             )
 
     @Slot()
@@ -464,30 +478,29 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         self.BulletinTestStatusLabel.setText("正在测试连接...")
         self.BulletinTestStatusLabel.setStyleSheet("")
         self.__bulletin_test_t0 = time.monotonic()
-        from gui.ALBulletinDialog import ALBulletinFetchWorker
         api_url = url.rstrip("/") + "/bulletins"
         self.__bulletin_test_worker = ALBulletinFetchWorker(
             self, api_url, {"date": "", "time": "", "range_hour": "1"}
         )
         self.__bulletin_test_worker.fetchWorkerIsFinished.connect(
-            self.__onBulletinTestFetched
+            self.onBulletinTestFetched
         )
         self.__bulletin_test_worker.fetchWorkerFinishedWithError.connect(
-            self.__onBulletinTestError
+            self.onBulletinTestError
         )
         self.__bulletin_test_worker.start()
 
     @Slot(dict)
-    def __onBulletinTestFetched(
+    def onBulletinTestFetched(
         self,
         data: dict
     ):
 
         self.__bulletin_test_worker.fetchWorkerIsFinished.disconnect(
-            self.__onBulletinTestFetched
+            self.onBulletinTestFetched
         )
         self.__bulletin_test_worker.fetchWorkerFinishedWithError.disconnect(
-            self.__onBulletinTestError
+            self.onBulletinTestError
         )
         self.__bulletin_test_worker.deleteLater()
         self.__bulletin_test_worker = None
@@ -500,16 +513,16 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         QTimer.singleShot(3000, self, self.clearBulletinTestStatus)
 
     @Slot(str)
-    def __onBulletinTestError(
+    def onBulletinTestError(
         self,
         error_message: str
     ):
 
         self.__bulletin_test_worker.fetchWorkerIsFinished.disconnect(
-            self.__onBulletinTestFetched
+            self.onBulletinTestFetched
         )
         self.__bulletin_test_worker.fetchWorkerFinishedWithError.disconnect(
-            self.__onBulletinTestError
+            self.onBulletinTestError
         )
         self.__bulletin_test_worker.deleteLater()
         self.__bulletin_test_worker = None
@@ -529,9 +542,9 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         self
     ):
 
-        _, style, _ = self.collectSettings()
+        _, style, _ = self.collectAppearanceSettings()
         style_changed = self.__original_style != style
-        self.saveAndApply()
+        self.saveSettings()
         if style_changed:
             self.maybeRestart()
 

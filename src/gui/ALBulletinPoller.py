@@ -16,7 +16,7 @@ from PySide6.QtCore import (
     Slot
 )
 
-from gui.ALBulletinDialog import ALBulletinFetchWorker
+from gui.ALBulletinWorker import ALBulletinFetchWorker
 from managers.bulletin.BulletinManager import instance as bulletinInstance
 
 
