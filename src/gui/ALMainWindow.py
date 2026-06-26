@@ -77,11 +77,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.connectSignals()
         self.startMsgPolling()
         self.startTimerTaskPolling()
-
         self.__bulletin_poller.start()
         if bulletinInstance().autoFetch():
             QTimer.singleShot(1000, self.__bulletin_poller.fetchNow)
-
         self._showLog("主窗口初始化完成")
 
     def modifyUi(
@@ -182,9 +180,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.StopButton.clicked.connect(self.onStopButtonClicked)
         self.SendButton.clicked.connect(self.onSendButtonClicked)
         self.MessageEdit.returnPressed.connect(self.onSendButtonClicked)
-        self.__bulletin_poller.newBulletinsDetected.connect(
-            self._onBulletinPollerNewBulletins
-        )
+        self.__bulletin_poller.newBulletinsDetected.connect(self.onBulletinPollerNewBulletins)
 
     def closeEvent(
         self,
@@ -365,12 +361,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__bulletin_poller.setDialogOpen(False)
 
     @Slot(int)
-    def _onBulletinPollerNewBulletins(
+    def onBulletinPollerNewBulletins(
         self,
         count: int
     ):
 
-        if not hasattr(self, 'TrayIcon'):
+        if not hasattr(self, "TrayIcon"):
             return
         self.TrayIcon.showMessage(
             "公告栏 - AutoLibrary",

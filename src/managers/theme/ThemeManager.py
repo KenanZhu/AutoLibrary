@@ -28,6 +28,8 @@ from utils.ThemeUtils import (
 )
 
 
+# we use Fusion as the default active style name
+#  because it's cross-platform.
 _active_style_name = "Fusion"
 
 
@@ -61,8 +63,10 @@ class ThemeManager:
     ):
 
         self.__themes_dir = os.path.abspath(themes_dir)
-        self.__lock = threading.Lock()
         self.__current_theme_name = ""
+        self.__lock = threading.Lock()
+
+        # directory must exist
         os.makedirs(self.__themes_dir, exist_ok=True)
 
     @staticmethod
@@ -143,18 +147,6 @@ class ThemeManager:
                 f"主题名称 '{theme_name}' (作者 '{author}') 已存在"
             )
         return alt_path
-
-    def themesDir(
-        self
-    ) -> str:
-        """
-            Get the themes directory path.
-
-            Returns:
-                str: The absolute path to the themes storage directory.
-        """
-
-        return self.__themes_dir
 
     def importTheme(
         self,
@@ -320,6 +312,18 @@ class ThemeManager:
             ThemeManager._colorSchemeFor(theme)
         )
         app.setStyle(QStyleFactory.create(_active_style_name))
+
+    def themesDir(
+        self
+    ) -> str:
+        """
+            Get the themes directory path.
+
+            Returns:
+                str: The absolute path to the themes storage directory.
+        """
+
+        return self.__themes_dir
 
 
 # ThemeManager singleton instance.

@@ -18,7 +18,7 @@ from interfaces.ConfigProvider import ConfigType, ConfigPath
 
 
 # This config manager class only responsible for global and other
-# unconfigurable config files.
+# config files. NOT include run and user config files.
 
 
 class ConfigTemplate:
@@ -87,8 +87,8 @@ class ConfigManager:
     ):
 
         self.__config_dir = os.path.abspath(config_dir)
-        self.__config_lock = threading.Lock()
         self.__config_data = {}
+        self.__lock = threading.Lock()
 
         self.initialize()
 
@@ -121,7 +121,7 @@ class ConfigManager:
         default: Optional[Any] = None
     ) -> Any:
 
-        with self.__config_lock:
+        with self.__lock:
             config_data = self.__config_data[key.config_type.value]
             if key.key == "":
                 return config_data
@@ -138,7 +138,7 @@ class ConfigManager:
         value: Any = None
     ):
 
-        with self.__config_lock:
+        with self.__lock:
             root_data = self.__config_data[key.config_type.value]
             if key.key == "":
                 self.__config_data[key.config_type.value] = value

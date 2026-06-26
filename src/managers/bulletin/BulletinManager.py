@@ -223,24 +223,24 @@ class BulletinManager:
         try:
             if self.isFirstSync():
                 start_date = now - timedelta(days=7)
-                range_hour = str(24 * 8)
+                range_hour = str(24*8)
             elif self.shouldFullSync():
                 with self.__lock:
                     bulletins = self.bulletins()
                 earliest = min(bulletins, key=self._parseBulletinDateTime)
                 start_date = self._parseBulletinDateTime(earliest)
                 diff = now - start_date
-                range_hour = str(int(diff.total_seconds() / 3600) + 1)
+                range_hour = str(int(diff.total_seconds()/3600) + 1)
             else:
                 with self.__lock:
                     bulletins = self.bulletins()
                 latest = max(bulletins, key=self._parseBulletinDateTime)
                 start_date = self._parseBulletinDateTime(latest)
                 diff = now - start_date
-                range_hour = str(int(diff.total_seconds() / 3600) + 1)
+                range_hour = str(int(diff.total_seconds()/3600) + 1)
         except (ValueError, TypeError, KeyError):
             start_date = now - timedelta(days=7)
-            range_hour = str(24 * 8)
+            range_hour = str(24*8)
 
         return {
             "date": start_date.strftime("%Y-%m-%d"),
@@ -256,9 +256,10 @@ class BulletinManager:
         """
             Merge incoming bulletins into the cache.
 
-            New bulletins are added with isNew=True. Existing bulletins
-            keep their current isNew state. Entries listed in delete_ids
-            are removed. Bulletins missing an "id" field are skipped.
+            - New bulletins are added with isNew=True.
+            - Existing bulletins keep their current isNew state.
+            - Entries listed in delete_ids are removed.
+            - Bulletins missing an "id" field are skipped.
 
             Args:
                 new_bulletins (list[dict]): Incoming bulletin list.
@@ -275,7 +276,6 @@ class BulletinManager:
                 bid = b.get("id")
                 if bid is not None:
                     bulletins_dict[str(bid)] = b
-
             for bulletin in new_bulletins:
                 bid = bulletin.get("id")
                 if bid is None:
@@ -290,10 +290,8 @@ class BulletinManager:
                     else bulletins_dict[bid].get("isNew", True)
                 )
                 bulletins_dict[bid] = bulletin
-
             for bid in delete_set:
                 bulletins_dict.pop(bid, None)
-
             result = list(bulletins_dict.values())
             result.sort(key=lambda x: str(x.get("id", "")))
             self.setBulletins(result)

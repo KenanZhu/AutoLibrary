@@ -99,17 +99,14 @@ class LogManager:
         self.__logger = logging.getLogger("AutoLibrary")
         self.__logger.setLevel(logging.DEBUG)
         self.__logger.handlers.clear()
-
         formatter = CallerInfoFormatter(
             '[%(asctime)s] - [%(name)s] - [%(levelname)s] - [%(filename)s:%(lineno)s] - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
-
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(formatter)
         self.__logger.addHandler(console_handler)
-
         all_log_file = os.path.join(self.__log_dir, "all.log")
         file_handler_all = TimedRotatingFileHandler(
             all_log_file,
@@ -122,7 +119,6 @@ class LogManager:
         file_handler_all.setLevel(logging.DEBUG)
         file_handler_all.setFormatter(formatter)
         self.__logger.addHandler(file_handler_all)
-
         error_log_file = os.path.join(self.__log_dir, "error.log")
         file_handler_error = TimedRotatingFileHandler(
             error_log_file,
@@ -135,7 +131,6 @@ class LogManager:
         file_handler_error.setLevel(logging.ERROR)
         file_handler_error.setFormatter(formatter)
         self.__logger.addHandler(file_handler_error)
-
         self.__initialized = True
 
     def getLogger(
