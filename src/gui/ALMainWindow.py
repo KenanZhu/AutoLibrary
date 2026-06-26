@@ -151,6 +151,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.hide()
+        self.__notification_type = ""
+        if not hasattr(self, "TrayIcon"):
+            return
         self.TrayIcon.showMessage(
             "AutoLibrary",
             "\n已最小化到托盘",
@@ -279,6 +282,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.setControlButtons(None, True, False)
+        self.__notification_type = ""
+        if not hasattr(self, "TrayIcon"):
+            return
         if not timer_task.get("silent", False):
             self.TrayIcon.showMessage(
                 "定时任务 - AutoLibrary",
@@ -296,6 +302,9 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.setControlButtons(None, False, True)
+        self.__notification_type = ""
+        if not hasattr(self, "TrayIcon"):
+            return
         self.TrayIcon.showMessage(
             "定时任务 - AutoLibrary",
             f"\n定时任务 '{timer_task['name']}' 执行{'失败' if is_error else '完成'}",
@@ -363,10 +372,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        self.__bulletin_poller.setDialogOpen(True)
         if self.__ALBulletinDialog is None:
             self.__ALBulletinDialog = ALBulletinDialog(self)
             self.__ALBulletinDialog.finished.connect(self.onBulletinDialogClosed)
+        self.__bulletin_poller.setDialogOpen(True)
         self.__ALBulletinDialog.show()
         self.__ALBulletinDialog.raise_()
         self.__ALBulletinDialog.activateWindow()

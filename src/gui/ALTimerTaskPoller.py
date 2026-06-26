@@ -88,8 +88,11 @@ class ALTimerTaskPoller(QObject):
             return
         try:
             task = self.__task_queue.get_nowait()
-            self.__timer.stop()
-            self.taskRunning.emit(task)
+        except queue.Empty:
+            return
+        self.__timer.stop()
+        self.taskRunning.emit(task)
+        try:
             self.__worker = TimerTaskWorker(
                 task,
                 self.__input_queue,
@@ -98,8 +101,10 @@ class ALTimerTaskPoller(QObject):
             )
             self.__worker.timerTaskWorkerIsFinished.connect(self.__onFinished)
             self.__worker.start()
-        except queue.Empty:
-            pass
+        except Exception:
+            self.__worker = None
+            if not self.__stopped:
+                self.__timer.start(500)
 
     @Slot(bool, dict)
     def __onFinished(
@@ -112,14 +117,15 @@ class ALTimerTaskPoller(QObject):
         self.__worker.wait(1000)
         self.__worker.deleteLater()
         self.__worker = None
-        task["executed"] = True
-        self.taskFinished.emit(is_error, task)
-        if not is_error:
-            self.taskExecuted.emit(task)
-        else:
-            self.taskError.emit(task)
-        if not self.__stopped:
-            self.__timer.start(500)
+        try:
+            self.taskFinished.emit(is_error, task)
+            if not is_error:
+                self.taskExecuted.emit(task)
+            else:
+                self.taskError.emit(task)
+        finally:
+            if not self.__stopped:
+                self.__timer.start(500)
 
     def __cleanupWorker(
         self
@@ -131,6 +137,6 @@ class ALTimerTaskPoller(QObject):
             self.__worker.timerTaskWorkerIsFinished.disconnect(self.__onFinished)
         except (TypeError, RuntimeError):
             pass
-        self.__worker.wait(2000)
-        self.__worker.deleteLater()
+        self.__worker.wait(500)
+        self.__worker.delete()
         self.__worker = None

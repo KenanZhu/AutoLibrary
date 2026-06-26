@@ -112,8 +112,8 @@ class ALBulletinPoller(QObject):
         if self.__worker is None:
             return
         self.__disconnectWorker(self.__worker)
-        self.__worker.wait(2000)
-        self.__worker.deleteLater()
+        self.__worker.wait(500)
+        self.__worker.delete()
         self.__worker = None
 
     def __doFetch(
@@ -149,8 +149,8 @@ class ALBulletinPoller(QObject):
         if worker is not self.__worker:
             return
         self.__disconnectWorker(worker)
-        worker.wait(2000)
-        worker.deleteLater()
+        worker.wait(500)
+        worker.delete()
         self.__worker = None
         old_ids = {str(b.get("id", "")) for b in self.__mgr.bulletins()}
         bulletins = data.get("bulletins", [])
@@ -180,8 +180,8 @@ class ALBulletinPoller(QObject):
         if worker is not self.__worker:
             return
         self.__disconnectWorker(worker)
-        worker.wait(2000)
-        worker.deleteLater()
+        worker.wait(500)
+        worker.delete()
         self.__worker = None
         if not self.__stopped:
             interval_ms = self.__mgr.syncInterval()*60*1000
