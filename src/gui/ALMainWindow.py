@@ -36,7 +36,7 @@ from gui.ALBulletinDialog import ALBulletinDialog
 from gui.ALBulletinPoller import ALBulletinPoller
 from gui.ALConfigWidget import ALConfigWidget
 from gui.ALSettingsWidget import ALSettingsWidget
-from gui.ALMainWorkers import (
+from gui.ALMainWorker import (
     AutoLibWorker,
     TimerTaskWorker
 )
