@@ -91,6 +91,7 @@ def _restartApp(
 class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
 
     settingsWidgetIsClosed = Signal()
+    openBulletinRequested = Signal()
 
     def __init__(
         self,
@@ -189,6 +190,7 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         self.CustomThemeComboBox.currentIndexChanged.connect(self.onCustomThemeComboBoxChanged)
         self.ResetCustomThemeButton.clicked.connect(self.onResetCustomThemeButtonClicked)
         self.BulletinTestButton.clicked.connect(self.onBulletinTestButtonClicked)
+        self.BulletinOpenButton.clicked.connect(self.openBulletinRequested.emit)
         self.CancelButton.clicked.connect(self.onCancelButtonClicked)
         self.ApplyButton.clicked.connect(self.onApplyButtonClicked)
         self.ConfirmButton.clicked.connect(self.onConfirmButtonClicked)

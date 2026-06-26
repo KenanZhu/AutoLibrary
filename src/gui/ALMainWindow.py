@@ -65,6 +65,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             self._output_queue,
             self.__config_paths
         )
+        self.__notification_type = ""
 
         self.setupUi(self)
         self.modifyUi()
@@ -137,13 +138,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayMenu = QMenu()
         self.TrayMenu.addAction("显示主窗口", self.showNormal)
         self.TrayMenu.addAction("显示定时窗口", self.onTimerTaskManageWidgetButtonClicked)
-        self.TrayMenu.addAction("公告栏", self.onBulletinActionTriggered)
         self.TrayMenu.addAction("最小化到托盘", self.hideToTray)
         self.TrayMenu.addSeparator()
         self.TrayMenu.addAction("退出", self.close)
         self.TrayIcon.setContextMenu(self.TrayMenu)
         self.TrayIcon.activated.connect(self.onTrayIconActivated)
-        self.TrayIcon.messageClicked.connect(self.onBulletinActionTriggered)
+        self.TrayIcon.messageClicked.connect(self.onTrayMessageClicked)
         self.TrayIcon.show()
 
     def hideToTray(
@@ -264,6 +264,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         if not hasattr(self, "TrayIcon"):
             return
+        self.__notification_type = "bulletin"
         self.TrayIcon.showMessage(
             "公告栏 - AutoLibrary",
             f"有 {count} 条新公告，点击查看详情。",
@@ -349,6 +350,15 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self._showLog("配置窗口已关闭,配置文件路径已更新")
 
     @Slot()
+    def onTrayMessageClicked(
+        self
+    ):
+
+        if self.__notification_type == "bulletin":
+            self.__notification_type = ""
+            self.onBulletinActionTriggered()
+
+    @Slot()
     def onBulletinActionTriggered(
         self
     ):
@@ -370,6 +380,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         if self.__ALSettingsWidget is None:
             self.__ALSettingsWidget = ALSettingsWidget(self)
             self.__ALSettingsWidget.settingsWidgetIsClosed.connect(self.onSettingsWidgetClosed)
+            self.__ALSettingsWidget.openBulletinRequested.connect(self.onBulletinActionTriggered)
         self.__ALSettingsWidget.show()
         self.__ALSettingsWidget.raise_()
         self.__ALSettingsWidget.activateWindow()
