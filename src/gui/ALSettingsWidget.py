@@ -116,6 +116,8 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         event: QCloseEvent
     ):
 
+        if hasattr(self, '__bulletin_test_worker') and self.__bulletin_test_worker is not None:
+            self.__bulletin_test_worker.wait(3000)
         self.settingsWidgetIsClosed.emit()
         super().closeEvent(event)
 
@@ -485,25 +487,26 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             self, api_url, {"date": "", "time": "", "range_hour": "1"}
         )
         self.__bulletin_test_worker.fetchWorkerIsFinished.connect(
-            self.onBulletinTestFetched
+            self.onBulletinTestIsFinished
         )
         self.__bulletin_test_worker.fetchWorkerFinishedWithError.connect(
-            self.onBulletinTestError
+            self.onBulletinTestFinishedWithError
         )
         self.__bulletin_test_worker.start()
 
     @Slot(dict)
-    def onBulletinTestFetched(
+    def onBulletinTestIsFinished(
         self,
         data: dict
     ):
 
         self.__bulletin_test_worker.fetchWorkerIsFinished.disconnect(
-            self.onBulletinTestFetched
+            self.onBulletinTestIsFinished
         )
         self.__bulletin_test_worker.fetchWorkerFinishedWithError.disconnect(
-            self.onBulletinTestError
+            self.onBulletinTestFinishedWithError
         )
+        self.__bulletin_test_worker.wait(3000)
         self.__bulletin_test_worker.deleteLater()
         self.__bulletin_test_worker = None
         elapsed_ms = (time.monotonic() - self.__bulletin_test_t0) * 1000
@@ -515,17 +518,18 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
         QTimer.singleShot(3000, self, self.clearBulletinTestStatus)
 
     @Slot(str)
-    def onBulletinTestError(
+    def onBulletinTestFinishedWithError(
         self,
         error_message: str
     ):
 
         self.__bulletin_test_worker.fetchWorkerIsFinished.disconnect(
-            self.onBulletinTestFetched
+            self.onBulletinTestIsFinished
         )
         self.__bulletin_test_worker.fetchWorkerFinishedWithError.disconnect(
-            self.onBulletinTestError
+            self.onBulletinTestFinishedWithError
         )
+        self.__bulletin_test_worker.wait(3000)
         self.__bulletin_test_worker.deleteLater()
         self.__bulletin_test_worker = None
         self.BulletinTestStatusLabel.setText(f"连接失败：{error_message}")

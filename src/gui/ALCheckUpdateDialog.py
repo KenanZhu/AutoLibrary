@@ -73,9 +73,9 @@ class ALCheckUpdateDialog(QDialog):
         )
         TitleLabel.setTextFormat(Qt.TextFormat.RichText)
         TitleLabel.setText(
-            f"检测到最新版本: "
-            f"<span style='color: inherit;'>{self.__current_version}</span>"
-            f" <span style='color: green; font-weight: bold;'>&gt;</span> "
+            f"检测到新版本: "
+            f"<span>{self.__current_version}</span> "
+            f"<span>&gt;</span> "
             f"<span style='color: green; font-weight: bold;'>{self.__latest_version}</span>"
         )
         layout.addWidget(TitleLabel)
@@ -83,8 +83,7 @@ class ALCheckUpdateDialog(QDialog):
         InfoLabel.setTextFormat(Qt.TextFormat.RichText)
         InfoLabel.setWordWrap(True)
         InfoLabel.setText(
-            f"发布版本: <b>{self.__tag_name}</b><br>"
-            f"发布页面: <a href='{self.__html_url}'>{self.__html_url}</a>"
+            f"最新版本: <b>{self.__tag_name}</b><br>"
         )
         InfoLabel.setOpenExternalLinks(True)
         layout.addWidget(InfoLabel)
@@ -94,14 +93,26 @@ class ALCheckUpdateDialog(QDialog):
             "前往 GitHub",
             QDialogButtonBox.ButtonRole.AcceptRole
         )
+        self.__btn_github.setMinimumWidth(100)
+        self.__btn_github.setMaximumWidth(100)
+        self.__btn_github.setMinimumHeight(25)
+        self.__btn_github.setMaximumHeight(25)
         self.__btn_download = self.__button_box.addButton(
             "官网下载",
             QDialogButtonBox.ButtonRole.ActionRole
         )
+        self.__btn_download.setMinimumWidth(80)
+        self.__btn_download.setMaximumWidth(80)
+        self.__btn_download.setMinimumHeight(25)
+        self.__btn_download.setMaximumHeight(25)
         self.__btn_cancel = self.__button_box.addButton(
             "取消",
             QDialogButtonBox.ButtonRole.RejectRole
         )
+        self.__btn_cancel.setMinimumWidth(80)
+        self.__btn_cancel.setMaximumWidth(80)
+        self.__btn_cancel.setMinimumHeight(25)
+        self.__btn_cancel.setMaximumHeight(25)
         layout.addWidget(self.__button_box)
 
     def buildUpToDateUi(
@@ -117,7 +128,9 @@ class ALCheckUpdateDialog(QDialog):
         TitleLabel.setText(f"已是最新版本 !")
         layout.addWidget(TitleLabel)
         InfoLabel = QLabel()
-        InfoLabel.setText(f"当前版本: {self.__current_version}")
+        InfoLabel.setText(
+            f"当前版本: <b>{self.__current_version}</b><br>"
+        )
         layout.addWidget(InfoLabel)
         layout.addStretch()
         self.__button_box = QDialogButtonBox()
@@ -125,6 +138,10 @@ class ALCheckUpdateDialog(QDialog):
             "确定",
             QDialogButtonBox.ButtonRole.AcceptRole
         )
+        self.__btn_close.setMinimumWidth(80)
+        self.__btn_close.setMaximumWidth(80)
+        self.__btn_close.setMinimumHeight(25)
+        self.__btn_close.setMaximumHeight(25)
         layout.addWidget(self.__button_box)
 
     def connectSignals(
