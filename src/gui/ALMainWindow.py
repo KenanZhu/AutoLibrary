@@ -9,6 +9,8 @@ See the LICENSE file for details.
 """
 import queue
 
+import packaging.version as ver
+
 from PySide6.QtCore import (
     QTimer,
     QUrl,
@@ -32,12 +34,15 @@ from PySide6.QtWidgets import (
 from base.MsgBase import MsgBase
 from gui.ALAboutDialog import ALAboutDialog
 from gui.ALBulletinDialog import ALBulletinDialog
+from gui.ALCheckUpdateWorker import ALCheckUpdateWorker
+from gui.ALCheckUpdateDialog import ALCheckUpdateDialog
 from gui.ALConfigWidget import ALConfigWidget
 from gui.ALSettingsWidget import ALSettingsWidget
 from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
 from gui.ALMainWorker import AutoLibWorker
 from gui.ALBulletinPoller import ALBulletinPoller
 from gui.ALTimerTaskPoller import ALTimerTaskPoller
+from gui.ALVersionInfo import AL_VERSION
 from gui.resources import ALResource
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
 from managers.bulletin.BulletinManager import instance as bulletinInstance
@@ -86,10 +91,10 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.setWindowIcon(self.Icon)
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
+        self.CheckUpdateAction.triggered.connect(self.onCheckUpdateActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
         self.SettingsAction.triggered.connect(self.onSettingsActionTriggered)
-        if hasattr(self, 'BulletinAction'):
-            self.BulletinAction.triggered.connect(self.onBulletinActionTriggered)
+        self.BulletinAction.triggered.connect(self.onBulletinActionTriggered)
         # initialize timer task widget, but not show it
         try:
             self.__ALTimerTaskManageWidget = ALTimerTaskManageWidget(self)
@@ -111,20 +116,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__ALTimerTaskManageWidget.timerTaskIsReady.connect(self.__timer_task_poller.enqueue)
         self.__ALTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
         self.__ALTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
-
-    def onAboutActionTriggered(
-        self
-    ):
-
-        AboutDialog = ALAboutDialog(self)
-        AboutDialog.exec()
-
-    def onManualActionTriggered(
-        self
-    ):
-
-        url = QUrl("https://manuals.autolibrary.kenanzhu.com")
-        QDesktopServices.openUrl(url)
 
     def setupTray(
         self
@@ -160,14 +151,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             QSystemTrayIcon.MessageIcon.Information,
             2000
         )
-
-    def onTrayIconActivated(
-        self,
-        reason: QSystemTrayIcon.ActivationReason
-    ):
-
-        if reason == QSystemTrayIcon.DoubleClick:
-            self.showNormal()
 
     def connectSignals(
         self
@@ -315,6 +298,67 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['uuid']}"
         )
 
+    @Slot(dict)
+    def onCheckUpdateIsFinished(
+        self,
+        data: dict
+    ):
+
+        worker = self.sender()
+        if worker is not self.__check_update_worker:
+            return
+        worker.checkUpdateWorkerIsFinished.disconnect(self.onCheckUpdateIsFinished)
+        worker.checkUpdateWorkerFinishedWithError.disconnect(self.onCheckUpdateFinishedWithError)
+        worker.wait(3000)
+        worker.deleteLater()
+        self.__check_update_worker = None
+        tag_name = data.get("tag_name", "")
+        html_url = data.get("html_url", "")
+        latest_version = tag_name.lstrip("v")
+        try:
+            local_ver = ver.Version(AL_VERSION)
+            remote_ver = ver.Version(latest_version)
+        except ver.InvalidVersion:
+            self._showTrace("版本号解析失败, 无法比较版本", self.TraceLevel.WARNING)
+            return
+        if remote_ver > local_ver:
+            ALCheckUpdateDialog.showResult(
+                self,
+                has_update=True,
+                current_version=AL_VERSION,
+                latest_version=latest_version,
+                tag_name=tag_name,
+                html_url=html_url
+            )
+        else:
+            ALCheckUpdateDialog.showResult(
+                self,
+                has_update=False,
+                current_version=AL_VERSION
+            )
+        self._showLog("检查更新完成")
+
+    @Slot(str)
+    def onCheckUpdateFinishedWithError(
+        self,
+        error_message: str
+    ):
+
+        worker = self.sender()
+        if worker is not self.__check_update_worker:
+            return
+        worker.checkUpdateWorkerIsFinished.disconnect(self.onCheckUpdateIsFinished)
+        worker.checkUpdateWorkerFinishedWithError.disconnect(self.onCheckUpdateFinishedWithError)
+        worker.wait(3000)
+        worker.deleteLater()
+        self.__check_update_worker = None
+        QMessageBox.warning(
+            self,
+            "检查更新 - AutoLibrary",
+            f"检查更新失败: \n{error_message}",
+        )
+        self._showLog("检查更新失败")
+
     @Slot()
     def onBulletinDialogClosed(
         self
@@ -359,15 +403,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self._showLog("配置窗口已关闭,配置文件路径已更新")
 
     @Slot()
-    def onTrayMessageClicked(
-        self
-    ):
-
-        if self.__notification_type == "bulletin":
-            self.__notification_type = ""
-            self.onBulletinActionTriggered()
-
-    @Slot()
     def onBulletinActionTriggered(
         self
     ):
@@ -395,6 +430,53 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__ALSettingsWidget.activateWindow()
         self.SettingsAction.setEnabled(False)
         self._showLog("打开全局设置窗口")
+
+    @Slot()
+    def onAboutActionTriggered(
+        self
+    ):
+
+        AboutDialog = ALAboutDialog(self)
+        AboutDialog.exec()
+
+    @Slot()
+    def onManualActionTriggered(
+        self
+    ):
+
+        url = QUrl("https://manuals.autolibrary.kenanzhu.com")
+        QDesktopServices.openUrl(url)
+
+    @Slot()
+    def onCheckUpdateActionTriggered(
+        self
+    ):
+
+        if hasattr(self, '__check_update_worker') and self.__check_update_worker is not None:
+            return
+        self.__check_update_worker = ALCheckUpdateWorker(self)
+        self.__check_update_worker.checkUpdateWorkerIsFinished.connect(self.onCheckUpdateIsFinished)
+        self.__check_update_worker.checkUpdateWorkerFinishedWithError.connect(self.onCheckUpdateFinishedWithError)
+        self.__check_update_worker.start()
+        self._showLog("正在检查更新...")
+
+    @Slot()
+    def onTrayMessageClicked(
+        self
+    ):
+
+        if self.__notification_type == "bulletin":
+            self.__notification_type = ""
+            self.onBulletinActionTriggered()
+
+    @Slot(QSystemTrayIcon.ActivationReason)
+    def onTrayIconActivated(
+        self,
+        reason: QSystemTrayIcon.ActivationReason
+    ):
+
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.showNormal()
 
     @Slot()
     def onTimerTaskManageWidgetButtonClicked(

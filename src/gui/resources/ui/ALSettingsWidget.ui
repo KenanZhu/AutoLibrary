@@ -113,6 +113,9 @@
      </item>
      <item>
       <widget class="QStackedWidget" name="PageStack">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
        <widget class="QScrollArea" name="AppearanceScrollArea">
         <property name="frameShape">
          <enum>QFrame::Shape::NoFrame</enum>
@@ -458,8 +461,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>397</width>
-           <height>434</height>
+           <width>409</width>
+           <height>383</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="BulletinPageLayout">
@@ -577,14 +580,14 @@
                    <height>25</height>
                   </size>
                  </property>
+                 <property name="suffix">
+                  <string> 分钟</string>
+                 </property>
                  <property name="minimum">
                   <number>1</number>
                  </property>
                  <property name="maximum">
                   <number>1440</number>
-                 </property>
-                 <property name="suffix">
-                  <string> 分钟</string>
                  </property>
                 </widget>
                </item>
@@ -624,6 +627,18 @@
              </item>
              <item>
               <widget class="QLabel" name="BulletinTestStatusLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>25</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
