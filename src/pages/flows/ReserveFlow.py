@@ -22,6 +22,7 @@ from pages.strategies.TimeSelectMaker import TimeSelectMaker
 from pages.ReserveView import ReserveView
 from pages.components.ReserveResultDialog import ReserveResultDialog
 from pages.components.TimeSelectDialog import TimeSelectDialog
+from pages.components.SeatMapDialog import SeatMapDialog
 
 
 @dataclass
@@ -150,7 +151,7 @@ class ReserveFlow(MsgBase):
     def _selectSeatAndSubmit(
         self,
         view: ReserveView,
-        seat_map,
+        seat_map: SeatMapDialog,
         ctx: ReserveContext,
     ) -> tuple[bool, bool]:
 
