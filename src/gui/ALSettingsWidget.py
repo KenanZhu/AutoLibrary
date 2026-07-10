@@ -388,7 +388,6 @@ class ALSettingsWidget(CenterOnParentMixin, QWidget, Ui_ALSettingsWidget):
             idx = self.CustomThemeComboBox.findData(file_id)
             if idx >= 0:
                 self.CustomThemeComboBox.setCurrentIndex(idx)
-            self.updateCustomThemeStatus()
             self.updateCustomThemeInfo()
         except Exception as e:
             QMessageBox.warning(
