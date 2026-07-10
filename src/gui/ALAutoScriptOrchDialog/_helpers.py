@@ -104,6 +104,7 @@ class _DateInputContainer(QWidget):
     ):
 
         super().__init__(parent)
+
         self.setupUi()
 
     def setupUi(
@@ -153,10 +154,16 @@ class _TimeInputContainer(QWidget):
     ):
 
         super().__init__(parent)
+
+        self.setupUi()
+
+    def setupUi(
+        self
+    ):
+
         self.TimeEdit = QTimeEdit(self)
         self.TimeEdit.setDisplayFormat("HH:mm")
         self.TimeEdit.setFixedHeight(25)
-
         Layout = QHBoxLayout(self)
         Layout.setContentsMargins(0, 0, 0, 0)
         Layout.addWidget(self.TimeEdit)
@@ -176,6 +183,13 @@ class _DateOffsetContainer(QWidget):
     ):
 
         super().__init__(parent)
+
+        self.setupUi()
+
+    def setupUi(
+        self
+    ):
+
         self.SpinBox = QSpinBox(self)
         self.SpinBox.setRange(0, 99999)
         self.SpinBox.setFixedHeight(25)
@@ -183,7 +197,6 @@ class _DateOffsetContainer(QWidget):
         for display, data in DATE_OFFSET_OPTIONS:
             self.UnitCombo.addItem(display, data)
         self.UnitCombo.setFixedHeight(25)
-
         Layout = QHBoxLayout(self)
         Layout.setContentsMargins(0, 0, 0, 0)
         Layout.setSpacing(4)
@@ -220,11 +233,17 @@ class _TimeOffsetContainer(QWidget):
     ):
 
         super().__init__(parent)
+
+        self.setupUi()
+
+    def setupUi(
+        self
+    ):
+
         self.SpinBox = QSpinBox(self)
         self.SpinBox.setRange(0, 99999)
         self.SpinBox.setSuffix(" 小时")
         self.SpinBox.setFixedHeight(25)
-
         Layout = QHBoxLayout(self)
         Layout.setContentsMargins(0, 0, 0, 0)
         Layout.addWidget(self.SpinBox)
