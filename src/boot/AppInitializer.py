@@ -73,6 +73,8 @@ def _initializeWebDriverManager(
 def _initializeAppearance(
 ):
 
+    logger = logInstance().getLogger("AppInitializer")
+
     app = QApplication.instance()
     if not app:
         return
@@ -82,7 +84,6 @@ def _initializeAppearance(
     saved_custom_theme = cfg.get(CfgKey.GLOBAL.APPEARANCE.CUSTOM_THEME, "")
     app.setStyle(saved_style)
     setActiveStyle(saved_style)
-    logger = logInstance().getLogger("AppInitializer")
     if saved_custom_theme:
         try:
             themeInstance().applyTheme(saved_custom_theme)

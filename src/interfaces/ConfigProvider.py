@@ -72,6 +72,12 @@ class CfgKey:
             STYLE = ConfigPath(ConfigType.GLOBAL, "appearance.style")
             CUSTOM_THEME = ConfigPath(ConfigType.GLOBAL, "appearance.custom_theme")
 
+        class BULLETIN:
+            ROOT = ConfigPath(ConfigType.GLOBAL, "bulletin")
+            AUTO_FETCH = ConfigPath(ConfigType.GLOBAL, "bulletin.auto_fetch")
+            SERVER_URL = ConfigPath(ConfigType.GLOBAL, "bulletin.server_url")
+            SYNC_INTERVAL = ConfigPath(ConfigType.GLOBAL, "bulletin.sync_interval")
+
     class TIMERTASK:
         ROOT = ConfigPath(ConfigType.TIMERTASK, "")
         TIMER_TASKS = ConfigPath(ConfigType.TIMERTASK, "timer_tasks")

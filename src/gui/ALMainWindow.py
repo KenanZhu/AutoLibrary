@@ -9,11 +9,12 @@ See the LICENSE file for details.
 """
 import queue
 
+import packaging.version as ver
+
 from PySide6.QtCore import (
     QTimer,
     QUrl,
     Qt,
-    Signal,
     Slot
 )
 from PySide6.QtGui import (
@@ -32,24 +33,23 @@ from PySide6.QtWidgets import (
 
 from base.MsgBase import MsgBase
 from gui.ALAboutDialog import ALAboutDialog
+from gui.ALBulletinDialog import ALBulletinDialog
+from gui.ALCheckUpdateWorker import ALCheckUpdateWorker
+from gui.ALCheckUpdateDialog import ALCheckUpdateDialog
 from gui.ALConfigWidget import ALConfigWidget
 from gui.ALSettingsWidget import ALSettingsWidget
-from gui.ALMainWorkers import (
-    AutoLibWorker,
-    TimerTaskWorker
-)
 from gui.ALTimerTaskManageWidget import ALTimerTaskManageWidget
+from gui.ALMainWorker import AutoLibWorker
+from gui.ALBulletinPoller import ALBulletinPoller
+from gui.ALTimerTaskPoller import ALTimerTaskPoller
+from gui.ALVersionInfo import AL_VERSION
 from gui.resources import ALResource
 from gui.resources.ui.Ui_ALMainWindow import Ui_ALMainWindow
+from managers.bulletin.BulletinManager import instance as bulletinInstance
 from managers.config.ConfigUtils import ConfigUtils
 
 
 class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
-
-    # signal : timer task
-    timerTaskIsRunning = Signal(dict)
-    timerTaskIsExecuted = Signal(dict)
-    timerTaskIsError = Signal(dict)
 
     def __init__(
         self
@@ -57,21 +57,30 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
 
         MsgBase.__init__(self, queue.Queue(), queue.Queue())
         QMainWindow.__init__(self)
-        self.__timer_task_queue = queue.Queue()
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
-        self.__alTimerTaskManageWidget = None
-        self.__alConfigWidget = None
-        self.__alSettingsWidget = None
+        self.__ALTimerTaskManageWidget = None
+        self.__ALConfigWidget = None
+        self.__ALSettingsWidget = None
+        self.__ALBulletinDialog = None
         self.__auto_lib_thread = None
-        self.__current_timer_task_thread = None
-        self.__is_running_timer_task = False
+        self.__bulletin_poller = ALBulletinPoller(self)
+        self.__timer_task_poller = ALTimerTaskPoller(
+            self,
+            self._input_queue,
+            self._output_queue,
+            self.__config_paths
+        )
+        self.__notification_type = ""
 
         self.setupUi(self)
         self.modifyUi()
         self.setupTray()
         self.connectSignals()
         self.startMsgPolling()
-        self.startTimerTaskPolling()
+        self.__timer_task_poller.start()
+        self.__bulletin_poller.start()
+        if bulletinInstance().autoFetch():
+            QTimer.singleShot(1000, self.__bulletin_poller.fetchNow)
         self._showLog("主窗口初始化完成")
 
     def modifyUi(
@@ -82,42 +91,31 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.setWindowIcon(self.Icon)
         self.MessageIOTextEdit.setFont(QFont("Courier New", 10))
         self.ManualAction.triggered.connect(self.onManualActionTriggered)
+        self.CheckUpdateAction.triggered.connect(self.onCheckUpdateActionTriggered)
         self.AboutAction.triggered.connect(self.onAboutActionTriggered)
         self.SettingsAction.triggered.connect(self.onSettingsActionTriggered)
-
+        self.BulletinAction.triggered.connect(self.onBulletinActionTriggered)
         # initialize timer task widget, but not show it
         try:
-            self.__alTimerTaskManageWidget = ALTimerTaskManageWidget(self)
+            self.__ALTimerTaskManageWidget = ALTimerTaskManageWidget(self)
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "错误 - AutoLibrary",
                 f"初始化定时任务功能失败: \n{e}"
             )
-            self.__alTimerTaskManageWidget = None
+            self.__ALTimerTaskManageWidget = None
             self.TimerTaskManageWidgetButton.setEnabled(False)
             self.TimerTaskManageWidgetButton.setToolTip("定时任务功能初始化失败, 请检查配置文件。")
             return
-        self.timerTaskIsRunning.connect(self.__alTimerTaskManageWidget.onTimerTaskIsRunning)
-        self.timerTaskIsExecuted.connect(self.__alTimerTaskManageWidget.onTimerTaskIsExecuted)
-        self.timerTaskIsError.connect(self.__alTimerTaskManageWidget.onTimerTaskIsError)
-        self.__alTimerTaskManageWidget.timerTaskIsReady.connect(self.onTimerTaskIsReady)
-        self.__alTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
-        self.__alTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
-
-    def onAboutActionTriggered(
-        self
-    ):
-
-        AboutDialog = ALAboutDialog(self)
-        AboutDialog.exec()
-
-    def onManualActionTriggered(
-        self
-    ):
-
-        Url = QUrl("https://www.autolibrary.kenanzhu.com/manuals")
-        QDesktopServices.openUrl(Url)
+        self.__timer_task_poller.taskRunning.connect(self.onTimerTaskRunning)
+        self.__timer_task_poller.taskFinished.connect(self.onTimerTaskFinished)
+        self.__timer_task_poller.taskRunning.connect(self.__ALTimerTaskManageWidget.onTimerTaskIsRunning)
+        self.__timer_task_poller.taskExecuted.connect(self.__ALTimerTaskManageWidget.onTimerTaskIsExecuted)
+        self.__timer_task_poller.taskError.connect(self.__ALTimerTaskManageWidget.onTimerTaskIsError)
+        self.__ALTimerTaskManageWidget.timerTaskIsReady.connect(self.__timer_task_poller.enqueue)
+        self.__ALTimerTaskManageWidget.timerTaskManageWidgetIsClosed.connect(self.onTimerTaskManageWidgetClosed)
+        self.__ALTimerTaskManageWidget.setWindowFlags(Qt.WindowType.Window|Qt.WindowType.WindowCloseButtonHint)
 
     def setupTray(
         self
@@ -135,8 +133,8 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.TrayMenu.addSeparator()
         self.TrayMenu.addAction("退出", self.close)
         self.TrayIcon.setContextMenu(self.TrayMenu)
-
         self.TrayIcon.activated.connect(self.onTrayIconActivated)
+        self.TrayIcon.messageClicked.connect(self.onTrayMessageClicked)
         self.TrayIcon.show()
 
     def hideToTray(
@@ -144,20 +142,15 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
     ):
 
         self.hide()
+        self.__notification_type = ""
+        if not hasattr(self, "TrayIcon"):
+            return
         self.TrayIcon.showMessage(
             "AutoLibrary",
             "\n已最小化到托盘",
             QSystemTrayIcon.MessageIcon.Information,
             2000
         )
-
-    def onTrayIconActivated(
-        self,
-        reason: QSystemTrayIcon.ActivationReason
-    ):
-
-        if reason == QSystemTrayIcon.DoubleClick:
-            self.showNormal()
 
     def connectSignals(
         self
@@ -169,6 +162,7 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.StopButton.clicked.connect(self.onStopButtonClicked)
         self.SendButton.clicked.connect(self.onSendButtonClicked)
         self.MessageEdit.returnPressed.connect(self.onSendButtonClicked)
+        self.__bulletin_poller.newBulletinsDetected.connect(self.onBulletinPollerNewBulletins)
 
     def closeEvent(
         self,
@@ -181,20 +175,22 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
             return
         if self.__msg_queue_timer and self.__msg_queue_timer.isActive():
             self.__msg_queue_timer.stop()
-        if self.__timer_task_timer and self.__timer_task_timer.isActive():
-            self.__timer_task_timer.stop()
-        if self.__is_running_timer_task:
-            self.__current_timer_task_thread.wait(2000)
-            self.__current_timer_task_thread.deleteLater()
-        if self.__alTimerTaskManageWidget:
-            self.__alTimerTaskManageWidget.close()
-            self.__alTimerTaskManageWidget.deleteLater()
-        if self.__alConfigWidget:
-            self.__alConfigWidget.close()
+        if self.__timer_task_poller:
+            self.__timer_task_poller.stop()
+        if self.__ALTimerTaskManageWidget:
+            self.__ALTimerTaskManageWidget.close()
+            self.__ALTimerTaskManageWidget.deleteLater()
+        if self.__ALConfigWidget:
+            self.__ALConfigWidget.close()
             # the config widget is already deleted in the 'self.onConfigWidgetClosed'
-        if self.__alSettingsWidget:
-            self.__alSettingsWidget.close()
+        if self.__ALSettingsWidget:
+            self.__ALSettingsWidget.close()
             # the settings widget is already deleted in the 'self.onSettingsWidgetClosed'
+        if self.__ALBulletinDialog:
+            self.__ALBulletinDialog.close()
+            # the bulletin dialog is already deleted in the 'self.onBulletinDialogClosed'
+        if self.__bulletin_poller:
+            self.__bulletin_poller.stop()
         self._showLog("主窗口关闭")
         QMainWindow.closeEvent(self, event)
 
@@ -218,47 +214,6 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self.__msg_queue_timer = QTimer()
         self.__msg_queue_timer.timeout.connect(self.pollMsgQueue)
         self.__msg_queue_timer.start(100)
-
-    def startTimerTaskPolling(
-        self
-    ):
-
-        self.__timer_task_timer = QTimer()
-        self.__timer_task_timer.timeout.connect(self.pollTimerTaskQueue)
-        self.__timer_task_timer.start(500)
-
-    def pollTimerTaskQueue(
-        self
-    ):
-
-        if self.__is_running_timer_task:
-            return
-        try:
-            while not self.__is_running_timer_task:
-                timer_task = self.__timer_task_queue.get_nowait()
-                self.timerTaskIsRunning.emit(timer_task)
-                self.__timer_task_timer.stop()
-                self.__is_running_timer_task = True
-                self.setControlButtons(None, True, False)
-                if not timer_task["silent"]:
-                    self.TrayIcon.showMessage(
-                        "定时任务 - AutoLibrary",
-                        f"\n已开始执行定时任务: \n{timer_task['name']}",
-                        QSystemTrayIcon.MessageIcon.Information,
-                        1000
-                    )
-                    self.showNormal()
-                self.__current_timer_task_thread = TimerTaskWorker(
-                    timer_task,
-                    self._input_queue,
-                    self._output_queue,
-                    self.__config_paths
-                )
-                self.__current_timer_task_thread.timerTaskWorkerIsFinished.connect(self.onTimerTaskFinished)
-                self.__current_timer_task_thread.start()
-        except queue.Empty:
-            self.__is_running_timer_task = False
-            pass
 
     def setControlButtons(
         self,
@@ -287,6 +242,145 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         except queue.Empty:
             pass
 
+    @Slot(int)
+    def onBulletinPollerNewBulletins(
+        self,
+        count: int
+    ):
+
+        if not hasattr(self, "TrayIcon"):
+            return
+        self.__notification_type = "bulletin"
+        self.TrayIcon.showMessage(
+            "公告栏 - AutoLibrary",
+            f"有 {count} 条新公告，点击查看详情。",
+            QSystemTrayIcon.MessageIcon.Information,
+            3000
+        )
+
+    @Slot(dict)
+    def onTimerTaskRunning(
+        self,
+        timer_task: dict
+    ):
+
+        self.setControlButtons(None, True, False)
+        self.__notification_type = ""
+        if not hasattr(self, "TrayIcon"):
+            return
+        if not timer_task.get("silent", False):
+            self.TrayIcon.showMessage(
+                "定时任务 - AutoLibrary",
+                f"\n已开始执行定时任务: \n{timer_task['name']}",
+                QSystemTrayIcon.MessageIcon.Information,
+                1000
+            )
+            self.showNormal()
+
+    @Slot(bool, dict)
+    def onTimerTaskFinished(
+        self,
+        is_error: bool,
+        timer_task: dict
+    ):
+
+        self.setControlButtons(None, False, True)
+        self.__notification_type = ""
+        if not hasattr(self, "TrayIcon"):
+            return
+        self.TrayIcon.showMessage(
+            "定时任务 - AutoLibrary",
+            f"\n定时任务 '{timer_task['name']}' 执行{'失败' if is_error else '完成'}",
+            QSystemTrayIcon.MessageIcon.Warning if is_error else QSystemTrayIcon.MessageIcon.Information,
+            1000
+        )
+        self._showTrace(
+            f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['uuid']}"
+        )
+
+    @Slot(dict)
+    def onCheckUpdateIsFinished(
+        self,
+        data: dict
+    ):
+
+        worker = self.sender()
+        if worker is not self.__check_update_worker:
+            return
+        worker.checkUpdateWorkerIsFinished.disconnect(self.onCheckUpdateIsFinished)
+        worker.checkUpdateWorkerFinishedWithError.disconnect(self.onCheckUpdateFinishedWithError)
+        worker.wait(3000)
+        worker.deleteLater()
+        self.__check_update_worker = None
+        tag_name = data.get("tag_name", "")
+        html_url = data.get("html_url", "")
+        latest_version = tag_name.lstrip("v")
+        try:
+            local_ver = ver.Version(AL_VERSION)
+            remote_ver = ver.Version(latest_version)
+        except ver.InvalidVersion:
+            self._showTrace("版本号解析失败, 无法比较版本", self.TraceLevel.WARNING)
+            return
+        if remote_ver > local_ver:
+            ALCheckUpdateDialog.showResult(
+                self,
+                has_update=True,
+                current_version=AL_VERSION,
+                latest_version=latest_version,
+                tag_name=tag_name,
+                html_url=html_url
+            )
+        else:
+            ALCheckUpdateDialog.showResult(
+                self,
+                has_update=False,
+                current_version=AL_VERSION
+            )
+        self._showLog("检查更新完成")
+
+    @Slot(str)
+    def onCheckUpdateFinishedWithError(
+        self,
+        error_message: str
+    ):
+
+        worker = self.sender()
+        if worker is not self.__check_update_worker:
+            return
+        worker.checkUpdateWorkerIsFinished.disconnect(self.onCheckUpdateIsFinished)
+        worker.checkUpdateWorkerFinishedWithError.disconnect(self.onCheckUpdateFinishedWithError)
+        worker.wait(3000)
+        worker.deleteLater()
+        self.__check_update_worker = None
+        QMessageBox.warning(
+            self,
+            "检查更新 - AutoLibrary",
+            f"检查更新失败: \n{error_message}",
+        )
+        self._showLog("检查更新失败")
+
+    @Slot()
+    def onBulletinDialogClosed(
+        self
+    ):
+
+        if self.__ALBulletinDialog:
+            self.__ALBulletinDialog.finished.disconnect(self.onBulletinDialogClosed)
+            self.__ALBulletinDialog.deleteLater()
+            self.__ALBulletinDialog = None
+        self.__bulletin_poller.setDialogOpen(False)
+
+    @Slot()
+    def onSettingsWidgetClosed(
+        self
+    ):
+
+        if self.__ALSettingsWidget:
+            self.__ALSettingsWidget.settingsWidgetIsClosed.disconnect(self.onSettingsWidgetClosed)
+            self.__ALSettingsWidget.deleteLater()
+            self.__ALSettingsWidget = None
+        self.SettingsAction.setEnabled(True)
+
     @Slot()
     def onTimerTaskManageWidgetClosed(
         self
@@ -299,84 +393,106 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alConfigWidget:
-            self.__alConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
-            self.__alConfigWidget.deleteLater()
-            self.__alConfigWidget = None
+        if self.__ALConfigWidget:
+            self.__ALConfigWidget.configWidgetIsClosed.disconnect(self.onConfigWidgetClosed)
+            self.__ALConfigWidget.deleteLater()
+            self.__ALConfigWidget = None
         self.__config_paths = ConfigUtils.getAutomationConfigPaths()
+        self.__timer_task_poller.updateConfigPaths(self.__config_paths)
         self.setControlButtons(True, None, None)
         self._showLog("配置窗口已关闭,配置文件路径已更新")
 
     @Slot()
-    def onSettingsWidgetClosed(
+    def onBulletinActionTriggered(
         self
     ):
 
-        if self.__alSettingsWidget:
-            self.__alSettingsWidget.settingsWidgetIsClosed.disconnect(self.onSettingsWidgetClosed)
-            self.__alSettingsWidget.deleteLater()
-            self.__alSettingsWidget = None
-        self.SettingsAction.setEnabled(True)
+        if self.__ALBulletinDialog is None:
+            self.__ALBulletinDialog = ALBulletinDialog(self)
+            self.__ALBulletinDialog.finished.connect(self.onBulletinDialogClosed)
+        self.__bulletin_poller.setDialogOpen(True)
+        self.__ALBulletinDialog.show()
+        self.__ALBulletinDialog.raise_()
+        self.__ALBulletinDialog.activateWindow()
+        self._showLog("打开公告栏窗口")
 
     @Slot()
     def onSettingsActionTriggered(
         self
     ):
 
-        if self.__alSettingsWidget is None:
-            self.__alSettingsWidget = ALSettingsWidget(self)
-            self.__alSettingsWidget.settingsWidgetIsClosed.connect(self.onSettingsWidgetClosed)
-        self.__alSettingsWidget.show()
-        self.__alSettingsWidget.raise_()
-        self.__alSettingsWidget.activateWindow()
+        if self.__ALSettingsWidget is None:
+            self.__ALSettingsWidget = ALSettingsWidget(self)
+            self.__ALSettingsWidget.settingsWidgetIsClosed.connect(self.onSettingsWidgetClosed)
+            self.__ALSettingsWidget.openBulletinRequested.connect(self.onBulletinActionTriggered)
+        self.__ALSettingsWidget.show()
+        self.__ALSettingsWidget.raise_()
+        self.__ALSettingsWidget.activateWindow()
         self.SettingsAction.setEnabled(False)
         self._showLog("打开全局设置窗口")
 
-    @Slot(dict)
-    def onTimerTaskIsReady(
-        self,
-        timer_task: dict
+    @Slot()
+    def onAboutActionTriggered(
+        self
     ):
 
-        self.__timer_task_queue.put(timer_task)
+        AboutDialog = ALAboutDialog(self)
+        AboutDialog.exec()
 
-    @Slot(dict)
-    def onTimerTaskFinished(
-        self,
-        is_error: bool,
-        timer_task: dict
+    @Slot()
+    def onManualActionTriggered(
+        self
     ):
 
-        self.__current_timer_task_thread.wait(1000)
-        self.__current_timer_task_thread.timerTaskWorkerIsFinished.disconnect(self.onTimerTaskFinished)
-        self.__current_timer_task_thread.deleteLater()
-        self.__current_timer_task_thread = None
-        self.setControlButtons(None, False, True)
-        self.__is_running_timer_task = False
-        self.__timer_task_timer.start(500)
-        timer_task["executed"] = True
-        self.TrayIcon.showMessage(
-            "定时任务 - AutoLibrary",
-            f"\n定时任务 '{timer_task['name']}' 执行{'失败' if is_error else '完成'}",
-            QSystemTrayIcon.MessageIcon.Warning if is_error else QSystemTrayIcon.MessageIcon.Information,
-            1000
-        )
-        self._showTrace(
-            f"定时任务 {timer_task['name']} 执行{'失败' if is_error else '完成'}, uuid: {timer_task['uuid']}"
-        )
-        if not is_error:
-            self.timerTaskIsExecuted.emit(timer_task)
-        else:
-            self.timerTaskIsError.emit(timer_task)
+        url = QUrl("https://manuals.autolibrary.kenanzhu.com")
+        QDesktopServices.openUrl(url)
+
+    @Slot()
+    def onCheckUpdateActionTriggered(
+        self
+    ):
+
+        if hasattr(self, '__check_update_worker') and self.__check_update_worker is not None:
+            return
+        self.__check_update_worker = ALCheckUpdateWorker(self)
+        self.__check_update_worker.checkUpdateWorkerIsFinished.connect(self.onCheckUpdateIsFinished)
+        self.__check_update_worker.checkUpdateWorkerFinishedWithError.connect(self.onCheckUpdateFinishedWithError)
+        self.__check_update_worker.start()
+        self._showLog("正在检查更新...")
+
+    @Slot()
+    def onTrayMessageClicked(
+        self
+    ):
+
+        if self.__notification_type == "bulletin":
+            self.__notification_type = ""
+            self.onBulletinActionTriggered()
+
+    @Slot(QSystemTrayIcon.ActivationReason)
+    def onTrayIconActivated(
+        self,
+        reason: QSystemTrayIcon.ActivationReason
+    ):
+
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.showNormal()
 
     @Slot()
     def onTimerTaskManageWidgetButtonClicked(
         self
     ):
 
-        self.__alTimerTaskManageWidget.show()
-        self.__alTimerTaskManageWidget.raise_()
-        self.__alTimerTaskManageWidget.activateWindow()
+        if self.__ALTimerTaskManageWidget is None:
+            QMessageBox.warning(
+                self,
+                "警告 - AutoLibrary",
+                "定时任务功能初始化失败, 请检查配置文件。"
+            )
+            return
+        self.__ALTimerTaskManageWidget.show()
+        self.__ALTimerTaskManageWidget.raise_()
+        self.__ALTimerTaskManageWidget.activateWindow()
         self.TimerTaskManageWidgetButton.setEnabled(False)
         self._showLog("打开定时任务管理窗口")
 
@@ -385,12 +501,12 @@ class ALMainWindow(MsgBase, QMainWindow, Ui_ALMainWindow):
         self
     ):
 
-        if self.__alConfigWidget is None:
-            self.__alConfigWidget = ALConfigWidget(self)
-            self.__alConfigWidget.configWidgetIsClosed.connect(self.onConfigWidgetClosed)
-        self.__alConfigWidget.show()
-        self.__alConfigWidget.raise_()
-        self.__alConfigWidget.activateWindow()
+        if self.__ALConfigWidget is None:
+            self.__ALConfigWidget = ALConfigWidget(self)
+            self.__ALConfigWidget.configWidgetIsClosed.connect(self.onConfigWidgetClosed)
+        self.__ALConfigWidget.show()
+        self.__ALConfigWidget.raise_()
+        self.__ALConfigWidget.activateWindow()
         self.ConfigButton.setEnabled(False)
         self._showLog("打开配置窗口")
 

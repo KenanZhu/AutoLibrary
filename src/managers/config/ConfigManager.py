@@ -7,6 +7,7 @@ This software is provided "as is", without any warranty of any kind.
 You may use, modify, and distribute this file under the terms of the MIT License.
 See the LICENSE file for details.
 """
+import copy
 import os
 import threading
 
@@ -18,7 +19,7 @@ from interfaces.ConfigProvider import ConfigType, ConfigPath
 
 
 # This config manager class only responsible for global and other
-# unconfigurable config files.
+# config files. NOT include run and user config files.
 
 
 class ConfigTemplate:
@@ -59,6 +60,11 @@ class ConfigTemplate:
                         "theme": "system",
                         "style": "Fusion",
                         "custom_theme": ""
+                    },
+                    "bulletin": {
+                        "auto_fetch": False,
+                        "server_url": "https://api.autolibrary.kenanzhu.com",
+                        "sync_interval": 10
                     }
                 }
             case ConfigType.BULLETIN:
@@ -82,8 +88,8 @@ class ConfigManager:
     ):
 
         self.__config_dir = os.path.abspath(config_dir)
-        self.__config_lock = threading.Lock()
         self.__config_data = {}
+        self.__lock = threading.Lock()
 
         self.initialize()
 
@@ -105,7 +111,7 @@ class ConfigManager:
                 config_data = JSONReader(config_path).data()
                 self.__config_data[config_type.value] = config_data
                 return
-            except:
+            except Exception:
                 pass
         self.__config_data[config_type.value] = ConfigTemplate(config_type).template()
         JSONWriter(config_path, self.__config_data[config_type.value])
@@ -116,16 +122,16 @@ class ConfigManager:
         default: Optional[Any] = None
     ) -> Any:
 
-        with self.__config_lock:
+        with self.__lock:
             config_data = self.__config_data[key.config_type.value]
             if key.key == "":
-                return config_data
+                return copy.deepcopy(config_data)
             keys = key.key.split('.')
             for k in keys[:-1]:
                 config_data = config_data.get(k, None)
                 if config_data is None:
                     return default
-            return config_data.get(keys[-1], default)
+            return copy.deepcopy(config_data.get(keys[-1], default))
 
     def set(
         self,
@@ -133,7 +139,7 @@ class ConfigManager:
         value: Any = None
     ):
 
-        with self.__config_lock:
+        with self.__lock:
             root_data = self.__config_data[key.config_type.value]
             if key.key == "":
                 self.__config_data[key.config_type.value] = value

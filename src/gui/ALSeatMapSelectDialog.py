@@ -55,7 +55,6 @@ class ALSeatMapSelectDialog(CenterOnParentMixin, QDialog):
         self.setMinimumSize(800, 600)
         self.resize(800, 600)
         self.setWindowTitle(f"选择楼层座位 - AutoLibrary")
-
         self.SeatMapWidgetMainLayout = QVBoxLayout(self)
         self.SeatMapWidgetMainLayout.setContentsMargins(5, 5, 5, 5)
         self.SeatMapWidgetMainLayout.setSpacing(5)
@@ -63,10 +62,8 @@ class ALSeatMapSelectDialog(CenterOnParentMixin, QDialog):
         self.TitleLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.TitleLabel.setStyleSheet("font-size: 16px; font-weight: bold; margin: 10px;")
         self.SeatMapWidgetMainLayout.addWidget(self.TitleLabel)
-
         self.SeatMapGraphicsView = ALSeatMapView(None, self.__seats_data)
         self.SeatMapWidgetMainLayout.addWidget(self.SeatMapGraphicsView)
-
         self.TipsLabel = QLabel(
             "  点击座位进行选择/取消选择, 最多选择1个座位 \n"
             "  [操作方法: Ctrl+鼠标滚轮缩放 | 滚轮/拖拽/方向键 移动]"
@@ -74,7 +71,6 @@ class ALSeatMapSelectDialog(CenterOnParentMixin, QDialog):
         self.TipsLabel.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.TipsLabel.setStyleSheet("color: #666; margin: 5px;")
         self.SeatMapWidgetMainLayout.addWidget(self.TipsLabel)
-
         self.ConfirmButton = QPushButton("确认")
         self.ConfirmButton.setFixedSize(80, 25)
         self.ConfirmButton.setAutoDefault(True)

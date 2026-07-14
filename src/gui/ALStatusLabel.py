@@ -118,35 +118,34 @@ class ALStatusLabel(QLabel):
         event
     ):
 
-        Painter = QPainter(self)
-        Painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         center_x = self.width()/2
         center_y = self.height()/2
         radius = min(center_x, center_y) - 3
         match self.__status:
             case self.Status.WAITING:
-                Pen = Painter.pen()
-                Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-                Pen.setColor(QColor("#969696")) # grey
-                Painter.setPen(Pen)
-                Painter.drawEllipse(
+                pen = painter.pen()
+                pen.setWidth(2)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                pen.setColor(QColor("#969696")) # grey
+                painter.setPen(pen)
+                painter.drawEllipse(
                     int(center_x - radius),
                     int(center_y - radius),
                     int(radius*2),
                     int(radius*2)
                 )
             case self.Status.RUNNING:
-                Gradient = QConicalGradient(center_x, center_y, self.__icon_angle)
-                Gradient.setColorAt(0.0, QColor("#2294FF" if self.isDarkMode() else "#0094FF"))
-                Gradient.setColorAt(1.0, QColor("#2294FF00"))
-                Pen = Painter.pen()
-                Pen.setWidth(3)
-                Pen.setBrush(Gradient)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-                Painter.setPen(Pen)
-                Painter.drawEllipse(
+                gradient = QConicalGradient(center_x, center_y, self.__icon_angle)
+                gradient.setColorAt(0.0, QColor("#2294FF" if self.isDarkMode() else "#0094FF"))
+                gradient.setColorAt(1.0, QColor("#2294FF00"))
+                pen = painter.pen()
+                pen.setWidth(3)
+                pen.setBrush(gradient)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                painter.setPen(pen)
+                painter.drawEllipse(
                     int(center_x - radius),
                     int(center_y - radius),
                     int(radius*2),
@@ -154,102 +153,99 @@ class ALStatusLabel(QLabel):
                 )
             case self.Status.SUCCESS:
                 # draw the success green circle
-                Pen = Painter.pen()
-                Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-                Pen.setColor(QColor("#4CAF50" if self.isDarkMode() else "#00AF50")) # green
-                Painter.setPen(Pen)
-                Painter.drawEllipse(
+                pen = painter.pen()
+                pen.setWidth(2)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                pen.setColor(QColor("#4CAF50" if self.isDarkMode() else "#00AF50")) # green
+                painter.setPen(pen)
+                painter.drawEllipse(
                     int(center_x - radius),
                     int(center_y - radius),
                     int(radius*2),
                     int(radius*2)
                 )
                 # draw the success check mark '✓'
-                Painter.setPen(Qt.PenStyle.SolidLine)
-                Pen = Painter.pen()
-                Pen.setWidth(3)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                painter.setPen(Qt.PenStyle.SolidLine)
+                pen = painter.pen()
+                pen.setWidth(3)
+                pen.setBrush(Qt.BrushStyle.NoBrush)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 # white when dark mode, black when light mode
-                Pen.setColor(self.getMarkColor())
-                Painter.setPen(Pen)
+                pen.setColor(self.getMarkColor())
+                painter.setPen(pen)
                 mark_size = radius/2
                 mark_path = [
                     (center_x - mark_size, center_y),
                     (center_x - mark_size/3, center_y + mark_size/2),
                     (center_x + mark_size, center_y - mark_size/2)
                 ]
-                Painter.drawLine(
+                painter.drawLine(
                     int(mark_path[0][0]),int(mark_path[0][1]),
                     int(mark_path[1][0]),int(mark_path[1][1])
                 )
-                Painter.drawLine(
+                painter.drawLine(
                     int(mark_path[1][0]),int(mark_path[1][1]),
                     int(mark_path[2][0]),int(mark_path[2][1])
                 )
             case self.Status.WARNING:
                 # draw the warning orange circle
-                Pen = Painter.pen()
-                Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-                Pen.setColor(QColor("#FF9800")) # orange
-                Painter.setPen(Pen)
-                Painter.drawEllipse(
+                pen = painter.pen()
+                pen.setWidth(2)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                pen.setColor(QColor("#FF9800")) # orange
+                painter.setPen(pen)
+                painter.drawEllipse(
                     int(center_x - radius),
                     int(center_y - radius),
                     int(radius*2),
                     int(radius*2)
                 )
                 # draw the warning exclamation mark '!'
-                Painter.setPen(Qt.PenStyle.SolidLine)
-                Pen = Painter.pen()
-                Pen.setWidth(3)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                painter.setPen(Qt.PenStyle.SolidLine)
+                pen = painter.pen()
+                pen.setWidth(3)
+                pen.setBrush(Qt.BrushStyle.NoBrush)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 # white when dark mode, black when light mode
-                Pen.setColor(self.getMarkColor())
-                Painter.setPen(Pen)
-                Painter.drawLine(
+                pen.setColor(self.getMarkColor())
+                painter.setPen(pen)
+                painter.drawLine(
                     int(center_x), int(center_y - radius/2),
                     int(center_x), int(center_y + radius/6)
                 )
-                Painter.drawPoint(
+                painter.drawPoint(
                     int(center_x), int(center_y + radius/2)
                 )
             case self.Status.FAILURE:
                 # draw the failure red circle
-                Pen = Painter.pen()
-                Pen.setWidth(2)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-                Pen.setColor(QColor("#DC0000")) # red
-                Painter.setPen(Pen)
-                Painter.drawEllipse(
+                pen = painter.pen()
+                pen.setWidth(2)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                pen.setColor(QColor("#DC0000")) # red
+                painter.setPen(pen)
+                painter.drawEllipse(
                     int(center_x - radius),
                     int(center_y - radius),
                     int(radius*2),
                     int(radius*2)
                 )
                 # draw the failure cross mark '✗'
-                Painter.setPen(Qt.PenStyle.SolidLine)
-                Pen = Painter.pen()
-                Pen.setWidth(3)
-                Pen.setBrush(Qt.BrushStyle.NoBrush)
-                Pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+                painter.setPen(Qt.PenStyle.SolidLine)
+                pen = painter.pen()
+                pen.setWidth(3)
+                pen.setBrush(Qt.BrushStyle.NoBrush)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 # white when dark mode, black when light mode
-                Pen.setColor(self.getMarkColor())
-                Painter.setPen(Pen)
+                pen.setColor(self.getMarkColor())
+                painter.setPen(pen)
                 mark_size = radius/3
-                Painter.drawLine(
+                painter.drawLine(
                     int(center_x - mark_size), int(center_y - mark_size),
                     int(center_x + mark_size), int(center_y + mark_size)
                 )
-                Painter.drawLine(
+                painter.drawLine(
                     int(center_x + mark_size), int(center_y - mark_size),
                     int(center_x - mark_size), int(center_y + mark_size)
                 )
-        Painter.end()
+        painter.end()
         super().paintEvent(event)

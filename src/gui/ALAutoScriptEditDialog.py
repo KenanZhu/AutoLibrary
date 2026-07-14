@@ -75,54 +75,54 @@ class ALScriptHighlighter(QSyntaxHighlighter):
         super().__init__(parent)
         self._rules = []
 
-        KeywordFmt = QTextCharFormat()
-        KeywordFmt.setForeground(QColor("#569CD6"))
-        KeywordFmt.setFontWeight(QFont.Weight.Bold)
+        keyword_fmt = QTextCharFormat()
+        keyword_fmt.setForeground(QColor("#569CD6"))
+        keyword_fmt.setFontWeight(QFont.Weight.Bold)
         for kw in [
             "if", "elseif", "else", "end", "then",
             "and", "or", "not",
             "local", "function", "return", "nil",
         ]:
-            self._rules.append((r"\b" + kw + r"\b", KeywordFmt))
-        BoolFmt = QTextCharFormat()
-        BoolFmt.setForeground(QColor("#4FC1FF"))
-        BoolFmt.setFontWeight(QFont.Weight.Bold)
-        self._rules.append((r"\btrue\b", BoolFmt))
-        self._rules.append((r"\bfalse\b", BoolFmt))
-        CmpFmt = QTextCharFormat()
-        CmpFmt.setForeground(QColor("#C586C0"))
-        CmpFmt.setFontWeight(QFont.Weight.Normal)
+            self._rules.append((r"\b" + kw + r"\b", keyword_fmt))
+        bool_fmt = QTextCharFormat()
+        bool_fmt.setForeground(QColor("#4FC1FF"))
+        bool_fmt.setFontWeight(QFont.Weight.Bold)
+        self._rules.append((r"\btrue\b", bool_fmt))
+        self._rules.append((r"\bfalse\b", bool_fmt))
+        cmp_fmt = QTextCharFormat()
+        cmp_fmt.setForeground(QColor("#C586C0"))
+        cmp_fmt.setFontWeight(QFont.Weight.Normal)
         for op in [r"==", r"~=", r">=", r"<=", r">", r"<"]:
-            self._rules.append((op, CmpFmt))
-        ArithFmt = QTextCharFormat()
-        ArithFmt.setForeground(QColor("#C586C0"))
-        ArithFmt.setFontWeight(QFont.Weight.Normal)
+            self._rules.append((op, cmp_fmt))
+        arith_fmt = QTextCharFormat()
+        arith_fmt.setForeground(QColor("#C586C0"))
+        arith_fmt.setFontWeight(QFont.Weight.Normal)
         for op in [r"\+", r"-", r"\*", r"/", r"\.\."]:
-            self._rules.append((op, ArithFmt))
-        FuncFmt = QTextCharFormat()
-        FuncFmt.setForeground(QColor("#DCDCAA"))
-        FuncFmt.setFontWeight(QFont.Weight.Normal)
+            self._rules.append((op, arith_fmt))
+        func_fmt = QTextCharFormat()
+        func_fmt.setForeground(QColor("#DCDCAA"))
+        func_fmt.setFontWeight(QFont.Weight.Normal)
         for fn in [ "time", "date", "datenow", "timenow", "dateadd", "timeadd"]:
-            self._rules.append((r"\b" + fn + r"\b", FuncFmt))
-        VarFmt = QTextCharFormat()
-        VarFmt.setForeground(QColor("#9CDCFE"))
-        VarFmt.setFontWeight(QFont.Weight.Normal)
+            self._rules.append((r"\b" + fn + r"\b", func_fmt))
+        var_fmt = QTextCharFormat()
+        var_fmt.setForeground(QColor("#9CDCFE"))
+        var_fmt.setFontWeight(QFont.Weight.Normal)
         var_names = [name for _, (name, _) in createAllVariablesTable().items()]
         for var in var_names:
-            self._rules.append((r"\b" + var + r"\b", VarFmt))
-        StrFmt = QTextCharFormat()
-        StrFmt.setForeground(QColor("#CE9178"))
-        StrFmt.setFontWeight(QFont.Weight.Normal)
-        self._rules.append((r'"[^"]*"', StrFmt))
-        self._rules.append((r"'[^']*'", StrFmt))
-        NumFmt = QTextCharFormat()
-        NumFmt.setForeground(QColor("#B5CEA8"))
-        NumFmt.setFontWeight(QFont.Weight.Normal)
-        self._rules.append((r"\b\d+(?:\.\d+)?\b", NumFmt))
-        CommentFmt = QTextCharFormat()
-        CommentFmt.setForeground(QColor("#6A9955"))
-        CommentFmt.setFontItalic(True)
-        self._rules.append((r"--[^\n]*", CommentFmt))
+            self._rules.append((r"\b" + var + r"\b", var_fmt))
+        st_fmt = QTextCharFormat()
+        st_fmt.setForeground(QColor("#CE9178"))
+        st_fmt.setFontWeight(QFont.Weight.Normal)
+        self._rules.append((r'"[^"]*"', st_fmt))
+        self._rules.append((r"'[^']*'", st_fmt))
+        num_fmt = QTextCharFormat()
+        num_fmt.setForeground(QColor("#B5CEA8"))
+        num_fmt.setFontWeight(QFont.Weight.Normal)
+        self._rules.append((r"\b\d+(?:\.\d+)?\b", num_fmt))
+        comment_fmt = QTextCharFormat()
+        comment_fmt.setForeground(QColor("#6A9955"))
+        comment_fmt.setFontItalic(True)
+        self._rules.append((r"--[^\n]*", comment_fmt))
 
     def highlightBlock(
         self,
@@ -189,13 +189,13 @@ class ALAutoScriptEditDialog(QDialog):
     ):
 
         super().__init__(parent)
-        self._fontSize = 21
-        self._mockWidgets = {}
+        self._font_size = 21
+        self._mock_widgets = {}
 
         self.setupUi()
         self.connectSignals()
         self.TextEdit.setPlainText(script)
-        self._Highlighter = ALScriptHighlighter(
+        self._high_lighter = ALScriptHighlighter(
             self.TextEdit.document()
         )
         if mockData:
@@ -224,7 +224,7 @@ class ALAutoScriptEditDialog(QDialog):
         self.ZoomResetBtn.setIconSize(QSize(14, 14))
         self.ZoomResetBtn.setFixedSize(25, 25)
         self.ZoomResetBtn.setToolTip("重置缩放")
-        self.ZoomLabel = QLabel(f"{self._fontSize}px")
+        self.ZoomLabel = QLabel(f"{self._font_size}px")
         self.ZoomLabel.setFixedHeight(25)
         self.OrchBtn = QPushButton("编排")
         self.OrchBtn.setFixedSize(80, 25)
@@ -259,7 +259,7 @@ class ALAutoScriptEditDialog(QDialog):
         self.TextEdit.setStyleSheet(
             "QPlainTextEdit {"
             "  font-family: 'Courier New', 'Consolas', monospace;"
-           f"  font-size: {self._fontSize}px;"
+           f"  font-size: {self._font_size}px;"
             "}"
         )
         Layout.addWidget(self.TextEdit)
@@ -287,30 +287,30 @@ class ALAutoScriptEditDialog(QDialog):
         BasicLayout.setSpacing(4)
         BasicLayout.setContentsMargins(4, 4, 4, 4)
         BasicLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        controlButtons = [
+        control_buttons = [
             ("如果 (if...)", "if  then\n    \nend"),
             ("再如果 (elseif...)", "elseif  then\n    "),
             ("否则 (else)", "else"),
             ("结束 (end)", "end"),
             ("跳过 (pass)", "-- pass"),
         ]
-        self.addButtonsToGrid(BasicLayout, controlButtons, 0, 0, 3)
-        assignButtons = [
+        self.addButtonsToGrid(BasicLayout, control_buttons, 0, 0, 3)
+        assign_buttons = [
             ("赋值 (=)", " = "),
         ]
-        self.addButtonsToGrid(BasicLayout, assignButtons, 1, 2, 3)
+        self.addButtonsToGrid(BasicLayout, assign_buttons, 1, 2, 3)
         TabWidget.addTab(BasicWidget, "基本语法")
         OperatorWidget = QWidget()
         OperatorLayout = QGridLayout(OperatorWidget)
         OperatorLayout.setSpacing(4)
         OperatorLayout.setContentsMargins(4, 4, 4, 4)
         OperatorLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        arithmeticButtons = [
+        arithmetic_buttons = [
             ("加 (+)", " + "),
             ("减 (-)", " - "),
         ]
-        self.addButtonsToGrid(OperatorLayout, arithmeticButtons, 0, 0, 3)
-        compareButtons = [
+        self.addButtonsToGrid(OperatorLayout, arithmetic_buttons, 0, 0, 3)
+        compare_buttons = [
             ("等于 (==)", " == "),
             ("不等于 (~=)", " ~= "),
             ("大于 (>)", " > "),
@@ -318,7 +318,7 @@ class ALAutoScriptEditDialog(QDialog):
             ("大于等于 (>=)", " >= "),
             ("小于等于 (<=)", " <= "),
         ]
-        self.addButtonsToGrid(OperatorLayout, compareButtons, 1, 0, 3)
+        self.addButtonsToGrid(OperatorLayout, compare_buttons, 1, 0, 3)
         logic_buttons = [
             ("且 (and)", " and "),
             ("或 (or)", " or "),
@@ -335,40 +335,40 @@ class ALAutoScriptEditDialog(QDialog):
             ("假 (false)", "false"),
         ]
         self.addButtonsToGrid(LiteralLayout, bool_buttons, 0, 0, 3)
-        dateTimeButtons = [
+        date_time_buttons = [
             ("日期", 'date(2026, 1, 1)'),
             ("时间", 'time(0, 0)'),
         ]
-        self.addButtonsToGrid(LiteralLayout, dateTimeButtons, 1, 0, 3)
-        hintButtons = [
+        self.addButtonsToGrid(LiteralLayout, date_time_buttons, 1, 0, 3)
+        hint_buttons = [
             ("字符串", '"请输入文本"'),
             ("数字", "123"),
             ("注释", "-- 请输入注释"),
         ]
-        self.addButtonsToGrid(LiteralLayout, hintButtons, 2, 0, 3)
+        self.addButtonsToGrid(LiteralLayout, hint_buttons, 2, 0, 3)
         TabWidget.addTab(LiteralWidget, "字面量")
         VarWidget = QWidget()
         VarLayout = QGridLayout(VarWidget)
         VarLayout.setSpacing(4)
         VarLayout.setContentsMargins(4, 4, 4, 4)
         VarLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        varButtons = [
+        var_buttons = [
             (display_name, name) for display_name, (name, _) in createAllVariablesTable().items()
         ]
-        self.addButtonsToGrid(VarLayout, varButtons, 0, 0, 3)
+        self.addButtonsToGrid(VarLayout, var_buttons, 0, 0, 3)
         TabWidget.addTab(VarWidget, "变量")
         FuncWidget = QWidget()
         FuncLayout = QGridLayout(FuncWidget)
         FuncLayout.setSpacing(4)
         FuncLayout.setContentsMargins(4, 4, 4, 4)
         FuncLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        funcButtons = [
+        func_buttons = [
             ("datenow()", "datenow()", "返回当前日期的 Unix 时间戳"),
             ("timenow()", "timenow()", "返回当前时间在一天中的分钟数"),
             ("dateadd(day, n)", "dateadd(, )", "日期偏移: dateadd(日期时间戳, 天数)"),
             ("timeadd(time, n)", "timeadd(, )", "时间偏移: timeadd(分钟数, 分钟数)"),
         ]
-        for i, (text, template, tooltip) in enumerate(funcButtons):
+        for i, (text, template, tooltip) in enumerate(func_buttons):
             Btn = QPushButton(text)
             Btn.setProperty("template", template)
             Btn.clicked.connect(self.insertTemplate)
@@ -419,17 +419,17 @@ class ALAutoScriptEditDialog(QDialog):
         Form = QFormLayout(Group)
         Form.setSpacing(4)
         Form.setContentsMargins(5, 10, 5, 5)
-        self._mockWidgets = {}
-        mockData = createMockTargetData()
+        self._mock_widgets = {}
+        mock_data = createMockTargetData()
         for name, var_type, key_path, display_name in createTargetVarDefs():
-            d = mockData
+            d = mock_data
             for key in key_path:
                 d = d[key]
             default = d
             Widget = self.makeMockInput(var_type, default)
             Label = QLabel(f"{display_name}: {name}({var_type})")
             Form.addRow(Label, Widget)
-            self._mockWidgets[name] = (Widget, var_type, key_path)
+            self._mock_widgets[name] = (Widget, var_type, key_path)
         return Group
 
     def makeMockInput(
@@ -439,49 +439,49 @@ class ALAutoScriptEditDialog(QDialog):
     ) -> QWidget:
 
         if var_type == "String":
-            W = QLineEdit()
-            W.setText(str(default))
-            return W
+            widget = QLineEdit()
+            widget.setText(str(default))
+            return widget
         if var_type == "Boolean":
-            W = QComboBox()
-            W.addItems(["是", "否"])
-            W.setCurrentIndex(0 if default else 1)
-            return W
+            widget = QComboBox()
+            widget.addItems(["是", "否"])
+            widget.setCurrentIndex(0 if default else 1)
+            return widget
         if var_type == "Date":
-            W = QDateEdit()
-            W.setCalendarPopup(True)
-            W.setDisplayFormat("yyyy-MM-dd")
-            W.setDate(QDate.fromString(str(default), "yyyy-MM-dd"))
-            return W
+            widget = QDateEdit()
+            widget.setCalendarPopup(True)
+            widget.setDisplayFormat("yyyy-MM-dd")
+            widget.setDate(QDate.fromString(str(default), "yyyy-MM-dd"))
+            return widget
         if var_type == "Time":
-            W = QTimeEdit()
-            W.setDisplayFormat("HH:mm")
-            W.setTime(QTime.fromString(str(default), "HH:mm"))
-            return W
+            widget = QTimeEdit()
+            widget.setDisplayFormat("HH:mm")
+            widget.setTime(QTime.fromString(str(default), "HH:mm"))
+            return widget
         if var_type == "Int":
-            W = QSpinBox()
-            W.setMinimum(-999999)
-            W.setMaximum(999999)
-            W.setValue(int(default) if default else 0)
-            return W
+            widget = QSpinBox()
+            widget.setMinimum(-999999)
+            widget.setMaximum(999999)
+            widget.setValue(int(default) if default else 0)
+            return widget
         if var_type == "Float":
-            W = QDoubleSpinBox()
-            W.setMinimum(-999999.0)
-            W.setMaximum(999999.0)
-            W.setDecimals(2)
-            W.setValue(float(default) if default else 0.0)
-            return W
-        W = QLineEdit()
-        W.setText(str(default))
-        return W
+            widget = QDoubleSpinBox()
+            widget.setMinimum(-999999.0)
+            widget.setMaximum(999999.0)
+            widget.setDecimals(2)
+            widget.setValue(float(default) if default else 0.0)
+            return widget
+        widget = QLineEdit()
+        widget.setText(str(default))
+        return widget
 
     def getMockData(
         self
     ) -> dict:
 
         data = {}
-        for name, var_type, key_path, display_name in createTargetVarDefs():
-            widget, _, _ = self._mockWidgets[name]
+        for name, var_type, key_path, _ in createTargetVarDefs():
+            widget, _, _ = self._mock_widgets[name]
             value = self.getMockValue(widget, var_type)
             d = data
             for key in key_path[:-1]:
@@ -496,14 +496,14 @@ class ALAutoScriptEditDialog(QDialog):
 
         if not data:
             return
-        for name, var_type, key_path, display_name in createTargetVarDefs():
+        for name, var_type, key_path, _ in createTargetVarDefs():
             d = data
             try:
                 for key in key_path:
                     d = d[key]
             except (KeyError, TypeError):
                 continue
-            widget, _, _ = self._mockWidgets[name]
+            widget, _, _ = self._mock_widgets[name]
             self.setMockValue(widget, var_type, d)
 
     def getMockValue(
@@ -578,10 +578,10 @@ class ALAutoScriptEditDialog(QDialog):
         self.TextEdit.setStyleSheet(
             "QPlainTextEdit {"
             "  font-family: 'Courier New', 'Consolas', monospace;"
-            f"  font-size: {self._fontSize}px;"
+            f"  font-size: {self._font_size}px;"
             "}"
         )
-        self.ZoomLabel.setText(f"{self._fontSize}px")
+        self.ZoomLabel.setText(f"{self._font_size}px")
 
     @Slot()
     def insertTemplate(
@@ -602,7 +602,7 @@ class ALAutoScriptEditDialog(QDialog):
         self
     ):
 
-        self._fontSize = min(self._fontSize + 2, 40)
+        self._font_size = min(self._font_size + 2, 40)
         self.updateFontSize()
 
     @Slot()
@@ -610,7 +610,7 @@ class ALAutoScriptEditDialog(QDialog):
         self
     ):
 
-        self._fontSize = max(self._fontSize - 2, 8)
+        self._font_size = max(self._font_size - 2, 8)
         self.updateFontSize()
 
     @Slot()
@@ -618,7 +618,7 @@ class ALAutoScriptEditDialog(QDialog):
         self
     ):
 
-        self._fontSize = 21
+        self._font_size = 21
         self.updateFontSize()
 
     @Slot()
@@ -639,13 +639,13 @@ class ALAutoScriptEditDialog(QDialog):
     ):
 
         from gui.ALAutoScriptOrchDialog import ALAutoScriptOrchDialog
-        Dlg = ALAutoScriptOrchDialog(self)
-        if Dlg.exec() == QDialog.DialogCode.Accepted:
-            script = Dlg.getScript()
+        Dialpg = ALAutoScriptOrchDialog(self)
+        if Dialpg.exec() == QDialog.DialogCode.Accepted:
+            script = Dialpg.getScript()
             if script:
                 cursor = self.TextEdit.textCursor()
                 cursor.insertText(script)
-        Dlg.deleteLater()
+        Dialpg.deleteLater()
 
     @Slot()
     def onDebugRun(
@@ -679,6 +679,6 @@ class ALAutoScriptEditDialog(QDialog):
         if not changes:
             QMessageBox.information(self, "调试运行", "目标变量未发生变化。")
             return
-        Dlg = _DebugResultDialog(changes, self)
-        Dlg.exec()
-        Dlg.deleteLater()
+        Dialpg = _DebugResultDialog(changes, self)
+        Dialpg.exec()
+        Dialpg.deleteLater()

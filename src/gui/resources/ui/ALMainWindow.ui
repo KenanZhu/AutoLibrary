@@ -286,6 +286,7 @@ font: 700 9pt;</string>
      <string>工具</string>
     </property>
     <addaction name="SettingsAction"/>
+    <addaction name="BulletinAction"/>
    </widget>
    <widget class="QMenu" name="HelpMenu">
     <property name="mouseTracking">
@@ -295,6 +296,7 @@ font: 700 9pt;</string>
      <string>帮助</string>
     </property>
     <addaction name="ManualAction"/>
+    <addaction name="CheckUpdateAction"/>
     <addaction name="AboutAction"/>
    </widget>
    <addaction name="ToolsMenu"/>
@@ -310,6 +312,11 @@ font: 700 9pt;</string>
     <string>在线手册</string>
    </property>
   </action>
+  <action name="CheckUpdateAction">
+   <property name="text">
+    <string>检查更新</string>
+   </property>
+  </action>
   <action name="AboutAction">
    <property name="text">
     <string>关于</string>
@@ -318,6 +325,11 @@ font: 700 9pt;</string>
   <action name="SettingsAction">
    <property name="text">
     <string>全局设置</string>
+   </property>
+  </action>
+  <action name="BulletinAction">
+   <property name="text">
+    <string>公告栏</string>
    </property>
   </action>
  </widget>
